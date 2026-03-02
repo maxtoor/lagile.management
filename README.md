@@ -290,10 +290,10 @@ Note:
 - quando la sede viene impostata correttamente, il comando imposta anche `Sottoscrizione AILA` a `Si`
 - quando la sede viene impostata correttamente, il comando imposta anche `is_active=Si`
 - regole automatiche per referente/auto-approvazione per sede:
-  - `Napoli` -> referente assegnato (oscurato), `auto_approve=Si`
-  - `Catania` -> referente assegnato (oscurato), `auto_approve=No`
-  - `Sassari` -> referente assegnato (oscurato), `auto_approve=No`
-  - `Padova` -> referente assegnato (oscurato), `auto_approve=No`
+  - `Sede A (oscurata)` -> referente assegnato (oscurato), `auto_approve=Si`
+  - `Sede B (oscurata)` -> referente assegnato (oscurato), `auto_approve=No`
+  - `Sede C (oscurata)` -> referente assegnato (oscurato), `auto_approve=No`
+  - `Sede D (oscurata)` -> referente assegnato (oscurato), `auto_approve=No`
 - se un utente viene usato come referente da queste regole e non e gia `ADMIN`/`SUPERADMIN`, viene impostato a ruolo `Referente Amministrativo` (`ADMIN`)
 - il comando stampa un report finale con aggiornati/invariati/non trovati/sedi non valide
 
