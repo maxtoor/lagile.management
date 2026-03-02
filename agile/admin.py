@@ -22,6 +22,10 @@ from email.utils import formataddr
 
 from .models import AgileGroup, AuditLog, ChangeRequest, DepartmentPolicy, Holiday, MonthlyPlan, PlanDay, SystemEmailTemplate, User
 
+admin.site.site_title = 'LAgile.Management'
+admin.site.site_header = 'LAgile.Management'
+admin.site.index_title = 'Amministrazione applicazione'
+
 
 class CollapseMediaMixin:
     class Media:

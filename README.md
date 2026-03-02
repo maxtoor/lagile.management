@@ -442,3 +442,17 @@ python manage.py sync_holidays --year 2026 --overwrite
 ```
 
 ## Limiti attuali (da discutere)
+
+- Gestione utenti/gruppi avanzata delegata al Django Admin
+- Notifiche email di base (template modificabili via admin)
+- Nessun frontend SPA separato (UI server-rendered)
+
+## Licenza
+
+Questo progetto e distribuito con licenza **GNU GPL v3.0 o successiva (GPL-3.0-or-later)**.
+Per i dettagli completi, vedi il file [`LICENSE`](/Users/master/Documents/projects/lagile.new/agile_work/LICENSE).
+
+## Nota su Codex
+
+Durante lo sviluppo e la manutenzione puo essere utilizzato **Codex** come strumento di supporto tecnico (analisi, proposta modifiche, automazione operativa).
+Le decisioni progettuali e la validazione finale del codice restano comunque in carico ai responsabili del progetto.
