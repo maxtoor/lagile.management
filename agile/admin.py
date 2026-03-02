@@ -2,16 +2,21 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib import messages
+from django.conf import settings
 from django.core.management import call_command
+from django.core.mail import send_mail
 from django import forms
 from django.db.models import Q
 from django.template.response import TemplateResponse
-from django.urls import path
+from django.urls import path, reverse
+from django.utils.html import format_html
+from django.shortcuts import get_object_or_404, redirect
 import io
 import os
 import tempfile
+from email.utils import formataddr
 
-from .models import AuditLog, ChangeRequest, DepartmentPolicy, Holiday, MonthlyPlan, PlanDay, User
+from .models import AuditLog, ChangeRequest, DepartmentPolicy, Holiday, MonthlyPlan, PlanDay, SystemEmailTemplate, User
 
 
 class CollapseMediaMixin:
@@ -207,6 +212,10 @@ class ImportCsvAdminForm(forms.Form):
     )
     delimiter = forms.CharField(label='Separatore', required=False, initial=',', max_length=1)
     dry_run = forms.BooleanField(label='Dry run', required=False, initial=True)
+
+
+class SendTestEmailForm(forms.Form):
+    recipient = forms.EmailField(label='Destinatario test')
 
 
 def import_tools_view(request):
@@ -426,3 +435,177 @@ class ChangeRequestAdmin(CollapseMediaMixin, admin.ModelAdmin):
     list_display = ('created_at', 'user', 'plan', 'status', 'processed_by', 'processed_at')
     list_filter = ('status', 'created_at')
     search_fields = ('user__username', 'plan__user__username', 'reason')
+
+
+@admin.register(SystemEmailTemplate)
+class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
+    fieldsets = (
+        ('Template', {'fields': ('key', 'subject_template')}),
+        (
+            'Corpo',
+            {
+                'classes': ('collapse',),
+                'fields': ('body_template',),
+            },
+        ),
+        (
+            'Legenda variabili',
+            {
+                'classes': ('collapse',),
+                'fields': ('variable_legend',),
+            },
+        ),
+        (
+            'Test',
+            {
+                'classes': ('collapse',),
+                'fields': ('test_email_tools',),
+            },
+        ),
+        (
+            'Aggiornamento',
+            {
+                'classes': ('collapse',),
+                'fields': ('updated_at',),
+            },
+        ),
+    )
+    readonly_fields = ('updated_at', 'variable_legend', 'test_email_tools')
+    list_display = ('key', 'updated_at')
+    search_fields = ('key', 'subject_template', 'body_template')
+
+    @admin.display(description='Variabili disponibili')
+    def variable_legend(self, obj):
+        return format_html(
+            "<div>"
+            "<strong>Generali:</strong> "
+            "<code>{{first_name_or_username}}</code>, <code>{{first_name}}</code>, <code>{{last_name}}</code>, "
+            "<code>{{full_name}}</code>, <code>{{username}}</code>, "
+            "<code>{{month_label}}</code>, <code>{{month_name_year}}</code>, "
+            "<code>{{status_label}}</code>, <code>{{status_label_lower}}</code>"
+            "<br><strong>Esiti:</strong> "
+            "<code>{{change_reason}}</code>, <code>{{rejection_reason}}</code>, <code>{{final_line}}</code>"
+            "<br><strong>Referente:</strong> "
+            "<code>{{manager_name}}</code>, <code>{{employee_name}}</code>"
+            "</div>"
+        )
+
+    @staticmethod
+    def _sender_from_env() -> str | None:
+        from_email = (getattr(settings, 'DEFAULT_FROM_EMAIL', '') or '').strip()
+        from_name = (getattr(settings, 'AGILE_EMAIL_FROM_NAME', '') or '').strip()
+        if not from_email:
+            return None
+        if not from_name:
+            return from_email
+        return formataddr((from_name, from_email))
+
+    @staticmethod
+    def _sample_context_for_key(key: str) -> dict:
+        base = {
+            'first_name': 'Mario',
+            'last_name': 'Rossi',
+            'full_name': 'Mario Rossi',
+            'username': 'mrossi',
+            'first_name_or_username': 'Mario',
+            'manager_name': 'Luigi Bianchi',
+            'employee_name': 'Mario Rossi',
+            'month_label': '03/2026',
+            'month_name_year': 'marzo 2026',
+            'status_label': 'APPROVATA',
+            'status_label_lower': 'approvata',
+            'change_reason': 'Aggiornamento attivita su progetto sperimentale',
+            'rejection_reason': 'Motivazione di esempio',
+            'final_line': 'La variazione e stata recepita nel piano.',
+        }
+        if key == 'PLAN_APPROVED':
+            base.update(
+                {
+                    'status_label': 'APPROVATO',
+                    'status_label_lower': 'approvato',
+                    'final_line': 'Il piano e ora definitivo.',
+                }
+            )
+        elif key == 'PLAN_REJECTED':
+            base.update(
+                {
+                    'status_label': 'RIFIUTATO',
+                    'status_label_lower': 'rifiutato',
+                    'final_line': 'Motivazione rifiuto: Motivazione di esempio',
+                }
+            )
+        elif key == 'CHANGE_REJECTED':
+            base.update(
+                {
+                    'status_label': 'RIFIUTATA',
+                    'status_label_lower': 'rifiutata',
+                    'final_line': 'Motivazione rifiuto: Motivazione di esempio',
+                }
+            )
+        return base
+
+    @staticmethod
+    def _render_template(text: str, context: dict) -> str:
+        class _SafeDict(dict):
+            def __missing__(self, key):
+                return '{' + str(key) + '}'
+
+        try:
+            return (text or '').format_map(_SafeDict(context or {}))
+        except Exception:
+            return text or ''
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<path:object_id>/send-test/',
+                self.admin_site.admin_view(self.send_test_email_view),
+                name='agile_systememailtemplate_send_test',
+            ),
+        ]
+        return custom_urls + urls
+
+    @admin.display(description='Invio test')
+    def test_email_tools(self, obj):
+        if not obj or not obj.pk:
+            return 'Salva il template per abilitare il test email.'
+        url = reverse('admin:agile_systememailtemplate_send_test', args=[obj.pk])
+        return format_html('<a class="button" href="{}">Invia email di test</a>', url)
+
+    def send_test_email_view(self, request, object_id):
+        template_obj = get_object_or_404(SystemEmailTemplate, pk=object_id)
+
+        if request.method == 'POST':
+            form = SendTestEmailForm(request.POST)
+            if form.is_valid():
+                recipient = form.cleaned_data['recipient']
+                context = self._sample_context_for_key(template_obj.key)
+                subject = self._render_template(template_obj.subject_template, context)
+                body = self._render_template(template_obj.body_template, context)
+                try:
+                    send_mail(
+                        subject=subject,
+                        message=body,
+                        from_email=self._sender_from_env(),
+                        recipient_list=[recipient],
+                        fail_silently=False,
+                    )
+                    messages.success(request, f'Email di test inviata a {recipient}')
+                    return redirect('admin:agile_systememailtemplate_change', object_id)
+                except Exception as exc:
+                    messages.error(request, f'Errore invio email test: {exc}')
+        else:
+            form = SendTestEmailForm(initial={'recipient': getattr(request.user, 'email', '') or ''})
+
+        context = {
+            **self.admin_site.each_context(request),
+            'title': f'Invia test email - {template_obj.get_key_display()}',
+            'opts': self.model._meta,
+            'template_obj': template_obj,
+            'form': form,
+            'rendered_subject': self._render_template(template_obj.subject_template, self._sample_context_for_key(template_obj.key)),
+            'rendered_body': self._render_template(template_obj.body_template, self._sample_context_for_key(template_obj.key)),
+            'back_url': reverse('admin:agile_systememailtemplate_change', args=[template_obj.pk]),
+        }
+        return TemplateResponse(request, 'admin/agile/system_email_template_send_test.html', context)

@@ -247,9 +247,30 @@ EMAIL_HOST_PASSWORD=...
 EMAIL_USE_TLS=1
 EMAIL_USE_SSL=0
 DEFAULT_FROM_EMAIL=noreply@example.org
+AGILE_EMAIL_FROM_NAME=Lagile.management
 ```
 
 Nota: in assenza di configurazione SMTP resta il backend console (`EMAIL_BACKEND` di default), utile in sviluppo.
+Se `AGILE_EMAIL_FROM_NAME` e valorizzato, il mittente viene inviato nel formato `Nome <indirizzo>`.
+
+Template email modificabili da Django admin:
+- sezione: `Template email di sistema`
+- chiavi disponibili:
+  - `CHANGE_REQUEST_SUBMITTED`
+  - `PLAN_APPROVED`
+  - `PLAN_REJECTED`
+  - `CHANGE_APPROVED`
+  - `CHANGE_REJECTED`
+- segnaposto utili nei template:
+  - `{first_name_or_username}`, `{first_name}`, `{last_name}`, `{full_name}`, `{username}`
+  - `{manager_name}`, `{employee_name}`
+  - `{month_label}`, `{month_name_year}`, `{status_label}`, `{status_label_lower}`
+  - `{change_reason}`, `{rejection_reason}`, `{final_line}`
+- dalla scheda template e disponibile il pulsante `Invia email di test` con anteprima e invio verso destinatario scelto
+- eventi email principali:
+  - invio richiesta variazione: email al referente amministrativo dell'utente
+  - esito piano (approvato/rifiutato): email al dipendente
+  - esito variazione (approvata/rifiutata): email al dipendente
 
 ## Vincoli di business implementati
 

@@ -1,5 +1,7 @@
 import logging
+from email.utils import formataddr
 
+from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
 from django.db import transaction
@@ -13,7 +15,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import AuditLog, ChangeRequest, MonthlyPlan
+from .models import AuditLog, ChangeRequest, MonthlyPlan, SystemEmailTemplate
 from .permissions import IsAdminOrSuperAdmin
 from .serializers import (
     ApprovalSerializer,
@@ -27,36 +29,101 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
+def sender_from_env() -> str | None:
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '') or ''
+    from_name = getattr(settings, 'AGILE_EMAIL_FROM_NAME', '') or ''
+    from_email = from_email.strip()
+    from_name = from_name.strip()
+    if not from_email:
+        return None
+    if not from_name:
+        return from_email
+    return formataddr((from_name, from_email))
+
+
+class _SafeDict(dict):
+    def __missing__(self, key):
+        return '{' + str(key) + '}'
+
+
+def month_name_year_it(*, month: int, year: int) -> str:
+    month_names = [
+        'gennaio',
+        'febbraio',
+        'marzo',
+        'aprile',
+        'maggio',
+        'giugno',
+        'luglio',
+        'agosto',
+        'settembre',
+        'ottobre',
+        'novembre',
+        'dicembre',
+    ]
+    idx = month - 1
+    if 0 <= idx < len(month_names):
+        return f'{month_names[idx]} {year}'
+    return f'{month:02d}/{year}'
+
+
+def render_system_email_template(*, key: str, default_subject: str, default_body: str, context: dict) -> tuple[str, str]:
+    tpl = SystemEmailTemplate.objects.filter(key=key).only('subject_template', 'body_template').first()
+    subject_t = (tpl.subject_template if tpl and tpl.subject_template else default_subject) or default_subject
+    body_t = (tpl.body_template if tpl and tpl.body_template else default_body) or default_body
+    safe_context = _SafeDict(context or {})
+    try:
+        subject = subject_t.format_map(safe_context)
+    except Exception:
+        subject = default_subject.format_map(safe_context)
+    try:
+        body = body_t.format_map(safe_context)
+    except Exception:
+        body = default_body.format_map(safe_context)
+    return subject, body
+
+
 def notify_plan_review(*, plan: MonthlyPlan, approved: bool) -> None:
     recipient = plan.user.email
     if not recipient:
         return
 
     month_label = f'{plan.month:02d}/{plan.year}'
+    month_name_year = month_name_year_it(month=plan.month, year=plan.year)
     status_label = 'APPROVATO' if approved else 'RIFIUTATO'
-    subject = f'Esito piano lavoro agile {month_label}: {status_label}'
-
-    lines = [
-        f'Ciao {plan.user.first_name or plan.user.username},',
-        '',
-        f'Il tuo piano di lavoro agile per {month_label} e stato {status_label.lower()}.',
-    ]
-    if approved:
-        lines.append('Il piano e ora definitivo.')
-    else:
-        lines.append(f'Motivazione rifiuto: {plan.rejection_reason or "non specificata"}')
-    lines.extend(
-        [
-            '',
-            'Puoi accedere al portale per vedere il dettaglio.',
-        ]
+    first_name = (plan.user.first_name or '').strip()
+    username = plan.user.username
+    rejection_reason = plan.rejection_reason or 'non specificata'
+    final_line = 'Il piano e ora definitivo.' if approved else f'Motivazione rifiuto: {rejection_reason}'
+    default_subject = f'Esito piano lavoro agile {month_name_year}: {status_label}'
+    default_body = (
+        'Ciao {first_name_or_username},\n\n'
+        'Il tuo piano di lavoro agile per {month_name_year} e stato {status_label_lower}.\n'
+        '{final_line}\n\n'
+        'Puoi accedere al portale per vedere il dettaglio.'
     )
-    message = '\n'.join(lines)
+    template_key = SystemEmailTemplate.Key.PLAN_APPROVED if approved else SystemEmailTemplate.Key.PLAN_REJECTED
+    subject, message = render_system_email_template(
+        key=template_key,
+        default_subject=default_subject,
+        default_body=default_body,
+        context={
+            'first_name': first_name,
+            'username': username,
+            'first_name_or_username': first_name or username,
+            'month_label': month_label,
+            'month_name_year': month_name_year,
+            'status_label': status_label,
+            'status_label_lower': status_label.lower(),
+            'rejection_reason': rejection_reason,
+            'final_line': final_line,
+        },
+    )
 
     send_mail(
         subject=subject,
         message=message,
-        from_email=None,
+        from_email=sender_from_env(),
         recipient_list=[recipient],
         fail_silently=False,
     )
@@ -69,33 +136,92 @@ def notify_change_request_review(*, change_request: ChangeRequest, approved: boo
 
     month_label = f'{change_request.plan.month:02d}/{change_request.plan.year}'
     status_label = 'APPROVATA' if approved else 'RIFIUTATA'
-    subject = f'Esito richiesta variazione {month_label}: {status_label}'
-
-    lines = [
-        f'Ciao {change_request.user.first_name or change_request.user.username},',
-        '',
-        f'La tua richiesta variazione per {month_label} e stata {status_label.lower()}.',
-        f'Motivazione richiesta: {change_request.reason or "non specificata"}',
-    ]
-    if approved:
-        lines.append('La variazione e stata recepita nel piano.')
-    else:
-        lines.append(f'Motivazione rifiuto: {change_request.response_reason or "non specificata"}')
-    lines.extend(
-        [
-            '',
-            'Puoi accedere al portale per vedere il dettaglio.',
-        ]
+    first_name = (change_request.user.first_name or '').strip()
+    last_name = (change_request.user.last_name or '').strip()
+    username = change_request.user.username
+    full_name = f'{first_name} {last_name}'.strip() or username
+    change_reason = change_request.reason or 'non specificata'
+    rejection_reason = change_request.response_reason or 'non specificata'
+    final_line = 'La variazione e stata recepita nel piano.' if approved else f'Motivazione rifiuto: {rejection_reason}'
+    month_name_year = month_name_year_it(month=change_request.plan.month, year=change_request.plan.year)
+    default_subject = f'Esito richiesta variazione {month_name_year}: {status_label}'
+    default_body = (
+        'Gentile {full_name},\n'
+        'La tua richiesta variazione per {month_name_year} e stata {status_label_lower}.\n'
+        '{final_line}\n'
+        '\n'
+        'Puoi accedere al portale per vedere il dettaglio.'
     )
-    message = '\n'.join(lines)
+    template_key = SystemEmailTemplate.Key.CHANGE_APPROVED if approved else SystemEmailTemplate.Key.CHANGE_REJECTED
+    subject, message = render_system_email_template(
+        key=template_key,
+        default_subject=default_subject,
+        default_body=default_body,
+        context={
+            'first_name': first_name,
+            'last_name': last_name,
+            'username': username,
+            'first_name_or_username': first_name or username,
+            'full_name': full_name,
+            'month_label': month_label,
+            'month_name_year': month_name_year,
+            'status_label': status_label,
+            'status_label_lower': status_label.lower(),
+            'change_reason': change_reason,
+            'rejection_reason': rejection_reason,
+            'final_line': final_line,
+        },
+    )
 
     send_mail(
         subject=subject,
         message=message,
-        from_email=None,
+        from_email=sender_from_env(),
         recipient_list=[recipient],
         fail_silently=False,
     )
+
+
+def notify_change_request_submitted(*, change_request: ChangeRequest) -> bool:
+    manager = change_request.user.manager
+    recipient = (manager.email or '').strip() if manager else ''
+    if not recipient:
+        return False
+
+    month_label = f'{change_request.plan.month:02d}/{change_request.plan.year}'
+    month_name_year = month_name_year_it(month=change_request.plan.month, year=change_request.plan.year)
+    employee_name = f'{(change_request.user.first_name or "").strip()} {(change_request.user.last_name or "").strip()}'.strip()
+    employee_name = employee_name or change_request.user.username
+    manager_name = f'{(manager.first_name or "").strip()} {(manager.last_name or "").strip()}'.strip() or manager.username
+    change_reason = change_request.reason or 'non specificata'
+    default_subject = f'Nuova richiesta variazione da approvare - {month_name_year}'
+    default_body = (
+        'Gentile {manager_name},\n\n'
+        "L'utente {employee_name} ha inviato una richiesta variazione per il mese {month_name_year}.\n"
+        'Motivazione richiesta: {change_reason}\n\n'
+        'Puoi accedere al portale per approvare o rifiutare la richiesta.'
+    )
+    subject, message = render_system_email_template(
+        key=SystemEmailTemplate.Key.CHANGE_REQUEST_SUBMITTED,
+        default_subject=default_subject,
+        default_body=default_body,
+        context={
+            'manager_name': manager_name,
+            'employee_name': employee_name,
+            'month_label': month_label,
+            'month_name_year': month_name_year,
+            'change_reason': change_reason,
+        },
+    )
+
+    send_mail(
+        subject=subject,
+        message=message,
+        from_email=sender_from_env(),
+        recipient_list=[recipient],
+        fail_silently=False,
+    )
+    return True
 
 
 class LoginView(APIView):
@@ -484,6 +610,27 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
                 target_id=change_request.id,
                 metadata={'plan_id': plan.id},
             )
+            try:
+                sent = notify_change_request_submitted(change_request=change_request)
+                AuditLog.track(
+                    actor=request.user,
+                    action='change_request_submitted_email_sent' if sent else 'change_request_submitted_email_skipped',
+                    target_type='ChangeRequest',
+                    target_id=change_request.id,
+                    metadata={'recipient': request.user.manager.email if request.user.manager else ''},
+                )
+            except Exception as exc:
+                logger.exception('Errore invio email nuova richiesta variazione %s', change_request.id)
+                AuditLog.track(
+                    actor=request.user,
+                    action='change_request_submitted_email_failed',
+                    target_type='ChangeRequest',
+                    target_id=change_request.id,
+                    metadata={
+                        'recipient': request.user.manager.email if request.user.manager else '',
+                        'error': str(exc),
+                    },
+                )
         return Response({'detail': 'Richiesta variazione inviata', 'auto_approved': False}, status=status.HTTP_201_CREATED)
 
 

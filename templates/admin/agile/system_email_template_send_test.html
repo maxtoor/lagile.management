@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div style="max-width:900px">
+  <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff;margin-bottom:14px">
+    <h2 style="margin-top:0">Invio test</h2>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="default">Invia email di test</button>
+      <a href="{{ back_url }}" style="margin-left:8px">Torna al template</a>
+    </form>
+  </section>
+
+  <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff;margin-bottom:14px">
+    <h2 style="margin-top:0">Anteprima soggetto</h2>
+    <pre style="white-space:pre-wrap;background:#f7faf8;border:1px solid #e3ebe6;border-radius:8px;padding:10px;margin:0">{{ rendered_subject }}</pre>
+  </section>
+
+  <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
+    <h2 style="margin-top:0">Anteprima corpo</h2>
+    <pre style="white-space:pre-wrap;background:#f7faf8;border:1px solid #e3ebe6;border-radius:8px;padding:10px;margin:0">{{ rendered_body }}</pre>
+  </section>
+</div>
+{% endblock %}

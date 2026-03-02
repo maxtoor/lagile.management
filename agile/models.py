@@ -394,6 +394,33 @@ class ChangeRequest(models.Model):
         ordering = ('-created_at',)
 
 
+class SystemEmailTemplate(models.Model):
+    class Key(models.TextChoices):
+        CHANGE_REQUEST_SUBMITTED = 'CHANGE_REQUEST_SUBMITTED', 'Richiesta variazione inviata'
+        PLAN_APPROVED = 'PLAN_APPROVED', 'Piano approvato'
+        PLAN_REJECTED = 'PLAN_REJECTED', 'Piano rifiutato'
+        CHANGE_APPROVED = 'CHANGE_APPROVED', 'Variazione approvata'
+        CHANGE_REJECTED = 'CHANGE_REJECTED', 'Variazione rifiutata'
+
+    key = models.CharField(max_length=40, unique=True, choices=Key.choices)
+    subject_template = models.CharField(max_length=255)
+    body_template = models.TextField(
+        help_text=(
+            'Template con segnaposto Python-style, es: {first_name}, {username}, {month_label}, '
+            '{status_label}, {rejection_reason}, {change_reason}'
+        )
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('key',)
+        verbose_name = 'Template email di sistema'
+        verbose_name_plural = 'Template email di sistema'
+
+    def __str__(self) -> str:
+        return self.get_key_display()
+
+
 class AuditLog(models.Model):
     actor = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     action = models.CharField(max_length=60)
