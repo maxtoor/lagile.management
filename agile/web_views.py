@@ -11,6 +11,8 @@ class BasePortalView(TemplateView):
         context['app_page'] = self.app_page
         context['date_display_format'] = settings.AGILE_DATE_DISPLAY_FORMAT
         context['login_logo_url'] = settings.AGILE_LOGIN_LOGO_URL
+        context['company_name'] = settings.AGILE_COMPANY_NAME
+        context['copyright_year'] = settings.AGILE_COPYRIGHT_YEAR
         return context
 
 
