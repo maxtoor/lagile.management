@@ -56,6 +56,13 @@ Logo nella schermata login (opzionale):
 - `AGILE_LOGIN_LOGO_URL=` URL assoluto dell'immagine (es. `https://.../logo.png`)
 - se vuoto, il logo non viene mostrato
 
+Log applicativo e monitor admin:
+- `AGILE_LOG_FILE=/app/logs/agile.log` file log principale
+- `AGILE_LOG_LEVEL=INFO` livello log
+- `AGILE_LOG_MONITOR_FILE=/app/logs/agile.log` file mostrato nel monitor admin
+- `AGILE_LOG_MONITOR_SOURCES=app:/app/logs/agile.log;scheduler:/app/logs/scheduler.log` sorgenti selezionabili
+- `AGILE_LOG_MONITOR_REFRESH_SECONDS=8` intervallo refresh monitor
+
 3. Avvia:
 
 ```bash
@@ -66,6 +73,14 @@ docker compose up --build
 - Portale dipendenti: `http://localhost:8001/`
 - API: `http://localhost:8001/api/`
 - Admin: `http://localhost:8001/admin/`
+
+Nota Docker:
+- e presente un servizio `scheduler` che esegue periodicamente:
+  - `send_submission_reminders` (promemoria utente ultimo giorno mese)
+  - `send_manager_monthly_summary` (riepilogo referente primo giorno mese)
+- intervallo controllo configurabile con `REMINDER_CHECK_INTERVAL_SECONDS` (default `86400`)
+- i comandi inviano realmente email solo nel loro giorno previsto (a meno di `--force`)
+- in Django Admin e disponibile il link `Monitor log` per visualizzare il tail live e selezionare la sorgente (es. `app` / `scheduler`)
 
 ## Avvio locale (senza Docker)
 
@@ -79,6 +94,54 @@ python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 ```
+
+## Deploy con Portainer (Docker Compose)
+
+Questa procedura usa direttamente `docker-compose.yml` e file `.env`, senza modifiche lato host oltre a Docker/Portainer.
+
+Prerequisiti:
+- Portainer attivo e raggiungibile
+- Docker engine sul nodo target
+- sorgenti del progetto disponibili sul nodo (git clone oppure upload stack)
+- porte libere (default `8001` per `web`)
+
+Passi:
+1. In Portainer, apri `Stacks` -> `Add stack`.
+2. Scegli `Web editor` (incolla il contenuto di `docker-compose.yml`) oppure `Repository` (se vuoi puntare al repo git).
+3. Configura le variabili ambiente:
+   - opzione consigliata: usa il file `.env` del progetto sul nodo
+   - in alternativa, imposta in Portainer le variabili equivalenti (`POSTGRES_*`, `LDAP_*`, `EMAIL_*`, `TIME_ZONE`, ecc.).
+4. Deploy dello stack.
+5. Verifica che i container siano `running`:
+   - `web`
+   - `db`
+   - `scheduler`
+
+Post-deploy (una tantum):
+1. Esegui migrazioni:
+   - `python manage.py migrate` (container `web`)
+2. Crea il superuser Django:
+   - `python manage.py createsuperuser`
+3. Verifica accesso:
+   - Portale: `http://<host>:8001/`
+   - Admin: `http://<host>:8001/admin/`
+
+Operativita:
+- Restart servizi: da Portainer (`Stacks` -> stack -> `Restart`)
+- Log: usa la sezione log del container (`web`/`scheduler`/`db`)
+- Aggiornamento applicazione:
+  1. aggiorna sorgenti/branch
+  2. `Re-deploy` dello stack con rebuild se necessario
+
+Persistenza e backup:
+- Il database PostgreSQL usa il volume Docker `pg_data`.
+- Effettua backup periodico del DB (dump SQL) e conserva anche `.env`.
+
+Troubleshooting rapido:
+- `port is already allocated`: cambia mapping porta in `docker-compose.yml` (es. `8002:8000`) e redeploy.
+- `.env not found`: crea/copia `.env` accanto a `docker-compose.yml`.
+- LDAP non raggiungibile: verifica `LDAP_SERVER_URI`, rete e firewall dal nodo Docker.
+- Email non inviate: verifica `EMAIL_HOST`, `EMAIL_PORT`, credenziali SMTP e log `web`.
 
 ## Endpoints principali
 
@@ -257,6 +320,8 @@ Template email modificabili da Django admin:
 - sezione: `Template email di sistema`
 - chiavi disponibili:
   - `CHANGE_REQUEST_SUBMITTED`
+  - `REMINDER_PENDING_SUBMISSION`
+  - `MANAGER_MONTHLY_SUMMARY`
   - `PLAN_APPROVED`
   - `PLAN_REJECTED`
   - `CHANGE_APPROVED`
@@ -264,13 +329,40 @@ Template email modificabili da Django admin:
 - segnaposto utili nei template:
   - `{first_name_or_username}`, `{first_name}`, `{last_name}`, `{full_name}`, `{username}`
   - `{manager_name}`, `{employee_name}`
+  - `{pending_count}`, `{missing_count}`, `{pending_lines}`, `{missing_lines}`
   - `{month_label}`, `{month_name_year}`, `{status_label}`, `{status_label_lower}`
+  - `{plan_status}`, `{plan_status_label}`
   - `{change_reason}`, `{rejection_reason}`, `{final_line}`
 - dalla scheda template e disponibile il pulsante `Invia email di test` con anteprima e invio verso destinatario scelto
 - eventi email principali:
   - invio richiesta variazione: email al referente amministrativo dell'utente
+  - ultimo giorno del mese: promemoria invio piano al mese successivo per utenti attivi senza auto-approvazione che non hanno ancora stato `SUBMITTED`/`APPROVED` (una sola volta per utente/mese target)
+  - primo giorno del mese: email riepilogo al referente con piani in attesa di approvazione e utenti assegnati senza piano del mese corrente (una sola volta per referente/mese)
   - esito piano (approvato/rifiutato): email al dipendente
   - esito variazione (approvata/rifiutata): email al dipendente
+
+Comando promemoria:
+
+```bash
+python manage.py send_submission_reminders
+```
+
+Opzioni utili:
+
+```bash
+python manage.py send_submission_reminders --dry-run
+python manage.py send_submission_reminders --force
+python manage.py send_submission_reminders --date 2026-03-30 --dry-run
+python manage.py send_manager_monthly_summary --dry-run
+python manage.py send_manager_monthly_summary --force
+python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run
+```
+
+Esecuzione schedulata consigliata (cron giornaliero, il comando invia solo l'ultimo giorno):
+
+```cron
+15 8 * * * cd /app && python manage.py send_submission_reminders
+```
 
 ## Vincoli di business implementati
 

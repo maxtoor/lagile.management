@@ -7,7 +7,10 @@
 <div id="site-name">
   <a href="{% url 'admin:index' %}">{{ site_header|default:_("Django administration") }}</a>
   <span style="margin-left:12px;font-size:13px;font-weight:500">
-    <a href="{% url 'admin:agile_import_tools' %}">Strumenti importazione</a>
+    <a href="{% url 'admin:agile_import_tools' %}">Strumenti</a>
+  </span>
+  <span style="margin-left:12px;font-size:13px;font-weight:500">
+    <a href="{% url 'admin:agile_log_monitor' %}">Monitor log</a>
   </span>
 </div>
 {% endblock %}

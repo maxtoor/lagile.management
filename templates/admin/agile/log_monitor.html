@@ -1,0 +1,84 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div style="max-width:1100px">
+  <p style="margin-top:0;color:#4b5a54">
+    Visualizzazione in tempo reale del file log applicativo configurato.
+  </p>
+
+  <section style="border:1px solid #dce4df;border-radius:10px;padding:12px;background:#fff;margin-bottom:12px">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label for="log-source"><strong>Sorgente</strong></label>
+      <select id="log-source" style="min-width:150px">
+        {% for item in log_sources %}
+          <option value="{{ item.key }}" {% if item.key == selected_source %}selected{% endif %}>{{ item.label }}</option>
+        {% endfor %}
+      </select>
+      <label for="log-lines"><strong>Righe</strong></label>
+      <input id="log-lines" type="number" min="50" max="2000" step="50" value="{{ default_lines }}" style="width:100px" />
+      <button id="refresh-btn" type="button">Aggiorna ora</button>
+      <span id="log-path" style="color:#4b5a54;word-break:break-all">{{ log_path }}</span>
+    </div>
+  </section>
+
+  {% if log_error %}
+    <div class="messagelist"><div class="errornote">{{ log_error }}</div></div>
+  {% endif %}
+
+  <section style="border:1px solid #dce4df;border-radius:10px;background:#0f1720;padding:0;overflow:hidden">
+    <pre id="log-viewer" style="margin:0;padding:12px;min-height:500px;max-height:70vh;overflow:auto;color:#dbe7ee;background:#0f1720;font:12px/1.4 Menlo,Consolas,monospace;white-space:pre-wrap">{{ log_lines }}</pre>
+  </section>
+</div>
+
+<script>
+  (function () {
+    const pollUrl = "{{ poll_url|escapejs }}";
+    const refreshMs = {{ refresh_seconds|default:3 }} * 1000;
+    const viewer = document.getElementById("log-viewer");
+    const sourceInput = document.getElementById("log-source");
+    const linesInput = document.getElementById("log-lines");
+    const refreshBtn = document.getElementById("refresh-btn");
+    const pathEl = document.getElementById("log-path");
+    let loading = false;
+
+    function sanitizeLineCount() {
+      const parsed = parseInt(linesInput.value, 10);
+      if (Number.isNaN(parsed)) return 200;
+      return Math.max(50, Math.min(parsed, 2000));
+    }
+
+    async function refreshLogs() {
+      if (loading) return;
+      loading = true;
+      const lines = sanitizeLineCount();
+      linesInput.value = String(lines);
+      const source = sourceInput ? sourceInput.value : "";
+      try {
+        const response = await fetch(`${pollUrl}?lines=${lines}&source=${encodeURIComponent(source)}`, {
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+          credentials: "same-origin",
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          viewer.textContent = payload.error || "Errore lettura log";
+          return;
+        }
+        pathEl.textContent = payload.path || "";
+        viewer.textContent = payload.content || "";
+        viewer.scrollTop = viewer.scrollHeight;
+      } catch (error) {
+        viewer.textContent = "Errore aggiornamento log";
+      } finally {
+        loading = false;
+      }
+    }
+
+    refreshBtn.addEventListener("click", refreshLogs);
+    linesInput.addEventListener("change", refreshLogs);
+    if (sourceInput) {
+      sourceInput.addEventListener("change", refreshLogs);
+    }
+    setInterval(refreshLogs, refreshMs);
+  })();
+</script>
+{% endblock %}

@@ -1,6 +1,6 @@
 from datetime import date
 
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -75,6 +75,14 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         self._align_role_permissions()
         super().save(*args, **kwargs)
+
+
+class AgileGroup(Group):
+    class Meta:
+        proxy = True
+        app_label = 'agile'
+        verbose_name = 'Gruppo'
+        verbose_name_plural = 'Gruppi'
 
 
 class MonthlyPlan(models.Model):
@@ -397,6 +405,8 @@ class ChangeRequest(models.Model):
 class SystemEmailTemplate(models.Model):
     class Key(models.TextChoices):
         CHANGE_REQUEST_SUBMITTED = 'CHANGE_REQUEST_SUBMITTED', 'Richiesta variazione inviata'
+        REMINDER_PENDING_SUBMISSION = 'REMINDER_PENDING_SUBMISSION', 'Promemoria invio piano'
+        MANAGER_MONTHLY_SUMMARY = 'MANAGER_MONTHLY_SUMMARY', 'Riepilogo mensile referente'
         PLAN_APPROVED = 'PLAN_APPROVED', 'Piano approvato'
         PLAN_REJECTED = 'PLAN_REJECTED', 'Piano rifiutato'
         CHANGE_APPROVED = 'CHANGE_APPROVED', 'Variazione approvata'

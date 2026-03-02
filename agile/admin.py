@@ -1,6 +1,7 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth.forms import UserChangeForm
+from django.contrib.auth.models import Group
 from django.contrib import messages
 from django.conf import settings
 from django.core.management import call_command
@@ -11,12 +12,15 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.shortcuts import get_object_or_404, redirect
+from django.http import JsonResponse
 import io
 import os
 import tempfile
+from collections import deque
+from pathlib import Path
 from email.utils import formataddr
 
-from .models import AuditLog, ChangeRequest, DepartmentPolicy, Holiday, MonthlyPlan, PlanDay, SystemEmailTemplate, User
+from .models import AgileGroup, AuditLog, ChangeRequest, DepartmentPolicy, Holiday, MonthlyPlan, PlanDay, SystemEmailTemplate, User
 
 
 class CollapseMediaMixin:
@@ -218,6 +222,67 @@ class SendTestEmailForm(forms.Form):
     recipient = forms.EmailField(label='Destinatario test')
 
 
+@admin.register(AgileGroup)
+class AgileGroupAdmin(GroupAdmin):
+    pass
+
+
+def _read_log_tail(log_path: str, lines: int) -> tuple[str, str | None]:
+    target = Path(log_path)
+    if not target.exists():
+        return '', f'File log non trovato: {target}'
+    if not target.is_file():
+        return '', f'Percorso non valido: {target}'
+
+    try:
+        with target.open('r', encoding='utf-8', errors='replace') as handle:
+            tail_lines = deque(handle, maxlen=lines)
+    except OSError as exc:
+        return '', f'Errore lettura file log: {exc}'
+
+    return ''.join(tail_lines), None
+
+
+def _get_log_sources() -> tuple[list[dict], str]:
+    raw_sources = (getattr(settings, 'AGILE_LOG_MONITOR_SOURCES', '') or '').strip()
+    fallback_path = (getattr(settings, 'AGILE_LOG_MONITOR_FILE', '') or '').strip()
+    options: list[dict] = []
+    selected_default = ''
+
+    for item in raw_sources.split(';'):
+        token = item.strip()
+        if not token:
+            continue
+        if ':' not in token:
+            continue
+        key, path_value = token.split(':', 1)
+        key = key.strip()
+        path_value = path_value.strip()
+        if not key or not path_value:
+            continue
+        options.append({'key': key, 'label': key, 'path': path_value})
+
+    if not options and fallback_path:
+        options.append({'key': 'app', 'label': 'app', 'path': fallback_path})
+
+    if options:
+        selected_default = options[0]['key']
+
+    return options, selected_default
+
+
+def _resolve_log_source_key(raw_key: str | None) -> tuple[str, str, list[dict]]:
+    sources, default_key = _get_log_sources()
+    selected_key = (raw_key or '').strip() or default_key
+    if not sources:
+        return selected_key, '', []
+
+    source_map = {src['key']: src for src in sources}
+    if selected_key not in source_map:
+        selected_key = default_key
+    return selected_key, source_map[selected_key]['path'], sources
+
+
 def import_tools_view(request):
     if not request.user.is_superuser:
         messages.error(request, 'Accesso consentito solo ai superuser')
@@ -225,7 +290,7 @@ def import_tools_view(request):
             request,
             'admin/agile/import_tools.html',
             {
-                'title': 'Strumenti importazione',
+                'title': 'Strumenti',
                 'ldap_form': ImportLdapAdminForm(),
                 'csv_form': ImportCsvAdminForm(),
                 'logs': [],
@@ -310,13 +375,81 @@ def import_tools_view(request):
         request,
         'admin/agile/import_tools.html',
         {
-            'title': 'Strumenti importazione',
+            'title': 'Strumenti',
             'ldap_form': ldap_form,
             'csv_form': csv_form,
             'logs': logs,
             'is_superuser': request.user.is_superuser,
             'opts': User._meta,
         },
+    )
+
+
+def log_monitor_view(request):
+    if not request.user.is_staff:
+        messages.error(request, 'Accesso consentito solo agli utenti staff')
+        return TemplateResponse(
+            request,
+            'admin/agile/log_monitor.html',
+            {
+                'title': 'Monitor log',
+                'log_lines': '',
+                'log_error': 'Permessi insufficienti',
+                'log_path': '',
+                'selected_source': '',
+                'log_sources': [],
+                'poll_url': '',
+                'refresh_seconds': 3,
+                'default_lines': 200,
+                'opts': User._meta,
+            },
+        )
+
+    default_lines = 200
+    selected_source, log_path, sources = _resolve_log_source_key(request.GET.get('source'))
+    refresh_seconds = max(2, int(getattr(settings, 'AGILE_LOG_MONITOR_REFRESH_SECONDS', 3)))
+    log_lines, log_error = _read_log_tail(log_path, default_lines)
+    return TemplateResponse(
+        request,
+        'admin/agile/log_monitor.html',
+        {
+            'title': 'Monitor log',
+            'log_lines': log_lines,
+            'log_error': log_error,
+            'log_path': log_path,
+            'selected_source': selected_source,
+            'log_sources': sources,
+            'poll_url': reverse('admin:agile_log_monitor_data'),
+            'refresh_seconds': refresh_seconds,
+            'default_lines': default_lines,
+            'opts': User._meta,
+        },
+    )
+
+
+def log_monitor_data_view(request):
+    if not request.user.is_staff:
+        return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+
+    raw_lines = request.GET.get('lines', '200')
+    try:
+        lines = int(raw_lines)
+    except (TypeError, ValueError):
+        lines = 200
+    lines = max(50, min(lines, 2000))
+
+    selected_source, log_path, sources = _resolve_log_source_key(request.GET.get('source'))
+    content, error = _read_log_tail(log_path, lines)
+    return JsonResponse(
+        {
+            'ok': error is None,
+            'source': selected_source,
+            'sources': [{'key': item['key'], 'label': item['label']} for item in sources],
+            'path': log_path,
+            'lines': lines,
+            'error': error,
+            'content': content,
+        }
     )
 
 
@@ -328,6 +461,16 @@ def _extend_admin_urls(get_urls):
                 admin.site.admin_view(import_tools_view),
                 name='agile_import_tools',
             ),
+            path(
+                'agile/log-monitor/',
+                admin.site.admin_view(log_monitor_view),
+                name='agile_log_monitor',
+            ),
+            path(
+                'agile/log-monitor/data/',
+                admin.site.admin_view(log_monitor_data_view),
+                name='agile_log_monitor_data',
+            ),
         ]
         return custom_urls + get_urls()
 
@@ -335,6 +478,10 @@ def _extend_admin_urls(get_urls):
 
 
 if not getattr(admin.site, '_agile_import_tools_patched', False):
+    try:
+        admin.site.unregister(Group)
+    except admin.sites.NotRegistered:
+        pass
     admin.site.get_urls = _extend_admin_urls(admin.site.get_urls)
     admin.site._agile_import_tools_patched = True
 
@@ -486,7 +633,9 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
             "<br><strong>Esiti:</strong> "
             "<code>{{change_reason}}</code>, <code>{{rejection_reason}}</code>, <code>{{final_line}}</code>"
             "<br><strong>Referente:</strong> "
-            "<code>{{manager_name}}</code>, <code>{{employee_name}}</code>"
+            "<code>{{manager_name}}</code>, <code>{{employee_name}}</code>, "
+            "<code>{{pending_count}}</code>, <code>{{missing_count}}</code>, "
+            "<code>{{pending_lines}}</code>, <code>{{missing_lines}}</code>"
             "</div>"
         )
 
@@ -512,6 +661,10 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
             'employee_name': 'Mario Rossi',
             'month_label': '03/2026',
             'month_name_year': 'marzo 2026',
+            'pending_count': 2,
+            'missing_count': 1,
+            'pending_lines': '- Mario Rossi (mrossi)\n- Anna Verdi (averdi)',
+            'missing_lines': '- Paolo Neri (pneri)',
             'status_label': 'APPROVATA',
             'status_label_lower': 'approvata',
             'change_reason': 'Aggiornamento attivita su progetto sperimentale',

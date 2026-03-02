@@ -4,8 +4,8 @@
   <div class="app-agile module" style="margin-bottom:16px;">
     <table>
       <caption>
-        <a href="{% url 'admin:agile_import_tools' %}" class="section" title="Apri strumenti importazione">
-          Strumenti importazione
+        <a href="{% url 'admin:agile_import_tools' %}" class="section" title="Apri strumenti">
+          Strumenti
         </a>
       </caption>
       <tbody>
@@ -17,6 +17,16 @@
           </th>
           <td>
             <a href="{% url 'admin:agile_import_tools' %}" class="viewlink">Apri</a>
+          </td>
+        </tr>
+        <tr class="model-user">
+          <th scope="row">
+            <a href="{% url 'admin:agile_log_monitor' %}">
+              Monitor log applicativo (aggiornamento live)
+            </a>
+          </th>
+          <td>
+            <a href="{% url 'admin:agile_log_monitor' %}" class="viewlink">Apri</a>
           </td>
         </tr>
       </tbody>

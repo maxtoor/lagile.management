@@ -13,6 +13,19 @@ ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.
 AGILE_SITES = csv_env('AGILE_SITES', 'Napoli,Catania,Sassari,Padova')
 AGILE_DATE_DISPLAY_FORMAT = os.getenv('AGILE_DATE_DISPLAY_FORMAT', 'IT').upper()
 AGILE_LOGIN_LOGO_URL = os.getenv('AGILE_LOGIN_LOGO_URL', '').strip()
+AGILE_LOG_FILE = os.getenv('AGILE_LOG_FILE', str(BASE_DIR / 'logs' / 'agile.log')).strip()
+AGILE_LOG_LEVEL = os.getenv('AGILE_LOG_LEVEL', 'INFO').strip().upper() or 'INFO'
+AGILE_LOG_MONITOR_FILE = os.getenv('AGILE_LOG_MONITOR_FILE', AGILE_LOG_FILE).strip()
+AGILE_LOG_MONITOR_SOURCES = os.getenv(
+    'AGILE_LOG_MONITOR_SOURCES',
+    f'app:{AGILE_LOG_MONITOR_FILE};scheduler:{BASE_DIR / "logs" / "scheduler.log"}',
+).strip()
+AGILE_LOG_MONITOR_REFRESH_SECONDS = int(os.getenv('AGILE_LOG_MONITOR_REFRESH_SECONDS', '8'))
+
+try:
+    Path(AGILE_LOG_FILE).parent.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -103,6 +116,56 @@ EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', '0') == '1'
 EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', '0') == '1'
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@istituto.local')
 AGILE_EMAIL_FROM_NAME = os.getenv('AGILE_EMAIL_FROM_NAME', '').strip()
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'exclude_log_monitor_poll': {
+            '()': 'agile.logging_filters.ExcludeLogMonitorPollFilter',
+        },
+    },
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s %(levelname)s [%(name)s] %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+            'filters': ['exclude_log_monitor_poll'],
+        },
+        'file': {
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': AGILE_LOG_FILE,
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+            'filters': ['exclude_log_monitor_poll'],
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': AGILE_LOG_LEVEL,
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': AGILE_LOG_LEVEL,
+            'propagate': False,
+        },
+        'agile': {
+            'handlers': ['console', 'file'],
+            'level': AGILE_LOG_LEVEL,
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console', 'file'],
+            'level': AGILE_LOG_LEVEL,
+            'propagate': False,
+        },
+    },
+}
 
 AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
 
