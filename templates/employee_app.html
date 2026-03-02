@@ -1,0 +1,3796 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lavoro Agile - Portale Dipendenti</title>
+    <style>
+      :root {
+        --bg: #f6f8f4;
+        --panel: #fffdf8;
+        --ink: #10241d;
+        --muted: #556b64;
+        --accent: #0e6b55;
+        --accent-2: #f09a2f;
+        --line: #dce4df;
+        --danger: #bb2e38;
+        --ok: #1f8b4c;
+        --title-min-width: 860px;
+        --top-strip-height: 46px;
+        --section-gap: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: linear-gradient(160deg, #eef7f2 0%, #f9f2e6 45%, #f6f8f4 100%);
+        min-height: 100vh;
+        overflow-x: auto;
+      }
+
+      .wrap {
+        max-width: 1100px;
+        min-width: var(--title-min-width);
+        margin: 0 auto;
+        padding: 0 24px 56px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      body.has-fixed-profile .wrap {
+        padding-top: calc(12px + var(--top-strip-height));
+      }
+
+      .subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 10px 30px rgba(16, 36, 29, 0.06);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--section-gap);
+        width: calc(100% - 26px);
+        min-width: calc(var(--title-min-width) - 26px);
+        margin: 0 auto;
+      }
+
+      #approverCard {
+        width: 100%;
+        min-width: calc(var(--title-min-width) - 26px);
+        margin: 0 auto;
+        overflow-x: auto;
+      }
+
+      .grid.programming-grid {
+        grid-template-columns: minmax(760px, 1fr) 190px;
+        gap: var(--section-gap);
+        align-items: stretch;
+        min-width: calc(var(--title-min-width) - 26px);
+      }
+
+      .grid.programming-grid > .card {
+        height: 100%;
+      }
+
+      .grid.programming-grid #calendarCard {
+        min-width: max(500px, calc(var(--title-min-width) - 26px - 190px - 16px));
+      }
+
+      body.weekdays-compact .grid.programming-grid {
+        grid-template-columns: minmax(420px, 1fr) 190px;
+      }
+
+      body.weekdays-compact .grid.programming-grid #calendarCard {
+        min-width: 420px;
+      }
+
+      body.weekdays-compact .wrap {
+        min-width: 760px;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: flex-end;
+      }
+
+      .toolbar-field label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .toolbar-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .toolbar-status-label {
+        font-size: 0.78rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      input,
+      textarea,
+      select,
+      button {
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+        background: white;
+      }
+
+      button.primary {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+      }
+
+      button.warn {
+        background: var(--accent-2);
+        border-color: var(--accent-2);
+        color: #1c1305;
+      }
+
+      button.ghost {
+        background: transparent;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .calendar-month {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(96px, 1fr));
+        gap: 10px;
+      }
+
+      .calendar-month.weekdays-only {
+        grid-template-columns: repeat(5, minmax(96px, 1fr));
+      }
+
+      .calendar-weekday {
+        padding: 5px 7px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #eef4f1;
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        text-align: center;
+        margin-bottom: 2px;
+      }
+
+      .calendar-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        align-items: center;
+        margin: 0 0 10px 0;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+
+      .legend-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        padding: 6px 10px;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .legend-toggle-btn .legend-icon {
+        font-size: 0.9rem;
+      }
+
+      .calendar-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .calendar-legend-swatch {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1px solid transparent;
+      }
+
+      .calendar-legend-swatch.approved {
+        background: #ecfaf2;
+        border-color: #b8e4cb;
+      }
+
+      .calendar-legend-swatch.pending {
+        background: #fff2df;
+        border-color: #f0c98f;
+      }
+
+      .calendar-legend-swatch.rejected {
+        background: #fde8ea;
+        border-color: #efc8cc;
+      }
+
+      .calendar-day {
+        min-height: 78px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        padding: 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      .calendar-day.working {
+        cursor: pointer;
+      }
+
+      .calendar-day.selected {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .calendar-day.outside-month {
+        background: transparent;
+        border-style: dashed;
+      }
+
+      .calendar-day.non-working {
+        background: #f4f8f6;
+      }
+
+      .calendar-day.mode-onsite {
+        background: #f3f8ff;
+        border-color: #c9dbf3;
+      }
+
+      .calendar-day.mode-remote {
+        background: #ecfaf2;
+        border-color: #b8e4cb;
+      }
+
+      .calendar-day.pending-approval {
+        background: #fff2df;
+        border-color: #f0c98f;
+      }
+
+      .calendar-day.rejected-approval {
+        background: #fde8ea;
+        border-color: #efc8cc;
+      }
+
+      .calendar-day.editing-change {
+        background: #eef1f4;
+        border-color: #cfd6de;
+      }
+
+      .calendar-day-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .calendar-day-number {
+        font-weight: 700;
+        font-size: 0.88rem;
+      }
+
+      .calendar-day-meta {
+        font-size: 0.7rem;
+        color: var(--muted);
+        text-transform: capitalize;
+      }
+
+      .calendar-day-status {
+        font-size: 0.7rem;
+        color: var(--muted);
+      }
+
+      .calendar-day-card {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+      }
+
+      .calendar-day-card.remote-centered {
+        align-items: center;
+        justify-content: center;
+      }
+
+      .calendar-day-mode-label {
+        display: inline-flex;
+        align-self: center;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+      }
+
+      .calendar-day-mode-label.remote {
+        background: #dff4e7;
+        border-color: #a8d9ba;
+        color: #165433;
+      }
+
+      .note-input {
+        width: 100%;
+        min-height: 120px;
+        padding: 10px 12px;
+        line-height: normal;
+        resize: vertical;
+        box-sizing: border-box;
+      }
+
+      .mode-select {
+        height: 40px;
+        min-height: 40px;
+        padding: 9px 12px;
+        box-sizing: border-box;
+      }
+
+      .note-btn {
+        padding: 7px 10px;
+        border-radius: 8px;
+      }
+
+      .note-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .bulk-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+
+      .calendar-footer-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+
+      .fixed-action-bar {
+        position: static;
+        z-index: auto;
+        margin-top: 0;
+        height: 100%;
+      }
+
+      .fixed-action-bar-inner {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        min-height: 100%;
+      }
+
+      .fixed-action-status {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        text-align: center;
+      }
+
+      .fixed-action-status .toolbar-status-label {
+        margin: 0;
+      }
+
+      .action-status-box {
+        width: 100%;
+      }
+
+      .action-multi-box {
+        width: 100%;
+      }
+
+      .action-multi-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .action-status-box .toolbar-status-label,
+      .action-multi-box .user-profile-label {
+        font-size: 0.7rem;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+      }
+
+      .fixed-action-submit {
+        margin-top: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .fixed-action-bar button {
+        font-size: 0.8rem;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .status {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        border: 1px solid var(--line);
+      }
+
+      .status.DRAFT {
+        background: #eef4f1;
+      }
+
+      .status.SUBMITTED {
+        background: #fff4dd;
+      }
+
+      .status.APPROVED {
+        background: #e4f5e9;
+      }
+
+      .status.REJECTED {
+        background: #fde8ea;
+      }
+
+      .status.CHANGE_REQUESTED {
+        background: #fff4dd;
+      }
+
+      .status.CHANGE_REJECTED {
+        background: #fde8ea;
+      }
+
+      .status.PENDING {
+        background: #fff4dd;
+      }
+
+      .status.EDITING {
+        background: #eef1f4;
+      }
+
+      .status.PROCESSED {
+        background: #e4f5e9;
+      }
+
+      .msg {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid;
+        display: none;
+      }
+
+      .msg.error {
+        color: var(--danger);
+        border-color: #efc8cc;
+        background: #fff4f5;
+      }
+
+      .msg.ok {
+        color: var(--ok);
+        border-color: #c4e8d1;
+        background: #f2fbf5;
+      }
+
+      .page-footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        margin: 0;
+        padding: 8px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 0.78rem;
+        color: var(--muted);
+        background: rgba(255, 253, 248, 0.96);
+        border-top: 1px solid var(--line);
+        box-shadow: 0 -8px 20px rgba(16, 36, 29, 0.08);
+        z-index: 40;
+      }
+
+      .page-footer-link {
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px dashed var(--accent);
+      }
+
+      .page-footer-link:hover {
+        opacity: 0.85;
+      }
+
+      .error-popup {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 140;
+        width: min(960px, calc(100vw - 24px));
+        background: #f2fbf5;
+        color: var(--ok);
+        border: 1px solid #c4e8d1;
+        border-radius: 10px;
+        padding: 10px 12px;
+        box-shadow: 0 8px 20px rgba(16, 36, 29, 0.14);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .error-popup button {
+        padding: 4px 8px;
+        border-radius: 8px;
+      }
+
+      .error-popup.kind-error {
+        background: #fff4f5;
+        color: var(--danger);
+        border-color: #efc8cc;
+      }
+
+      .error-popup.kind-warn {
+        background: #fff8e8;
+        color: #8a5a12;
+        border-color: #edd39f;
+      }
+
+      .error-popup.kind-ok {
+        background: #f2fbf5;
+        color: var(--ok);
+        border-color: #c4e8d1;
+      }
+
+      .review-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .review-batch-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 0 0 8px 0;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #f7faf8;
+      }
+
+      .review-batch-info {
+        font-size: 0.83rem;
+        color: var(--muted);
+      }
+
+      .review-batch-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .user-profile {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .user-profile.fixed-top {
+        position: sticky;
+        top: var(--top-strip-height);
+        width: calc(100% - 26px);
+        min-width: calc(var(--title-min-width) - 26px);
+        margin: 0 auto var(--section-gap);
+        padding: 10px 14px;
+        box-shadow: 0 8px 20px rgba(16, 36, 29, 0.08);
+        z-index: 45;
+      }
+
+      .page-top-strip {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: var(--top-strip-height);
+        width: 100%;
+        margin: 0;
+        padding: 0 24px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: 0 6px 14px rgba(16, 36, 29, 0.06);
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .page-top-strip-title {
+        margin: 0;
+        font-size: clamp(0.96rem, 1.5vw, 1.1rem);
+        line-height: 1.2;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .main-menu {
+        position: relative;
+        min-width: 240px;
+      }
+
+      .main-menu-toggle {
+        width: 100%;
+        min-height: 30px;
+        padding: 6px 10px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .main-menu-panel {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 6px);
+        width: max(240px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: 0 10px 26px rgba(16, 36, 29, 0.12);
+        padding: 6px;
+        z-index: 130;
+      }
+
+      .main-menu-item {
+        width: 100%;
+        text-align: left;
+        border: none;
+        background: transparent;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 0.85rem;
+      }
+
+      .main-menu-item:hover {
+        background: #eef4f1;
+      }
+
+      .custom-select {
+        position: relative;
+        min-width: 120px;
+      }
+
+      .custom-select-toggle {
+        width: 100%;
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .custom-select-panel {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        width: 100%;
+        min-width: 120px;
+        max-height: 240px;
+        overflow: auto;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: 0 10px 26px rgba(16, 36, 29, 0.12);
+        padding: 6px;
+        z-index: 130;
+      }
+
+      .custom-select-item {
+        width: 100%;
+        text-align: left;
+        border: none;
+        background: transparent;
+        border-radius: 8px;
+        padding: 7px 9px;
+        font-size: 0.84rem;
+      }
+
+      .custom-select-item:hover {
+        background: #eef4f1;
+      }
+
+      .user-profile-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(220px, 1fr));
+        gap: 10px;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+      }
+
+      .profile-planning-toolbar {
+        margin-top: 2px;
+        justify-content: center;
+      }
+
+      .fixed-month-bar {
+        width: 100%;
+        margin: 0 0 6px 0;
+        padding: 2px 14px 10px;
+      }
+
+      .fixed-month-bar .toolbar {
+        justify-content: center;
+      }
+
+      .month-nav-inline {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+      }
+
+      .month-nav-inline .toolbar-field {
+        width: 148px;
+      }
+
+      .month-nav-inline .toolbar-field input {
+        width: 100%;
+      }
+
+      .month-nav-inline .custom-select {
+        width: 100%;
+        min-width: 0;
+      }
+
+      #prevMonthBtn,
+      #nextMonthBtn {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        font-size: 0;
+        position: relative;
+      }
+
+      #prevMonthBtn::before,
+      #nextMonthBtn::before {
+        content: "";
+        width: 0;
+        height: 0;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+      }
+
+      #prevMonthBtn::before {
+        border-right: 7px solid currentColor;
+      }
+
+      #nextMonthBtn::before {
+        border-left: 7px solid currentColor;
+      }
+
+      .profile-planning-toolbar .toolbar-field label {
+        font-size: 0.76rem;
+      }
+
+      .profile-planning-toolbar input,
+      .profile-planning-toolbar select,
+      .profile-planning-toolbar button {
+        font-size: 0.84rem;
+        padding: 7px 9px;
+      }
+
+      .profile-planning-toolbar .toolbar-status-label {
+        font-size: 0.7rem;
+      }
+
+      .user-profile-item {
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+      }
+
+      .user-profile-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+
+      .user-profile-value {
+        font-weight: 600;
+      }
+
+      .btn-small {
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+      }
+
+      .btn-approve {
+        background: #e4f5e9;
+        border-color: #9ed2ae;
+        color: #14552d;
+      }
+
+      .btn-reject {
+        background: #fde8ea;
+        border-color: #e6aab2;
+        color: #7d1e28;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(16, 36, 29, 0.48);
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        z-index: 120;
+      }
+
+      .modal-box {
+        width: min(900px, 100%);
+        max-height: 80vh;
+        overflow: auto;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+        font-size: 0.92rem;
+      }
+
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .modal-title {
+        margin: 0;
+        font-size: 1.02rem;
+        font-weight: 600;
+      }
+
+      .details-calendar {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(82px, 1fr));
+        gap: 8px;
+      }
+
+      .details-weekday {
+        padding: 5px 6px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #eef4f1;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .details-day {
+        min-height: 74px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .details-day.outside {
+        background: transparent;
+        border-style: dashed;
+      }
+
+      .details-day.non-working {
+        background: #f4f8f6;
+      }
+
+      .details-day.working.mode-onsite {
+        background: #f3f8ff;
+        border-color: #c9dbf3;
+      }
+
+      .details-day.working.mode-remote {
+        background: #ecfaf2;
+        border-color: #b8e4cb;
+      }
+
+      .details-day-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+      }
+
+      .details-day-number {
+        font-weight: 700;
+        font-size: 0.86rem;
+      }
+
+      .details-day-meta {
+        font-size: 0.68rem;
+        color: var(--muted);
+        text-transform: capitalize;
+      }
+
+      .details-day-mode {
+        font-size: 0.72rem;
+        font-weight: 600;
+      }
+
+      .details-day-status {
+        font-size: 0.7rem;
+        color: var(--muted);
+      }
+
+      .details-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 0 0 8px 0;
+      }
+
+      .details-toolbar-meta {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .details-calendar-period,
+      .details-summary-inline {
+        margin: 0;
+        font-size: 0.88rem;
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .details-day-note-flag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        align-self: flex-start;
+        padding: 2px 7px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #f6faf8;
+        color: var(--ink);
+        font-size: 0.68rem;
+        font-weight: 600;
+      }
+
+      .details-day.working.has-notes {
+        cursor: pointer;
+      }
+
+      .modal-subtitle {
+        margin: 0 0 10px 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.35;
+      }
+
+      .modal-label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .modal-actions {
+        margin-top: 10px;
+      }
+
+      .login-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(16, 36, 29, 0.48);
+        display: grid;
+        place-items: center;
+        padding: 16px;
+      }
+
+      .login-box {
+        width: min(420px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px;
+      }
+
+      .login-brand {
+        display: flex;
+        justify-content: center;
+        margin: 0 0 10px 0;
+      }
+
+      .login-brand img {
+        max-width: 220px;
+        max-height: 64px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+      }
+
+      .login-box h2 {
+        margin-top: 0;
+      }
+
+      .login-box form {
+        display: grid;
+        gap: 10px;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 860px) {
+        .user-profile-grid {
+          grid-template-columns: repeat(3, minmax(220px, 1fr));
+        }
+
+        .main-menu {
+          min-width: 240px;
+          width: auto;
+        }
+
+        .calendar-month {
+          grid-template-columns: repeat(7, minmax(96px, 1fr));
+        }
+
+        .calendar-day {
+          min-height: 78px;
+        }
+
+        .calendar-weekday {
+          font-size: 0.74rem;
+        }
+      }
+    </style>
+  </head>
+  <body
+    data-app-page="{{ app_page|default:'programming' }}"
+    data-date-display-format="{{ date_display_format|default:'IT' }}"
+  >
+    <div class="page-top-strip">
+      <h1 class="page-top-strip-title">Portale Lavoro Agile</h1>
+      <div id="mainMenu" class="main-menu hidden">
+        <button id="mainMenuToggle" type="button" class="main-menu-toggle">
+          <span id="mainMenuLabel">Programmazione</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div id="mainMenuPanel" class="main-menu-panel hidden">
+          <button id="menuProgramming" type="button" class="main-menu-item" data-target="/">Programmazione</button>
+          <button id="menuApprovals" type="button" class="main-menu-item" data-target="/admin/approvals/">Richieste approvazione</button>
+          <button id="menuChanges" type="button" class="main-menu-item" data-target="/admin/change-requests/">Richieste variazioni</button>
+          <button id="menuLogout" type="button" class="main-menu-item" data-target="__logout__">Logout</button>
+        </div>
+      </div>
+    </div>
+    <div class="wrap">
+      <section id="userProfileCard" class="card user-profile fixed-top hidden">
+        <div class="user-profile-grid">
+          <div class="user-profile-item">
+            <div class="user-profile-label">Nome e cognome</div>
+            <div id="profileName" class="user-profile-value">-</div>
+          </div>
+          <div class="user-profile-item">
+            <div class="user-profile-label">Sede</div>
+            <div id="profileSite" class="user-profile-value">-</div>
+          </div>
+          <div class="user-profile-item">
+            <div class="user-profile-label">Referente amministrativo</div>
+            <div id="profileManager" class="user-profile-value">-</div>
+          </div>
+        </div>
+      </section>
+      <div class="grid">
+        <section id="calendarCard" class="card">
+          <section id="planningControls" class="fixed-month-bar hidden">
+            <div class="toolbar profile-planning-toolbar">
+              <div class="month-nav-inline">
+                <button id="prevMonthBtn" type="button" title="Mese precedente">◀</button>
+                <div class="toolbar-field">
+                  <input id="yearInput" type="number" min="2024" max="2100" />
+                </div>
+                <div class="toolbar-field">
+                  <div id="monthDropdown" class="custom-select">
+                    <button id="monthToggle" type="button" class="custom-select-toggle">
+                      <span id="monthLabel">01</span>
+                      <span aria-hidden="true">▾</span>
+                    </button>
+                    <div id="monthPanel" class="custom-select-panel hidden"></div>
+                  </div>
+                </div>
+                <button id="nextMonthBtn" type="button" title="Mese successivo">▶</button>
+              </div>
+              <button id="toggleLegendBtn" type="button" class="legend-toggle-btn" aria-expanded="false" title="Mostra o nascondi legenda">
+                <span class="legend-icon" aria-hidden="true">ⓘ</span>
+                <span>Legenda</span>
+              </button>
+            </div>
+            <div id="feedback" class="msg"></div>
+          </section>
+          <div id="calendarLegend" class="calendar-legend hidden">
+            <span class="calendar-legend-item">
+              <span class="calendar-legend-swatch" style="background:#eef1f4;border-color:#cfd6de"></span>
+              <span>In modifica</span>
+            </span>
+            <span class="calendar-legend-item">
+              <span class="calendar-legend-swatch approved"></span>
+              <span>Approvato</span>
+            </span>
+            <span class="calendar-legend-item">
+              <span class="calendar-legend-swatch pending"></span>
+              <span>In attesa approvazione</span>
+            </span>
+            <span class="calendar-legend-item">
+              <span class="calendar-legend-swatch rejected"></span>
+              <span>Rifiutato</span>
+            </span>
+          </div>
+          <div id="calendarBody" class="calendar-month"></div>
+        </section>
+        <section id="actionsCard" class="card hidden">
+          <div id="fixedActionBar" class="fixed-action-bar">
+            <div class="fixed-action-bar-inner">
+              <div class="user-profile-item action-status-box">
+                <div class="fixed-action-status">
+                  <span class="toolbar-status-label">Stato</span>
+                  <span id="statusChip" class="status EDITING">In modifica</span>
+                  <span id="statusSecondaryChip" class="status EDITING hidden">In modifica</span>
+                  <button id="viewReasonBtn" class="hidden">Visualizza motivazione</button>
+                  <button id="restoreApprovedBtn" class="hidden">Torna all'ultimo piano approvato</button>
+                </div>
+              </div>
+              <div id="multiSelectBox" class="user-profile-item action-multi-box hidden">
+                <div class="user-profile-label">Selezione multipla</div>
+                <div class="action-multi-actions">
+                  <button id="bulkSetOnSiteBtn" type="button">Imposta In sede</button>
+                  <button id="bulkSetRemoteBtn" type="button">Imposta Lavoro agile</button>
+                </div>
+              </div>
+              <div class="fixed-action-submit">
+                <button id="submitBtn" class="warn">Richiedi approvazione</button>
+                <button id="requestChangeBtn" class="warn hidden">Richiedi variazione</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="approverCard" class="card hidden">
+          <div id="reviewFeedback" class="msg"></div>
+          <div id="approvalsPanel">
+            <h3 style="margin-top:0">Coda approvazioni</h3>
+            <p class="subtitle" style="margin-top:0">Piani mensili in stato SUBMITTED</p>
+            <div id="approvalsBatchBar" class="review-batch-bar hidden">
+              <div id="approvalsBatchInfo" class="review-batch-info">Selezionati: 0</div>
+              <div class="review-batch-actions">
+                <button id="approveSelectedBtn" type="button" class="btn-small btn-approve" disabled>Approva selezione</button>
+                <button id="rejectSelectedBtn" type="button" class="btn-small btn-reject" disabled>Rifiuta selezione</button>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:34px">
+                    <input id="approverSelectAll" type="checkbox" aria-label="Seleziona tutti i piani in coda" />
+                  </th>
+                  <th>Utente</th>
+                  <th>Sede</th>
+                  <th>Mese</th>
+                  <th>Stato</th>
+                  <th>Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="approverBody"></tbody>
+            </table>
+          </div>
+          <div id="changesPanel">
+            <h3 style="margin-top:0">Coda Richieste Variazioni</h3>
+            <p class="subtitle" style="margin-top:0">Richieste del mese corrente in stato PENDING</p>
+            <div id="changesBatchBar" class="review-batch-bar hidden">
+              <div id="changesBatchInfo" class="review-batch-info">Selezionati: 0</div>
+              <div class="review-batch-actions">
+                <button id="approveChangeSelectedBtn" type="button" class="btn-small btn-approve" disabled>Approva selezione</button>
+                <button id="rejectChangeSelectedBtn" type="button" class="btn-small btn-reject" disabled>Rifiuta selezione</button>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:34px">
+                    <input id="changeReqSelectAll" type="checkbox" aria-label="Seleziona tutte le richieste variazione in coda" />
+                  </th>
+                  <th>Utente</th>
+                  <th>Sede</th>
+                  <th>Mese</th>
+                  <th>Stato</th>
+                  <th>Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="changeReqBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      <footer class="page-footer">
+        <span>© Portale Lavoro Agile</span>
+        <a href="#" id="softwareInfoLink" class="page-footer-link">Informazioni software</a>
+      </footer>
+    </div>
+
+    <div id="softwareInfoModal" class="modal-backdrop hidden">
+      <div class="modal-box" style="width:min(620px, 100%)">
+        <div class="modal-head">
+          <h3 class="modal-title">Informazioni software</h3>
+          <button id="closeSoftwareInfoBtn" class="ghost">Chiudi</button>
+        </div>
+        <p class="modal-subtitle" style="margin-bottom:6px">
+          Portale Lavoro Agile - gestione programmazione mensile, approvazioni e variazioni.
+        </p>
+        <div style="font-size:0.88rem;line-height:1.45;color:var(--ink)">
+          Ambiente: on-premise, autenticazione LDAP/locale, workflow mensile di approvazione.
+        </div>
+      </div>
+    </div>
+
+    <div id="detailsModal" class="modal-backdrop hidden">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h3 id="detailsTitle" class="modal-title">Dettaglio piano</h3>
+          <button id="closeDetailsBtn" class="ghost">Chiudi</button>
+        </div>
+        <div class="details-toolbar">
+          <div class="details-toolbar-meta">
+            <p id="detailsCalendarPeriod" class="details-calendar-period"></p>
+            <p id="detailsSummary" class="details-summary-inline"></p>
+          </div>
+          <button id="detailsRequestReasonBtn" class="ghost hidden" type="button">Motivazione della richiesta</button>
+        </div>
+        <div id="detailsCalendar" class="details-calendar"></div>
+      </div>
+    </div>
+
+    <div id="detailsDayModal" class="modal-backdrop hidden">
+      <div class="modal-box" style="width:min(760px, 100%)">
+        <div class="modal-head">
+          <h3 id="detailsDayTitle" class="modal-title">Dettaglio giornata</h3>
+          <button id="closeDetailsDayBtn" class="ghost">Chiudi</button>
+        </div>
+        <p id="detailsDayMode" class="modal-subtitle" style="margin-bottom:8px"></p>
+        <div
+          id="detailsDayNotes"
+          style="white-space:pre-wrap;line-height:1.4;max-height:45vh;overflow:auto;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff"
+        ></div>
+      </div>
+    </div>
+
+    <div id="confirmSubmitModal" class="modal-backdrop hidden">
+      <div class="modal-box" style="width:min(520px, 100%)">
+        <div class="modal-head">
+          <h3 class="modal-title">Conferma Invio</h3>
+        </div>
+        <p class="modal-subtitle">
+          Confermi l'invio in approvazione? Dopo l'invio non potrai piu modificare il piano.
+        </p>
+        <div class="toolbar-actions">
+          <button id="cancelSubmitBtn">Annulla</button>
+          <button id="confirmSubmitBtn" class="warn">Conferma invio</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="noteModal" class="modal-backdrop hidden">
+      <div class="modal-box" style="width:min(680px, 100%)">
+        <div class="modal-head">
+          <h3 id="noteModalTitle" class="modal-title">Dettaglio giornata</h3>
+          <button id="closeNoteModalBtn" class="ghost hidden">Chiudi</button>
+        </div>
+        <label class="modal-label">Modalita</label>
+        <div id="noteModalWorkTypeDropdown" class="custom-select" style="width:100%">
+          <button id="noteModalWorkTypeToggle" type="button" class="custom-select-toggle" style="width:100%">
+            <span id="noteModalWorkTypeLabel">In sede</span>
+            <span aria-hidden="true">▾</span>
+          </button>
+          <div id="noteModalWorkTypePanel" class="custom-select-panel hidden" style="width:100%">
+            <button type="button" class="custom-select-item" data-value="ON_SITE">In sede</button>
+            <button type="button" class="custom-select-item" data-value="REMOTE">Lavoro agile</button>
+          </div>
+        </div>
+        <label for="noteModalText" class="modal-label" style="margin-top:10px">Attivita programmate</label>
+        <textarea
+          id="noteModalText"
+          class="note-input"
+          placeholder="Inserisci le note della giornata"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          data-gramm="false"
+          data-gramm_editor="false"
+          data-enable-grammarly="false"
+          translate="no"
+        ></textarea>
+        <div class="toolbar-actions modal-actions">
+          <button id="cancelNoteBtn">Annulla</button>
+          <button id="saveNoteBtn" class="primary">Salva giornata</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="bulkRemoteModal" class="modal-backdrop hidden">
+      <div class="modal-box" style="width:min(760px, 100%)">
+        <div class="modal-head">
+          <h3 id="bulkRemoteTitle" class="modal-title">Lavoro agile - Impostazione rapida</h3>
+        </div>
+        <p class="modal-subtitle">
+          Puoi inserire qui le attività programmate impostandole uguali per tutti i giorni selezionati oppure puoi impostarle per ogni singolo giorno con doppio clic sui giorni che ti interessano.
+        </p>
+        <textarea
+          id="bulkRemoteText"
+          class="note-input"
+          placeholder="Inserisci il testo da applicare a tutti i giorni selezionati"
+        ></textarea>
+        <div class="toolbar-actions modal-actions">
+          <button id="cancelBulkRemoteBtn">Annulla</button>
+          <button id="applyBulkRemoteBtn" class="primary">Applica ai giorni selezionati</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="reasonModal" class="modal-backdrop hidden">
+      <div class="modal-box" style="width:min(680px, 100%)">
+        <div class="modal-head">
+          <h3 class="modal-title">Motivazione</h3>
+          <button id="closeReasonModalBtn" class="ghost">Chiudi</button>
+        </div>
+        <div id="reasonText" style="white-space:pre-wrap;line-height:1.4"></div>
+      </div>
+    </div>
+
+    <div id="changeRequestModal" class="modal-backdrop hidden">
+      <div class="modal-box" style="width:min(680px, 100%)">
+        <div class="modal-head">
+          <h3 class="modal-title">Richiedi variazione</h3>
+          <button id="closeChangeRequestModalBtn" class="ghost">Chiudi</button>
+        </div>
+        <p class="modal-subtitle">
+          Inserisci una descrizione della variazione. La richiesta sara inviata all'amministratore referente.
+        </p>
+        <div style="margin:0 0 10px 0;padding:8px 10px;border:1px solid #efc8cc;border-radius:8px;background:#fff4f5;color:var(--danger);font-size:0.9rem">
+          Attenzione: dopo l'invio non potrai inviare una nuova richiesta finche questa resta in attesa.
+        </div>
+        <textarea
+          id="changeRequestReason"
+          class="note-input"
+          placeholder="Descrivi la variazione richiesta"
+        ></textarea>
+        <div class="toolbar-actions modal-actions">
+          <button id="cancelChangeRequestBtn">Annulla</button>
+          <button id="confirmChangeRequestBtn" class="warn">Conferma invio all'amministratore</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="actionDialogModal" class="modal-backdrop hidden">
+      <div class="modal-box" style="width:min(640px, 100%)">
+        <div class="modal-head">
+          <h3 id="actionDialogTitle" class="modal-title">Conferma</h3>
+        </div>
+        <p id="actionDialogMessage" class="modal-subtitle"></p>
+        <div id="actionDialogReasonWrap" class="hidden">
+          <label for="actionDialogReason" class="modal-label">Motivazione</label>
+          <textarea id="actionDialogReason" class="note-input" placeholder="Inserisci la motivazione"></textarea>
+        </div>
+        <div class="toolbar-actions modal-actions">
+          <button id="actionDialogCancelBtn">Annulla</button>
+          <button id="actionDialogConfirmBtn" class="warn">Conferma</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="loginOverlay" class="login-overlay hidden">
+      <div class="login-box">
+        {% if login_logo_url %}
+        <div class="login-brand">
+          <img src="{{ login_logo_url }}" alt="Logo istituto" />
+        </div>
+        {% endif %}
+        <h2>Login</h2>
+        <form id="loginForm">
+          <input id="username" type="text" placeholder="Username" required />
+          <input id="password" type="password" placeholder="Password" required />
+          <button class="primary" type="submit">Accedi</button>
+        </form>
+        <div id="loginError" class="msg error"></div>
+      </div>
+    </div>
+    <div id="errorPopup" class="error-popup hidden">
+      <span id="errorPopupText"></span>
+      <button id="closeErrorPopupBtn" type="button">Chiudi</button>
+    </div>
+
+    <script>
+      const API_BASE = "/api";
+      const TOKEN_KEY = "agile_token";
+      const USER_KEY = "agile_user";
+      const YM_PREF_PREFIX = "agile_ym_pref_v1";
+      const APP_PAGE = document.body.dataset.appPage || "programming";
+      const DATE_DISPLAY_FORMAT = (document.body.dataset.dateDisplayFormat || "IT").toUpperCase();
+
+      const monthDropdown = document.getElementById("monthDropdown");
+      const monthToggle = document.getElementById("monthToggle");
+      const monthLabel = document.getElementById("monthLabel");
+      const monthPanel = document.getElementById("monthPanel");
+      const prevMonthBtn = document.getElementById("prevMonthBtn");
+      const nextMonthBtn = document.getElementById("nextMonthBtn");
+      const yearInput = document.getElementById("yearInput");
+      const calendarBody = document.getElementById("calendarBody");
+      const statusChip = document.getElementById("statusChip");
+      const statusSecondaryChip = document.getElementById("statusSecondaryChip");
+      const feedback = document.getElementById("feedback");
+      const loginOverlay = document.getElementById("loginOverlay");
+      const loginError = document.getElementById("loginError");
+      const errorPopup = document.getElementById("errorPopup");
+      const errorPopupText = document.getElementById("errorPopupText");
+      const closeErrorPopupBtn = document.getElementById("closeErrorPopupBtn");
+      const softwareInfoLink = document.getElementById("softwareInfoLink");
+      const softwareInfoModal = document.getElementById("softwareInfoModal");
+      const closeSoftwareInfoBtn = document.getElementById("closeSoftwareInfoBtn");
+      const mainMenu = document.getElementById("mainMenu");
+      const mainMenuToggle = document.getElementById("mainMenuToggle");
+      const mainMenuPanel = document.getElementById("mainMenuPanel");
+      const mainMenuLabel = document.getElementById("mainMenuLabel");
+      const menuProgramming = document.getElementById("menuProgramming");
+      const menuApprovals = document.getElementById("menuApprovals");
+      const menuChanges = document.getElementById("menuChanges");
+      const menuLogout = document.getElementById("menuLogout");
+      const userProfileCard = document.getElementById("userProfileCard");
+      const profileName = document.getElementById("profileName");
+      const profileSite = document.getElementById("profileSite");
+      const profileManager = document.getElementById("profileManager");
+      const planningControls = document.getElementById("planningControls");
+      const toggleLegendBtn = document.getElementById("toggleLegendBtn");
+      const calendarLegend = document.getElementById("calendarLegend");
+      const mainGrid = document.querySelector(".grid");
+      const calendarCard = document.getElementById("calendarCard");
+      const actionsCard = document.getElementById("actionsCard");
+      const fixedActionBar = document.getElementById("fixedActionBar");
+      const multiSelectBox = document.getElementById("multiSelectBox");
+      const bulkSetOnSiteBtn = document.getElementById("bulkSetOnSiteBtn");
+      const bulkSetRemoteBtn = document.getElementById("bulkSetRemoteBtn");
+      const approverCard = document.getElementById("approverCard");
+      const approvalsPanel = document.getElementById("approvalsPanel");
+      const changesPanel = document.getElementById("changesPanel");
+      const approvalsBatchBar = document.getElementById("approvalsBatchBar");
+      const approvalsBatchInfo = document.getElementById("approvalsBatchInfo");
+      const approverSelectAll = document.getElementById("approverSelectAll");
+      const approveSelectedBtn = document.getElementById("approveSelectedBtn");
+      const rejectSelectedBtn = document.getElementById("rejectSelectedBtn");
+      const changesBatchBar = document.getElementById("changesBatchBar");
+      const changesBatchInfo = document.getElementById("changesBatchInfo");
+      const changeReqSelectAll = document.getElementById("changeReqSelectAll");
+      const approveChangeSelectedBtn = document.getElementById("approveChangeSelectedBtn");
+      const rejectChangeSelectedBtn = document.getElementById("rejectChangeSelectedBtn");
+      const approverBody = document.getElementById("approverBody");
+      const changeReqBody = document.getElementById("changeReqBody");
+      const reviewFeedback = document.getElementById("reviewFeedback");
+      const detailsModal = document.getElementById("detailsModal");
+      const detailsTitle = document.getElementById("detailsTitle");
+      const detailsSummary = document.getElementById("detailsSummary");
+      const detailsCalendarPeriod = document.getElementById("detailsCalendarPeriod");
+      const detailsRequestReasonBtn = document.getElementById("detailsRequestReasonBtn");
+      const detailsCalendar = document.getElementById("detailsCalendar");
+      const detailsDayModal = document.getElementById("detailsDayModal");
+      const detailsDayTitle = document.getElementById("detailsDayTitle");
+      const detailsDayMode = document.getElementById("detailsDayMode");
+      const detailsDayNotes = document.getElementById("detailsDayNotes");
+      const closeDetailsDayBtn = document.getElementById("closeDetailsDayBtn");
+      const confirmSubmitModal = document.getElementById("confirmSubmitModal");
+      const cancelSubmitBtn = document.getElementById("cancelSubmitBtn");
+      const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
+      const noteModal = document.getElementById("noteModal");
+      const noteModalTitle = document.getElementById("noteModalTitle");
+      const noteModalWorkTypeDropdown = document.getElementById("noteModalWorkTypeDropdown");
+      const noteModalWorkTypeToggle = document.getElementById("noteModalWorkTypeToggle");
+      const noteModalWorkTypeLabel = document.getElementById("noteModalWorkTypeLabel");
+      const noteModalWorkTypePanel = document.getElementById("noteModalWorkTypePanel");
+      const noteModalOnSiteItem = noteModalWorkTypePanel?.querySelector('.custom-select-item[data-value="ON_SITE"]');
+      const noteModalRemoteItem = noteModalWorkTypePanel?.querySelector('.custom-select-item[data-value="REMOTE"]');
+      const noteModalText = document.getElementById("noteModalText");
+      const closeNoteModalBtn = document.getElementById("closeNoteModalBtn");
+      const cancelNoteBtn = document.getElementById("cancelNoteBtn");
+      const saveNoteBtn = document.getElementById("saveNoteBtn");
+      const bulkRemoteModal = document.getElementById("bulkRemoteModal");
+      const bulkRemoteTitle = document.getElementById("bulkRemoteTitle");
+      const bulkRemoteText = document.getElementById("bulkRemoteText");
+      const cancelBulkRemoteBtn = document.getElementById("cancelBulkRemoteBtn");
+      const applyBulkRemoteBtn = document.getElementById("applyBulkRemoteBtn");
+      const requestChangeBtn = document.getElementById("requestChangeBtn");
+      const submitBtn = document.getElementById("submitBtn");
+      const viewReasonBtn = document.getElementById("viewReasonBtn");
+      const restoreApprovedBtn = document.getElementById("restoreApprovedBtn");
+      const reasonModal = document.getElementById("reasonModal");
+      const reasonText = document.getElementById("reasonText");
+      const closeReasonModalBtn = document.getElementById("closeReasonModalBtn");
+      const changeRequestModal = document.getElementById("changeRequestModal");
+      const changeRequestReason = document.getElementById("changeRequestReason");
+      const closeChangeRequestModalBtn = document.getElementById("closeChangeRequestModalBtn");
+      const cancelChangeRequestBtn = document.getElementById("cancelChangeRequestBtn");
+      const confirmChangeRequestBtn = document.getElementById("confirmChangeRequestBtn");
+      const actionDialogModal = document.getElementById("actionDialogModal");
+      const actionDialogTitle = document.getElementById("actionDialogTitle");
+      const actionDialogMessage = document.getElementById("actionDialogMessage");
+      const actionDialogReasonWrap = document.getElementById("actionDialogReasonWrap");
+      const actionDialogReason = document.getElementById("actionDialogReason");
+      const actionDialogCancelBtn = document.getElementById("actionDialogCancelBtn");
+      const actionDialogConfirmBtn = document.getElementById("actionDialogConfirmBtn");
+
+      let currentPlan = null;
+      let currentUser = null;
+      let resolveSubmitConfirm = null;
+      let resolveActionDialog = null;
+      let currentHolidayDays = new Set();
+      let currentHolidayNames = {};
+      let dayValues = {};
+      let activeDay = null;
+      let noteModalMode = "edit";
+      let noteModalWorkTypeValue = "ON_SITE";
+      let approverRefreshTimer = null;
+      let calendarReadonly = false;
+      let bulkRemoteDays = [];
+      let ignoreNextCalendarClick = false;
+      let selectedDays = new Set();
+      let baselineDaySignature = "";
+      let baselineDayMap = {};
+      let popupAutoCloseTimer = null;
+      let weekendHiddenMode = false;
+      const WEEKENDS_HIDE_BREAKPOINT = 1085;
+      let currentDisplayStatus = "DRAFT";
+      let approvedSnapshotMap = {};
+      let detailsDayMap = {};
+      let detailsChangeRequestReason = "";
+      let approverQueuePlans = [];
+      let selectedApproverPlanIds = new Set();
+      let changeRequestQueueItems = [];
+      let selectedChangeRequestIds = new Set();
+      let serverToday = null;
+      let currentMonthContext = {
+        isCurrentMonth: false,
+        isNextMonth: false,
+        hasPendingChangeRequest: false,
+        hasApprovedSnapshot: false,
+        hasRejectedChangeRequest: false,
+        latestRejectedChangeReason: "",
+      };
+
+      for (let m = 1; m <= 12; m++) {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "custom-select-item";
+        item.dataset.value = String(m);
+        item.textContent = String(m).padStart(2, "0");
+        monthPanel.appendChild(item);
+      }
+
+      function localTodayParts() {
+        const now = new Date();
+        return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+      }
+
+      const initialToday = localTodayParts();
+      yearInput.value = initialToday.year;
+      let selectedMonth = initialToday.month;
+      monthLabel.textContent = String(selectedMonth).padStart(2, "0");
+
+      async function syncServerToday() {
+        const data = await api("/auth/server-date/");
+        const year = Number(data?.year);
+        const month = Number(data?.month);
+        const day = Number(data?.day);
+        if (
+          Number.isFinite(year) &&
+          Number.isFinite(month) &&
+          Number.isFinite(day) &&
+          month >= 1 &&
+          month <= 12 &&
+          day >= 1 &&
+          day <= 31
+        ) {
+          serverToday = { year, month, day };
+          return;
+        }
+        throw new Error("Data server non valida");
+      }
+
+      function currentYearMonth() {
+        if (serverToday) {
+          return { year: serverToday.year, month: serverToday.month };
+        }
+        const local = localTodayParts();
+        return { year: local.year, month: local.month };
+      }
+
+      function nextYearMonth() {
+        const nowYm = currentYearMonth();
+        if (nowYm.month === 12) return { year: nowYm.year + 1, month: 1 };
+        return { year: nowYm.year, month: nowYm.month + 1 };
+      }
+
+      function setMonthValue(value) {
+        const month = Number(value);
+        if (!Number.isFinite(month) || month < 1 || month > 12) return;
+        selectedMonth = month;
+        monthLabel.textContent = String(month).padStart(2, "0");
+      }
+
+      function shiftMonth(delta) {
+        if (!Number.isInteger(delta) || delta === 0) return;
+        const currentYear = Number(yearInput.value);
+        if (!Number.isFinite(currentYear)) return;
+        const date = new Date(currentYear, selectedMonth - 1 + delta, 1);
+        yearInput.value = date.getFullYear();
+        setMonthValue(date.getMonth() + 1);
+      }
+
+      function labelWorkType(code) {
+        if (code === "ON_SITE") return "In sede";
+        if (code === "REMOTE") return "Lavoro agile";
+        return code;
+      }
+
+      function setNoteModalWorkType(value) {
+        noteModalWorkTypeValue = value === "REMOTE" ? "REMOTE" : "ON_SITE";
+        noteModalWorkTypeLabel.textContent = labelWorkType(noteModalWorkTypeValue);
+      }
+
+      function token() {
+        return localStorage.getItem(TOKEN_KEY);
+      }
+
+      function purgeLegacyLocalDrafts() {
+        const prefix = "agile_local_draft_v1:";
+        Object.keys(localStorage)
+          .filter((key) => key.startsWith(prefix))
+          .forEach((key) => localStorage.removeItem(key));
+      }
+
+      function monthYearPrefKey() {
+        const userId = currentUser?.id;
+        if (!userId) return null;
+        return `${YM_PREF_PREFIX}:${userId}`;
+      }
+
+      function saveMonthYearPreference(year = Number(yearInput.value), month = Number(selectedMonth)) {
+        const key = monthYearPrefKey();
+        if (!key || !Number.isFinite(year) || !Number.isFinite(month)) return;
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            year,
+            month,
+          })
+        );
+      }
+
+      function restoreMonthYearPreference() {
+        const key = monthYearPrefKey();
+        if (!key) return false;
+        const raw = localStorage.getItem(key);
+        if (!raw) return false;
+        let parsed = null;
+        try {
+          parsed = JSON.parse(raw);
+        } catch (_) {
+          localStorage.removeItem(key);
+          return false;
+        }
+        const year = Number(parsed?.year);
+        const month = Number(parsed?.month);
+        if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+          localStorage.removeItem(key);
+          return false;
+        }
+        yearInput.value = String(year);
+        setMonthValue(month);
+        return true;
+      }
+
+      function persistLocalDraft() {
+        // Bozza locale disabilitata: nessuna persistenza in localStorage.
+      }
+
+      function clearLocalDraft() {
+        // Bozza locale disabilitata.
+      }
+
+      function restoreLocalDraftIfAny() {
+        // Bozza locale disabilitata.
+        return false;
+      }
+
+      function setFeedback(message, kind = "ok") {
+        showTopPopup(message, kind);
+        feedback.style.display = "none";
+      }
+
+      function clearFeedback() {
+        feedback.style.display = "none";
+      }
+
+      function normalizePlanVisualStatus(status) {
+        if (status === "SUBMITTED" || status === "CHANGE_REQUESTED" || status === "PENDING") return "PENDING";
+        if (status === "REJECTED" || status === "CHANGE_REJECTED") return "REJECTED";
+        if (status === "APPROVED") return "APPROVED";
+        return "EDITING";
+      }
+
+      function setStatus(status) {
+        const visualStatus = normalizePlanVisualStatus(status);
+        currentDisplayStatus = visualStatus;
+        statusChip.className = `status ${visualStatus}`;
+        statusChip.textContent = labelStatus(visualStatus);
+        if (statusSecondaryChip) {
+          statusSecondaryChip.classList.add("hidden");
+          statusSecondaryChip.textContent = "";
+          statusSecondaryChip.className = "status EDITING hidden";
+        }
+        updateSendButtonsLabel();
+      }
+
+      function updateSendButtonsLabel() {
+        if (submitBtn) {
+          submitBtn.textContent = currentDisplayStatus === "PENDING"
+            ? "In attesa approvazione"
+            : "Richiedi approvazione";
+        }
+        if (requestChangeBtn) {
+          requestChangeBtn.textContent = currentDisplayStatus === "PENDING"
+            ? "In attesa approvazione"
+            : "Richiedi variazione";
+        }
+      }
+
+      function normalizeDayPayloads(days) {
+        return (days || [])
+          .map((item) => ({
+            day: item.day,
+            work_type: item.work_type || "ON_SITE",
+            notes: (item.work_type === "REMOTE" ? item.notes : "") || "",
+          }))
+          .sort((a, b) => String(a.day).localeCompare(String(b.day)));
+      }
+
+      function mapSignatureFromDayValues() {
+        const normalized = Object.keys(dayValues)
+          .sort()
+          .map((day) => ({
+            day,
+            work_type: dayValues[day]?.work_type || "ON_SITE",
+            notes: (dayValues[day]?.work_type === "REMOTE" ? dayValues[day]?.notes : "") || "",
+          }));
+        return JSON.stringify(normalized);
+      }
+
+      function cloneDayValuesMap(source = dayValues) {
+        const out = {};
+        for (const [day, value] of Object.entries(source || {})) {
+          out[day] = {
+            work_type: value?.work_type === "REMOTE" ? "REMOTE" : "ON_SITE",
+            notes: value?.work_type === "REMOTE" ? (value?.notes || "") : "",
+          };
+        }
+        return out;
+      }
+
+      function hasDraftChanges() {
+        return mapSignatureFromDayValues() !== baselineDaySignature;
+      }
+
+      function refreshPlanningActions() {
+        const {
+          isCurrentMonth,
+          isNextMonth,
+          hasPendingChangeRequest,
+          hasApprovedSnapshot,
+          hasRejectedChangeRequest,
+          latestRejectedChangeReason
+        } = currentMonthContext;
+        const programmingEnabled = hasAilaSubscription();
+        const draftChanged = hasDraftChanges();
+        const editingOverlayActive =
+          draftChanged &&
+          (currentDisplayStatus === "APPROVED" ||
+            currentDisplayStatus === "PENDING" ||
+            currentDisplayStatus === "REJECTED");
+
+        submitBtn.disabled =
+          !programmingEnabled ||
+          !isNextMonth ||
+          !draftChanged;
+        submitBtn.classList.toggle("hidden", !programmingEnabled || !isNextMonth);
+
+        requestChangeBtn.classList.toggle("hidden", !programmingEnabled || !isCurrentMonth);
+        requestChangeBtn.disabled =
+          !programmingEnabled ||
+          !isCurrentMonth ||
+          hasPendingChangeRequest ||
+          !draftChanged;
+
+        viewReasonBtn.classList.toggle(
+          "hidden",
+          !(
+            currentPlan &&
+            currentDisplayStatus === "REJECTED" &&
+            (
+              (!hasPendingChangeRequest &&
+                currentPlan.status === "REJECTED" &&
+                (currentPlan.rejection_reason || "").trim()) ||
+              latestRejectedChangeReason
+            )
+          )
+        );
+
+        if (statusSecondaryChip) {
+          statusSecondaryChip.classList.toggle("hidden", !editingOverlayActive);
+          if (editingOverlayActive) {
+            statusSecondaryChip.className = "status EDITING";
+            statusSecondaryChip.textContent = "In modifica";
+          }
+        }
+
+        const showRestorePreviousState =
+          currentPlan &&
+          editingOverlayActive &&
+          draftChanged;
+        restoreApprovedBtn.classList.toggle(
+          "hidden",
+          !programmingEnabled || !(showRestorePreviousState || (
+            currentPlan &&
+            !hasPendingChangeRequest &&
+            hasApprovedSnapshot &&
+            hasDifferencesFromApproved() &&
+            (
+              (isCurrentMonth && hasRejectedChangeRequest && currentDisplayStatus === "REJECTED") ||
+              (isNextMonth && currentDisplayStatus === "EDITING")
+            )
+          ))
+        );
+        if (showRestorePreviousState) {
+          restoreApprovedBtn.disabled = false;
+          restoreApprovedBtn.title = "";
+          restoreApprovedBtn.textContent = "Torna allo stato precedente";
+        } else {
+          restoreApprovedBtn.disabled = !hasApprovedSnapshot;
+          restoreApprovedBtn.title = hasApprovedSnapshot
+            ? ""
+            : "Nessun piano approvato storico disponibile per il ripristino";
+          restoreApprovedBtn.textContent = "Torna all'ultimo piano approvato";
+        }
+      }
+
+      function setReviewFeedback(message, kind = "ok") {
+        showTopPopup(message, kind);
+        reviewFeedback.style.display = "none";
+      }
+
+      function clearReviewFeedback() {
+        reviewFeedback.style.display = "none";
+      }
+
+      function showTopPopup(message, kind = "ok") {
+        const popupKind = kind === "error" ? "error" : kind === "warn" ? "warn" : "ok";
+        if (popupAutoCloseTimer) {
+          clearTimeout(popupAutoCloseTimer);
+          popupAutoCloseTimer = null;
+        }
+        errorPopup.classList.remove("kind-error", "kind-warn", "kind-ok");
+        errorPopup.classList.add(`kind-${popupKind}`);
+        const prefix = popupKind === "error" ? "ERRORE" : popupKind === "warn" ? "ATTENZIONE" : "INFO";
+        errorPopupText.textContent = `${prefix}: ${message || "-"}`;
+        errorPopup.classList.remove("hidden");
+        const timeoutMs = popupKind === "error" ? 7000 : 5000;
+        popupAutoCloseTimer = setTimeout(() => {
+          hideErrorPopup();
+        }, timeoutMs);
+      }
+
+      function hideErrorPopup() {
+        if (popupAutoCloseTimer) {
+          clearTimeout(popupAutoCloseTimer);
+          popupAutoCloseTimer = null;
+        }
+        errorPopup.classList.add("hidden");
+        errorPopupText.textContent = "";
+      }
+
+      function isApprover() {
+        return (
+          currentUser &&
+          (currentUser.role === "ADMIN" ||
+            currentUser.role === "SUPERADMIN" ||
+            currentUser.is_staff ||
+            currentUser.is_superuser)
+        );
+      }
+
+      function hasAilaSubscription() {
+        return Boolean(currentUser?.aila_subscribed);
+      }
+
+      function renderUserProfile(user) {
+        if (!user) {
+          document.body.classList.remove("has-fixed-profile");
+          userProfileCard.classList.add("hidden");
+          profileName.textContent = "-";
+          profileSite.textContent = "-";
+          profileManager.textContent = "-";
+          return;
+        }
+        const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "-";
+        const site = (user.department || "").trim() || "-";
+        const managerName = (user.manager_name || "").trim() || "Non assegnato";
+        profileName.textContent = fullName;
+        profileSite.textContent = site;
+        profileManager.textContent = managerName;
+        document.body.classList.add("has-fixed-profile");
+        userProfileCard.classList.remove("hidden");
+      }
+
+      function applyMainPageMode() {
+        const isProgramming = APP_PAGE === "programming";
+        const isApprovalsPage = APP_PAGE === "approvals";
+        const isChangesPage = APP_PAGE === "changes";
+        if (mainMenuLabel) {
+          mainMenuLabel.textContent = isApprovalsPage
+            ? "Richieste approvazione"
+            : isChangesPage
+              ? "Richieste variazioni"
+              : "Programmazione";
+        }
+
+        planningControls.classList.toggle("hidden", !isProgramming);
+        mainGrid.classList.toggle("programming-grid", isProgramming);
+        calendarCard.classList.toggle("hidden", !isProgramming);
+        actionsCard.classList.toggle("hidden", !isProgramming);
+        approvalsPanel.classList.toggle("hidden", !isApprovalsPage);
+        changesPanel.classList.toggle("hidden", !isChangesPage);
+      }
+
+      function syncMainMenuByRole() {
+        const approver = isApprover();
+        if (menuApprovals) menuApprovals.hidden = !approver;
+        if (menuChanges) menuChanges.hidden = !approver;
+      }
+
+      function closeMainMenuPanel() {
+        mainMenuPanel.classList.add("hidden");
+      }
+
+      function navigateFromMenu(target) {
+        closeMainMenuPanel();
+        if (target === "__logout__") {
+          performLogout();
+          return;
+        }
+        if (target && target !== window.location.pathname) {
+          window.location.href = target;
+          return;
+        }
+        applyMainPageMode();
+      }
+
+      function performLogout() {
+        stopApproverAutoRefresh();
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        currentDisplayStatus = "EDITING";
+        updateSendButtonsLabel();
+        renderUserProfile(null);
+        window.location.reload();
+      }
+
+      function dayLabel(dateIso) {
+        return new Date(dateIso).toLocaleDateString("it-IT", { weekday: "long" });
+      }
+
+      function formatIsoDate(dateIso) {
+        if (!dateIso) return "";
+        if (DATE_DISPLAY_FORMAT === "ISO") return dateIso;
+        const [year, month, day] = String(dateIso).split("-");
+        if (!year || !month || !day) return dateIso;
+        return `${day}/${month}/${year}`;
+      }
+
+      function workingDaysOfMonth(year, month) {
+        const out = [];
+        const d = new Date(year, month - 1, 1);
+        while (d.getMonth() === month - 1) {
+          const wd = d.getDay();
+          if (wd !== 0 && wd !== 6) {
+            out.push(new Date(d));
+          }
+          d.setDate(d.getDate() + 1);
+        }
+        return out;
+      }
+
+      function toIsoDate(d) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+          d.getDate()
+        ).padStart(2, "0")}`;
+      }
+
+      function isoWeekNumber(d) {
+        const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        const dayNum = tmp.getUTCDay() || 7;
+        tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+        return Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+      }
+
+      function shouldHideWeekends() {
+        return window.innerWidth < WEEKENDS_HIDE_BREAKPOINT;
+      }
+
+      function buildApprovedSnapshotMap(items) {
+        const out = {};
+        for (const item of items || []) {
+          const day = String(item?.day || "").trim();
+          if (!day) continue;
+          out[day] = {
+            work_type: item?.work_type === "REMOTE" ? "REMOTE" : "ON_SITE",
+            notes: item?.work_type === "REMOTE" ? (item?.notes || "") : "",
+          };
+        }
+        return out;
+      }
+
+      function buildApprovedSnapshotMapFromPlanDays(items) {
+        const out = {};
+        for (const item of items || []) {
+          const day = String(item?.day || "").trim();
+          if (!day) continue;
+          const workType = item?.work_type === "REMOTE" ? "REMOTE" : "ON_SITE";
+          out[day] = {
+            work_type: workType,
+            notes: workType === "REMOTE" ? (item?.notes || "") : "",
+          };
+        }
+        return out;
+      }
+
+      function dayDiffersFromApproved(dayIso) {
+        const current = dayValues[dayIso];
+        if (!current) return false;
+        const approved = approvedSnapshotMap[dayIso];
+        if (!approved) return true;
+        const currentType = current.work_type === "REMOTE" ? "REMOTE" : "ON_SITE";
+        const approvedType = approved.work_type === "REMOTE" ? "REMOTE" : "ON_SITE";
+        const currentNotes = currentType === "REMOTE" ? String(current.notes || "") : "";
+        const approvedNotes = approvedType === "REMOTE" ? String(approved.notes || "") : "";
+        return currentType !== approvedType || currentNotes !== approvedNotes;
+      }
+
+      function dayDiffersFromBaseline(dayIso) {
+        const current = dayValues[dayIso];
+        const base = baselineDayMap[dayIso];
+        if (!current || !base) return false;
+        const currentType = current.work_type === "REMOTE" ? "REMOTE" : "ON_SITE";
+        const baseType = base.work_type === "REMOTE" ? "REMOTE" : "ON_SITE";
+        const currentNotes = currentType === "REMOTE" ? String(current.notes || "") : "";
+        const baseNotes = baseType === "REMOTE" ? String(base.notes || "") : "";
+        return currentType !== baseType || currentNotes !== baseNotes;
+      }
+
+      function dayApprovalStateForDay(dayIso) {
+        if (!dayDiffersFromApproved(dayIso)) return "";
+        if (hasDraftChanges() && dayDiffersFromBaseline(dayIso)) {
+          return "editing";
+        }
+        if (currentDisplayStatus === "REJECTED") {
+          return dayDiffersFromBaseline(dayIso) ? "editing" : "rejected";
+        }
+        if (currentDisplayStatus === "PENDING") return "pending";
+        return "editing";
+      }
+
+      function hasDifferencesFromApproved() {
+        if (!currentPlan || !Object.keys(approvedSnapshotMap).length) return false;
+        const days = Object.keys(dayValues || {});
+        if (!days.length) return false;
+        return days.some((dayIso) => dayDiffersFromApproved(dayIso));
+      }
+
+      function isPendingRequestState() {
+        return currentDisplayStatus === "PENDING";
+      }
+
+      function dayModalMode() {
+        return (calendarReadonly || isPendingRequestState()) ? "view" : "edit";
+      }
+
+      function renderCalendar(daysMap = {}) {
+        const year = Number(yearInput.value);
+        const month = Number(selectedMonth);
+        const hideWeekends = shouldHideWeekends();
+        weekendHiddenMode = hideWeekends;
+        document.body.classList.toggle("weekdays-compact", hideWeekends);
+        calendarBody.innerHTML = "";
+        calendarBody.classList.toggle("weekdays-only", hideWeekends);
+        dayValues = {};
+        const availableDays = new Set();
+        const weekdayLabels = hideWeekends
+          ? ["Lun", "Mar", "Mer", "Gio", "Ven"]
+          : ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+        weekdayLabels.forEach((label) => {
+          const head = document.createElement("div");
+          head.className = "calendar-weekday";
+          head.textContent = label;
+          calendarBody.appendChild(head);
+        });
+
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const appendOutsideCell = () => {
+          const outside = document.createElement("div");
+          outside.className = "calendar-day outside-month";
+          calendarBody.appendChild(outside);
+        };
+        const appendDayCell = (dayNumber) => {
+          const cell = document.createElement("div");
+          cell.className = "calendar-day";
+
+          const d = new Date(year, month - 1, dayNumber);
+          const iso = toIsoDate(d);
+          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+          const isHoliday = currentHolidayDays.has(iso);
+          const dayName = dayLabel(iso);
+
+          const head = document.createElement("div");
+          head.className = "calendar-day-head";
+          head.innerHTML = `
+            <span class="calendar-day-number">${String(dayNumber).padStart(2, "0")}</span>
+            <span class="calendar-day-meta">${dayName}</span>
+          `;
+          cell.appendChild(head);
+
+          if (isWeekend || isHoliday) {
+            cell.classList.add("non-working");
+            const status = document.createElement("div");
+            status.className = "calendar-day-status";
+            status.textContent = isHoliday ? (currentHolidayNames[iso] || "Festivita") : "Weekend";
+            cell.appendChild(status);
+            calendarBody.appendChild(cell);
+            return;
+          }
+
+          const value = daysMap[iso] || { work_type: "ON_SITE", notes: "" };
+          dayValues[iso] = {
+            work_type: value.work_type || "ON_SITE",
+            notes: value.notes || "",
+          };
+          availableDays.add(iso);
+          if (dayValues[iso].work_type === "REMOTE") {
+            cell.classList.add("mode-remote");
+          } else {
+            cell.classList.add("mode-onsite");
+          }
+          const dayApprovalState = dayApprovalStateForDay(iso);
+          if (dayApprovalState === "pending") {
+            cell.classList.add("pending-approval");
+          } else if (dayApprovalState === "rejected") {
+            cell.classList.add("rejected-approval");
+          } else if (dayApprovalState === "editing") {
+            cell.classList.add("editing-change");
+          }
+          cell.classList.add("working");
+          cell.dataset.day = iso;
+          if (selectedDays.has(iso)) {
+            cell.classList.add("selected");
+          }
+
+          const card = document.createElement("div");
+          card.className = "calendar-day-card";
+          if (dayValues[iso].work_type === "REMOTE") {
+            card.classList.add("remote-centered");
+            const modeLabel = document.createElement("span");
+            modeLabel.className = "calendar-day-mode-label remote";
+            modeLabel.textContent = "Lavoro agile";
+            card.appendChild(modeLabel);
+          }
+          cell.appendChild(card);
+          calendarBody.appendChild(cell);
+        };
+
+        if (hideWeekends) {
+          const first = new Date(year, month - 1, 1);
+          const firstWeekday = first.getDay(); // 0=dom, 1=lun, ... 6=sab
+          const leadingSlots = firstWeekday >= 1 && firstWeekday <= 5 ? firstWeekday - 1 : 0;
+          for (let i = 0; i < leadingSlots; i++) {
+            appendOutsideCell();
+          }
+
+          let renderedWorkingSlots = 0;
+          for (let dayNumber = 1; dayNumber <= daysInMonth; dayNumber++) {
+            const d = new Date(year, month - 1, dayNumber);
+            const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+            if (isWeekend) continue;
+            appendDayCell(dayNumber);
+            renderedWorkingSlots += 1;
+          }
+
+          const totalSlots = leadingSlots + renderedWorkingSlots;
+          const trailingSlots = (5 - (totalSlots % 5)) % 5;
+          for (let i = 0; i < trailingSlots; i++) {
+            appendOutsideCell();
+          }
+        } else {
+          const first = new Date(year, month - 1, 1);
+          const firstWeekdayIndex = (first.getDay() + 6) % 7;
+          const totalSlots = Math.ceil((firstWeekdayIndex + daysInMonth) / 7) * 7;
+          for (let slot = 0; slot < totalSlots; slot++) {
+            const dayNumber = slot - firstWeekdayIndex + 1;
+            if (dayNumber < 1 || dayNumber > daysInMonth) {
+              appendOutsideCell();
+              continue;
+            }
+            appendDayCell(dayNumber);
+          }
+        }
+        selectedDays = new Set([...selectedDays].filter((day) => availableDays.has(day)));
+        updateSelectionState();
+      }
+
+      function getSelectedDays() {
+        return Array.from(selectedDays);
+      }
+
+      function updateSelectionState() {
+        const hasMultiSelection = selectedDays.size > 1;
+        multiSelectBox.classList.toggle("hidden", !hasMultiSelection);
+      }
+
+      function clearSelectedDays() {
+        selectedDays = new Set();
+      }
+
+      function maxRemoteDaysForSelectedMonth() {
+        return Number(selectedMonth) === 2 ? 8 : 10;
+      }
+
+      function projectedRemoteDaysForSelection(days) {
+        const currentRemote = Object.values(dayValues).filter((entry) => entry?.work_type === "REMOTE").length;
+        const becomingRemote = (days || []).filter((day) => dayValues[day] && dayValues[day].work_type !== "REMOTE").length;
+        return currentRemote + becomingRemote;
+      }
+
+      function currentRemoteDaysCount() {
+        return Object.values(dayValues).filter((entry) => entry?.work_type === "REMOTE").length;
+      }
+
+      function canSetRemoteForDays(days, context = "applicare la selezione") {
+        const remoteMax = maxRemoteDaysForSelectedMonth();
+        const projectedRemote = projectedRemoteDaysForSelection(days);
+        if (projectedRemote > remoteMax) {
+          setFeedback(
+            `Hai raggiunto il massimo mensile di lavoro agile (${remoteMax}). Non puoi selezionare altri giorni agile.`,
+            "warn"
+          );
+          return false;
+        }
+        const projectedOnSite = projectedOnSiteDaysFromRemote(projectedRemote);
+        if (!validateOnSitePrevalence(projectedRemote, projectedOnSite, `di ${context}`)) {
+          return false;
+        }
+        return true;
+      }
+
+      function totalWorkingDaysCount() {
+        return Object.keys(dayValues).length;
+      }
+
+      function projectedOnSiteDaysFromRemote(remoteDays) {
+        return Math.max(0, totalWorkingDaysCount() - remoteDays);
+      }
+
+      function validateOnSitePrevalence(remoteDays, onSiteDays, context = "inviare") {
+        if (remoteDays > 0 && onSiteDays <= remoteDays) {
+          setFeedback(
+            `ATENZIONE: il lavoro in presenza deve restare prevalente (in sede ${onSiteDays}, agile ${remoteDays}). Riduci i giorni agile prima di ${context}.`,
+            "warn"
+          );
+          return false;
+        }
+        return true;
+      }
+
+      function validateRemoteLimitForSend() {
+        const remoteMax = maxRemoteDaysForSelectedMonth();
+        const remoteDays = currentRemoteDaysCount();
+        if (remoteDays > remoteMax) {
+          setFeedback(
+            `Superi il massimo mensile di lavoro agile: ${remoteDays}/${remoteMax}. Riduci le giornate agile prima dell'invio.`,
+            "warn"
+          );
+          return false;
+        }
+        const onSiteDays = projectedOnSiteDaysFromRemote(remoteDays);
+        if (!validateOnSitePrevalence(remoteDays, onSiteDays, "dell'invio")) {
+          return false;
+        }
+        return true;
+      }
+
+      function applyModeToDays(days, mode) {
+        if (!days.length || calendarReadonly) return;
+        if (mode === "REMOTE") {
+          if (!canSetRemoteForDays(days, "applicare la selezione")) {
+            return;
+          }
+          bulkRemoteDays = [...days];
+          bulkRemoteTitle.textContent = `Lavoro agile - ${days.length} giorni selezionati`;
+          bulkRemoteText.value = "";
+          bulkRemoteModal.classList.remove("hidden");
+          return;
+        }
+        days.forEach((day) => {
+          if (!dayValues[day]) return;
+          dayValues[day].work_type = mode;
+          if (mode !== "REMOTE") {
+            dayValues[day].notes = "";
+          }
+        });
+        clearSelectedDays();
+        renderCalendar(dayValues);
+        refreshPlanningActions();
+        persistLocalDraft();
+      }
+
+      function closeBulkRemoteModal({ clearSelection = false } = {}) {
+        if (clearSelection) {
+          clearSelectedDays();
+          renderCalendar(dayValues);
+          refreshPlanningActions();
+        }
+        bulkRemoteModal.classList.add("hidden");
+        bulkRemoteDays = [];
+      }
+
+      function applyBulkRemoteMode() {
+        if (!bulkRemoteDays.length || calendarReadonly) {
+          closeBulkRemoteModal();
+          return;
+        }
+        if (!canSetRemoteForDays(bulkRemoteDays, "applicare la selezione")) {
+          return;
+        }
+        const sharedText = (bulkRemoteText.value || "").trim();
+        bulkRemoteDays.forEach((day) => {
+          if (!dayValues[day]) return;
+          dayValues[day].work_type = "REMOTE";
+          dayValues[day].notes = sharedText;
+        });
+        closeBulkRemoteModal({ clearSelection: true });
+        persistLocalDraft();
+      }
+
+      function collectDays() {
+        return Object.keys(dayValues)
+          .sort()
+          .map((day) => ({
+            day,
+            work_type: dayValues[day].work_type || "ON_SITE",
+            notes: dayValues[day].work_type === "REMOTE" ? (dayValues[day].notes || "") : "",
+          }));
+      }
+
+      async function api(path, options = {}) {
+        const headers = {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+        };
+        if (token()) headers.Authorization = `Token ${token()}`;
+        const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+        let data = null;
+        try {
+          data = await res.json();
+        } catch (_) {}
+        if (!res.ok) {
+          const message = data?.detail || data?.non_field_errors?.[0] || JSON.stringify(data) || "Errore API";
+          const error = new Error(message);
+          error.status = res.status;
+          throw error;
+        }
+        return data;
+      }
+
+      async function loadMonth() {
+        clearFeedback();
+        const year = Number(yearInput.value);
+        const month = Number(selectedMonth);
+        saveMonthYearPreference(year, month);
+        const currentYm = currentYearMonth();
+        const nextYm = nextYearMonth();
+
+        const [plans, holidays] = await Promise.all([
+          api("/plans/"),
+          api(`/holidays/month/?year=${year}&month=${month}`),
+        ]);
+        currentHolidayDays = new Set(holidays.days || []);
+        currentHolidayNames = {};
+        for (const item of holidays.items || []) {
+          if (!item?.day) continue;
+          currentHolidayNames[item.day] = item.name || "Festivita";
+        }
+        currentPlan =
+          plans.find((p) => p.user && p.user.id === currentUser?.id && p.year === year && p.month === month) || null;
+        approvedSnapshotMap = currentPlan ? buildApprovedSnapshotMap(currentPlan.approved_days_snapshot || []) : {};
+
+        const daysMap = {};
+        const isCurrentMonth = year === currentYm.year && month === currentYm.month;
+        const isNextMonth = year === nextYm.year && month === nextYm.month;
+        const hasPendingChangeRequest =
+          !!(currentPlan && isCurrentMonth && currentPlan.has_pending_change_request);
+        const hasRejectedChangeRequest =
+          !!(currentPlan && isCurrentMonth && currentPlan.latest_change_request_status === "REJECTED");
+        const latestRejectedChangeReason =
+          hasRejectedChangeRequest
+            ? (currentPlan.latest_change_request_response_reason || "").trim()
+            : "";
+
+        if (currentPlan) {
+          for (const d of currentPlan.days || []) {
+            daysMap[d.day] = { work_type: d.work_type, notes: d.notes || "" };
+          }
+          // Fallback: se lo snapshot non e ancora disponibile, usa il piano approvato corrente come baseline.
+          if (!Object.keys(approvedSnapshotMap).length && currentPlan.status === "APPROVED") {
+            approvedSnapshotMap = buildApprovedSnapshotMapFromPlanDays(currentPlan.days || []);
+          }
+          const hasRejectedChangeRequest = isCurrentMonth && currentPlan.latest_change_request_status === "REJECTED";
+          const baseStatus = hasPendingChangeRequest
+            ? "CHANGE_REQUESTED"
+            : (hasRejectedChangeRequest ? "CHANGE_REJECTED" : currentPlan.status);
+          const displayStatus = normalizePlanVisualStatus(baseStatus);
+          setStatus(displayStatus);
+        } else {
+          setStatus("EDITING");
+        }
+
+        currentMonthContext = {
+          isCurrentMonth,
+          isNextMonth,
+          hasPendingChangeRequest,
+          hasApprovedSnapshot: !!(currentPlan && currentPlan.has_approved_snapshot),
+          hasRejectedChangeRequest,
+          latestRejectedChangeReason,
+        };
+
+        const editableMonth = isCurrentMonth || isNextMonth;
+        const readonlyByMonth = !editableMonth;
+        const readonlyByPendingChangeRequest = isCurrentMonth && hasPendingChangeRequest;
+        const readonlyByAilaSubscription = !hasAilaSubscription();
+        const readonly = readonlyByMonth || readonlyByPendingChangeRequest || readonlyByAilaSubscription;
+        if (readonly) {
+          clearSelectedDays();
+        }
+
+        renderCalendar(daysMap);
+        baselineDaySignature = mapSignatureFromDayValues();
+        baselineDayMap = cloneDayValuesMap();
+        restoreLocalDraftIfAny(year, month, { readonly });
+        calendarReadonly = readonly;
+        bulkSetOnSiteBtn.disabled = readonly;
+        bulkSetRemoteBtn.disabled = readonly;
+        if (readonlyByAilaSubscription && APP_PAGE === "programming") {
+          setFeedback("Programmazione non disponibile: Sottoscrizione AILA impostata su No", "warn");
+        }
+        refreshPlanningActions();
+      }
+
+      async function loadSelectedMonthDirectly() {
+        if (!token()) {
+          renderCalendar({});
+          return;
+        }
+        await loadMonth();
+      }
+
+      function queueUserLabel(user) {
+        const fullName = `${(user?.first_name || "").trim()} ${(user?.last_name || "").trim()}`.trim();
+        return fullName || user?.username || "-";
+      }
+
+      function renderApproverQueue(plans) {
+        approverQueuePlans = [...plans];
+        const validIds = new Set(approverQueuePlans.map((plan) => String(plan.id)));
+        selectedApproverPlanIds = new Set(
+          [...selectedApproverPlanIds].filter((id) => validIds.has(String(id)))
+        );
+        approverBody.innerHTML = "";
+        const hasRows = plans.length > 0;
+        approvalsBatchBar.classList.toggle("hidden", !hasRows);
+        if (!hasRows) {
+          approverSelectAll.checked = false;
+          approverSelectAll.indeterminate = false;
+          approvalsBatchInfo.textContent = "Selezionati: 0";
+          approveSelectedBtn.disabled = true;
+          rejectSelectedBtn.disabled = true;
+        }
+        if (!plans.length) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td colspan="6">Nessun piano in attesa di approvazione</td>`;
+          approverBody.appendChild(tr);
+          return;
+        }
+
+        plans.forEach((plan) => {
+          const tr = document.createElement("tr");
+          const checked = selectedApproverPlanIds.has(String(plan.id)) ? "checked" : "";
+          tr.innerHTML = `
+            <td>
+              <input type="checkbox" data-plan-select="${plan.id}" aria-label="Seleziona piano ${plan.id}" ${checked} />
+            </td>
+            <td>${queueUserLabel(plan.user)}</td>
+            <td>${plan.user?.department || "-"}</td>
+            <td>${String(plan.month).padStart(2, "0")}/${plan.year}</td>
+            <td><span class="status ${plan.status}">${labelStatus(plan.status)}</span></td>
+            <td>
+              <div class="review-actions">
+                <button class="btn-small btn-approve" data-action="approve" data-id="${plan.id}">Approva</button>
+                <button class="btn-small btn-reject" data-action="reject" data-id="${plan.id}">Rifiuta</button>
+                <button class="btn-small" data-action="details" data-id="${plan.id}">Dettaglio</button>
+              </div>
+            </td>
+          `;
+          approverBody.appendChild(tr);
+        });
+        syncApproverSelectionUi();
+      }
+
+      function syncApproverSelectionUi() {
+        const total = approverQueuePlans.length;
+        const selected = selectedApproverPlanIds.size;
+        approvalsBatchInfo.textContent = `Selezionati: ${selected}${total ? ` su ${total}` : ""}`;
+        const hasSelection = selected > 0;
+        approveSelectedBtn.disabled = !hasSelection;
+        rejectSelectedBtn.disabled = !hasSelection;
+        approverSelectAll.checked = total > 0 && selected === total;
+        approverSelectAll.indeterminate = selected > 0 && selected < total;
+      }
+
+      function selectedApproverPlans() {
+        return approverQueuePlans.filter((plan) => selectedApproverPlanIds.has(String(plan.id)));
+      }
+
+      function renderChangeRequests(items) {
+        changeRequestQueueItems = [...items];
+        const validIds = new Set(changeRequestQueueItems.map((item) => String(item.id)));
+        selectedChangeRequestIds = new Set(
+          [...selectedChangeRequestIds].filter((id) => validIds.has(String(id)))
+        );
+        changeReqBody.innerHTML = "";
+        const hasRows = items.length > 0;
+        changesBatchBar.classList.toggle("hidden", !hasRows);
+        if (!hasRows) {
+          changeReqSelectAll.checked = false;
+          changeReqSelectAll.indeterminate = false;
+          changesBatchInfo.textContent = "Selezionati: 0";
+          approveChangeSelectedBtn.disabled = true;
+          rejectChangeSelectedBtn.disabled = true;
+        }
+        if (!items.length) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td colspan="6">Nessuna richiesta variazione in attesa</td>`;
+          changeReqBody.appendChild(tr);
+          return;
+        }
+
+        items.forEach((item) => {
+          const tr = document.createElement("tr");
+          const checked = selectedChangeRequestIds.has(String(item.id)) ? "checked" : "";
+          tr.innerHTML = `
+            <td>
+              <input type="checkbox" data-change-select="${item.id}" aria-label="Seleziona richiesta variazione ${item.id}" ${checked} />
+            </td>
+            <td>${queueUserLabel(item.user)}</td>
+            <td>${item.user?.department || "-"}</td>
+            <td>${String(item.plan_month).padStart(2, "0")}/${item.plan_year}</td>
+            <td><span class="status ${item.status}">${labelChangeRequestStatus(item.status)}</span></td>
+            <td>
+              <div class="review-actions">
+                <button class="btn-small btn-approve" data-change-action="approve" data-id="${item.id}">Approva</button>
+                <button class="btn-small btn-reject" data-change-action="reject" data-id="${item.id}">Rifiuta</button>
+                <button class="btn-small" data-change-action="details" data-id="${item.id}">Dettaglio</button>
+              </div>
+            </td>
+          `;
+          changeReqBody.appendChild(tr);
+        });
+        syncChangeSelectionUi();
+      }
+
+      function syncChangeSelectionUi() {
+        const total = changeRequestQueueItems.length;
+        const selected = selectedChangeRequestIds.size;
+        changesBatchInfo.textContent = `Selezionati: ${selected}${total ? ` su ${total}` : ""}`;
+        const hasSelection = selected > 0;
+        approveChangeSelectedBtn.disabled = !hasSelection;
+        rejectChangeSelectedBtn.disabled = !hasSelection;
+        changeReqSelectAll.checked = total > 0 && selected === total;
+        changeReqSelectAll.indeterminate = selected > 0 && selected < total;
+      }
+
+      function selectedChangeRequests() {
+        return changeRequestQueueItems.filter((item) => selectedChangeRequestIds.has(String(item.id)));
+      }
+
+      function labelStatus(code) {
+        if (code === "EDITING" || code === "DRAFT") return "In modifica";
+        if (code === "PENDING") return "In approvazione";
+        if (code === "SUBMITTED") return "In attesa approvazione";
+        if (code === "APPROVED") return "Approvato";
+        if (code === "REJECTED") return "Rifiutato";
+        if (code === "CHANGE_REQUESTED") return "Richiesta variazione";
+        if (code === "CHANGE_REJECTED") return "Variazione rifiutata";
+        if (code === "PROCESSED") return "Processata";
+        return code || "-";
+      }
+
+      function labelChangeRequestStatus(code) {
+        if (code === "PENDING") return "In attesa approvazione";
+        if (code === "APPROVED") return "Variazione approvata";
+        if (code === "REJECTED") return "Variazione rifiutata";
+        return labelStatus(code);
+      }
+
+      function hasPlannedActivities(entry) {
+        if (!entry) return false;
+        const notesValue = (entry.notes || "").trim();
+        if (!notesValue) return false;
+        const normalized = notesValue.toLowerCase();
+        if (normalized === "nessuna attivita programmata") return false;
+        if (normalized === "nessuna attività programmata") return false;
+        if (normalized === "-") return false;
+        return true;
+      }
+
+      function openPlanDetails(plan, { changeRequest = null } = {}) {
+        const days = [...(plan.days || [])].sort((a, b) => a.day.localeCompare(b.day));
+        const remote = days.filter((d) => d.work_type === "REMOTE").length;
+        const onSite = days.filter((d) => d.work_type === "ON_SITE").length;
+
+        detailsTitle.textContent = `Dettaglio ${plan.user?.username || "-"} - ${String(plan.month).padStart(2, "0")}/${plan.year}`;
+        detailsSummary.textContent = `In sede: ${onSite} | In lavoro agile: ${remote}`;
+        const monthDate = new Date(Number(plan.year), Number(plan.month) - 1, 1);
+        const monthLabel = monthDate.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+        detailsCalendarPeriod.textContent = `Mese/Anno: ${monthLabel.charAt(0).toUpperCase()}${monthLabel.slice(1)}`;
+        if (changeRequest) {
+          detailsChangeRequestReason = (changeRequest.reason || "").trim() || "Nessuna motivazione";
+          detailsRequestReasonBtn.classList.remove("hidden");
+        } else {
+          detailsChangeRequestReason = "";
+          detailsRequestReasonBtn.classList.add("hidden");
+        }
+        detailsCalendar.innerHTML = "";
+        const weekdayLabels = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+        weekdayLabels.forEach((label) => {
+          const head = document.createElement("div");
+          head.className = "details-weekday";
+          head.textContent = label;
+          detailsCalendar.appendChild(head);
+        });
+
+        const dayMap = {};
+        days.forEach((d) => {
+          dayMap[d.day] = d;
+        });
+        detailsDayMap = dayMap;
+        const year = Number(plan.year);
+        const month = Number(plan.month);
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const first = new Date(year, month - 1, 1);
+        const firstWeekdayIndex = (first.getDay() + 6) % 7;
+        const totalSlots = Math.ceil((firstWeekdayIndex + daysInMonth) / 7) * 7;
+
+        for (let slot = 0; slot < totalSlots; slot++) {
+          const dayNumber = slot - firstWeekdayIndex + 1;
+          if (dayNumber < 1 || dayNumber > daysInMonth) {
+            const outside = document.createElement("div");
+            outside.className = "details-day outside";
+            detailsCalendar.appendChild(outside);
+            continue;
+          }
+
+          const cell = document.createElement("div");
+          cell.className = "details-day";
+          const d = new Date(year, month - 1, dayNumber);
+          const iso = toIsoDate(d);
+          const entry = dayMap[iso];
+          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+
+          const head = document.createElement("div");
+          head.className = "details-day-head";
+          head.innerHTML = `
+            <span class="details-day-number">${String(dayNumber).padStart(2, "0")}</span>
+            <span class="details-day-meta">${dayLabel(iso)}</span>
+          `;
+          cell.appendChild(head);
+
+          if (isWeekend || !entry) {
+            cell.classList.add("non-working");
+            const status = document.createElement("div");
+            status.className = "details-day-status";
+            status.textContent = isWeekend ? "Weekend" : "Non lavorativo";
+            cell.appendChild(status);
+            detailsCalendar.appendChild(cell);
+            continue;
+          }
+
+          cell.classList.add("working");
+          cell.classList.add(entry.work_type === "REMOTE" ? "mode-remote" : "mode-onsite");
+          cell.dataset.day = iso;
+          const modeLabel = document.createElement("div");
+          modeLabel.className = "details-day-mode";
+          modeLabel.textContent = entry.work_type === "REMOTE" ? "Lavoro agile" : "In sede";
+          cell.appendChild(modeLabel);
+
+          const hasNotes = hasPlannedActivities(entry);
+          if (hasNotes) {
+            const noteFlag = document.createElement("span");
+            noteFlag.className = "details-day-note-flag";
+            noteFlag.textContent = "Attivita";
+            cell.appendChild(noteFlag);
+            cell.classList.add("has-notes");
+          }
+          detailsCalendar.appendChild(cell);
+        }
+
+        detailsModal.classList.remove("hidden");
+      }
+
+      function openDetailsDayModal(dayIso) {
+        const entry = detailsDayMap[dayIso];
+        if (!entry) return;
+        detailsDayTitle.textContent = `Dettaglio giornata - ${formatIsoDate(dayIso)}`;
+        detailsDayMode.textContent = `Modalita: ${labelWorkType(entry.work_type)}`;
+        const notesValue = (entry.notes || "").trim();
+        detailsDayNotes.textContent = notesValue || "Nessuna attivita programmata";
+        detailsDayModal.classList.remove("hidden");
+      }
+
+      async function loadApproverQueue({ clearFeedback = true } = {}) {
+        if (!isApprover()) {
+          approverCard.classList.add("hidden");
+          selectedApproverPlanIds.clear();
+          selectedChangeRequestIds.clear();
+          return;
+        }
+        if (APP_PAGE === "programming") {
+          approverCard.classList.add("hidden");
+          selectedApproverPlanIds.clear();
+          selectedChangeRequestIds.clear();
+          return;
+        }
+        approverCard.classList.remove("hidden");
+        if (clearFeedback) {
+          clearReviewFeedback();
+        }
+        if (APP_PAGE === "approvals") {
+          const plans = await api("/plans/");
+          const pending = plans.filter((p) => p.status === "SUBMITTED");
+          renderApproverQueue(pending);
+          return;
+        }
+        const changeRequests = await api("/change-requests/");
+        const pendingChangeRequests = changeRequests.filter((r) => r.status === "PENDING");
+        renderChangeRequests(pendingChangeRequests);
+      }
+
+      function startApproverAutoRefresh() {
+        if (!isApprover()) return;
+        if (APP_PAGE === "programming") return;
+        if (approverRefreshTimer) clearInterval(approverRefreshTimer);
+        approverRefreshTimer = setInterval(async () => {
+          if (document.hidden || !token() || !isApprover()) return;
+          try {
+            await loadApproverQueue({ clearFeedback: false });
+          } catch (_) {}
+        }, 15000);
+      }
+
+      function stopApproverAutoRefresh() {
+        if (!approverRefreshTimer) return;
+        clearInterval(approverRefreshTimer);
+        approverRefreshTimer = null;
+      }
+
+      async function reviewPlan(planId, approve) {
+        const body = { approve };
+        if (!approve) {
+          const result = await askActionDialog({
+            title: "Rifiuta piano",
+            message: "Inserisci la motivazione del rifiuto.",
+            requireReason: true,
+            confirmLabel: "Conferma rifiuto",
+            reasonPlaceholder: "Motivazione rifiuto piano",
+          });
+          if (!result.confirmed) return;
+          const reason = (result.reason || "").trim();
+          if (!reason) return;
+          body.reason = reason;
+        }
+        await api(`/plans/${planId}/review/`, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        setReviewFeedback(
+          approve ? "Piano approvato correttamente" : "Piano rifiutato correttamente",
+          "ok"
+        );
+        await loadApproverQueue();
+        await loadMonth();
+      }
+
+      async function reviewSelectedPlans(approve) {
+        const selectedPlans = selectedApproverPlans();
+        if (!selectedPlans.length) return;
+        let reason = "";
+        if (!approve) {
+          const result = await askActionDialog({
+            title: "Rifiuta piani selezionati",
+            message: "Inserisci la motivazione del rifiuto da applicare a tutti i piani selezionati.",
+            requireReason: true,
+            confirmLabel: "Conferma rifiuto",
+            reasonPlaceholder: "Motivazione rifiuto piani selezionati",
+          });
+          if (!result.confirmed) return;
+          reason = (result.reason || "").trim();
+          if (!reason) return;
+        }
+        for (const plan of selectedPlans) {
+          const body = approve ? { approve: true } : { approve: false, reason };
+          await api(`/plans/${plan.id}/review/`, {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+        }
+        selectedApproverPlanIds.clear();
+        setReviewFeedback(
+          approve
+            ? `Approvati ${selectedPlans.length} piani selezionati`
+            : `Rifiutati ${selectedPlans.length} piani selezionati`,
+          "ok"
+        );
+        await loadApproverQueue();
+        await loadMonth();
+      }
+
+      async function reviewSelectedChangeRequests(approve) {
+        const selectedItems = selectedChangeRequests();
+        if (!selectedItems.length) return;
+        let reason = "";
+        if (!approve) {
+          const result = await askActionDialog({
+            title: "Rifiuta richieste selezionate",
+            message: "Inserisci la motivazione del rifiuto da applicare a tutte le richieste selezionate.",
+            requireReason: true,
+            confirmLabel: "Conferma rifiuto",
+            reasonPlaceholder: "Motivazione rifiuto richieste selezionate",
+          });
+          if (!result.confirmed) return;
+          reason = (result.reason || "").trim();
+          if (!reason) return;
+        }
+        for (const item of selectedItems) {
+          const body = approve ? { approve: true } : { approve: false, reason };
+          await api(`/change-requests/${item.id}/review/`, {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+        }
+        selectedChangeRequestIds.clear();
+        setReviewFeedback(
+          approve
+            ? `Approvate ${selectedItems.length} richieste selezionate`
+            : `Rifiutate ${selectedItems.length} richieste selezionate`,
+          "ok"
+        );
+        await loadApproverQueue();
+        await loadMonth();
+      }
+
+      async function saveDraft({ silent = false, reloadAfterSave = true } = {}) {
+        if (!hasAilaSubscription()) {
+          throw new Error("Programmazione non disponibile: Sottoscrizione AILA impostata su No");
+        }
+        const payload = {
+          year: Number(yearInput.value),
+          month: Number(selectedMonth),
+          days: collectDays(),
+        };
+
+        if (currentPlan) {
+          currentPlan = await api(`/plans/${currentPlan.id}/`, {
+            method: "PUT",
+            body: JSON.stringify(payload),
+          });
+        } else {
+          currentPlan = await api("/plans/", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+        }
+
+        setStatus(currentPlan.status);
+        currentMonthContext.hasPendingChangeRequest = !!currentPlan.has_pending_change_request;
+        currentMonthContext.hasApprovedSnapshot = !!currentPlan.has_approved_snapshot;
+        currentMonthContext.hasRejectedChangeRequest = currentPlan.latest_change_request_status === "REJECTED";
+        currentMonthContext.latestRejectedChangeReason =
+          currentPlan.latest_change_request_status === "REJECTED"
+            ? (currentPlan.latest_change_request_response_reason || "").trim()
+            : "";
+        refreshPlanningActions();
+        baselineDaySignature = mapSignatureFromDayValues();
+        baselineDayMap = cloneDayValuesMap();
+        clearLocalDraft(payload.year, payload.month);
+        if (!silent) {
+          setFeedback("Bozza salvata", "ok");
+        }
+        if (reloadAfterSave) {
+          await loadMonth();
+        }
+      }
+
+      async function submitPlan() {
+        if (!validateRemoteLimitForSend()) {
+          return;
+        }
+        const confirmed = await askSubmitConfirmation();
+        if (!confirmed) {
+          return;
+        }
+        await saveDraft({ silent: true, reloadAfterSave: false });
+        currentPlan = await api(`/plans/${currentPlan.id}/submit/`, { method: "POST", body: "{}" });
+        setStatus(currentPlan.status);
+        currentMonthContext.hasPendingChangeRequest = false;
+        refreshPlanningActions();
+        clearLocalDraft();
+        setFeedback(
+          currentPlan.status === "APPROVED"
+            ? "Piano approvato automaticamente"
+            : "Piano inviato in approvazione",
+          "ok"
+        );
+        await loadMonth();
+      }
+
+      function askSubmitConfirmation() {
+        return new Promise((resolve) => {
+          resolveSubmitConfirm = resolve;
+          confirmSubmitModal.classList.remove("hidden");
+        });
+      }
+
+      function openNoteModal(day, mode = "edit") {
+        activeDay = day;
+        noteModalMode = mode;
+        noteModalTitle.textContent = `${mode === "view" ? "Visualizza" : "Modifica"} - ${formatIsoDate(day)}`;
+        const value = dayValues[day] || { work_type: "ON_SITE", notes: "" };
+        const remoteMaxReached = currentRemoteDaysCount() >= maxRemoteDaysForSelectedMonth();
+        const alreadyRemote = value.work_type === "REMOTE";
+        if (noteModalRemoteItem) {
+          noteModalRemoteItem.disabled = mode === "view" || (remoteMaxReached && !alreadyRemote);
+        }
+        if (noteModalOnSiteItem) {
+          noteModalOnSiteItem.disabled = mode === "view";
+        }
+        setNoteModalWorkType(value.work_type || "ON_SITE");
+        noteModalText.value = value.notes || "";
+        noteModalWorkTypeToggle.disabled = mode === "view";
+        noteModalText.disabled = mode === "view";
+        noteModalText.readOnly = mode === "view" || noteModalWorkTypeValue === "ON_SITE";
+        closeNoteModalBtn.classList.toggle("hidden", mode !== "view");
+        saveNoteBtn.classList.toggle("hidden", mode === "view");
+        cancelNoteBtn.classList.toggle("hidden", mode === "view");
+        noteModal.classList.remove("hidden");
+      }
+
+      function closeNoteModal() {
+        noteModal.classList.add("hidden");
+        noteModalWorkTypePanel.classList.add("hidden");
+        activeDay = null;
+      }
+
+      function saveNoteModal() {
+        if (!activeDay || noteModalMode === "view") return;
+        const workType = noteModalWorkTypeValue || "ON_SITE";
+        if (workType === "REMOTE" && !canSetRemoteForDays([activeDay], "salvare la giornata")) {
+          return;
+        }
+        if (!dayValues[activeDay]) {
+          dayValues[activeDay] = { work_type: workType, notes: "" };
+        }
+        dayValues[activeDay].work_type = workType;
+        dayValues[activeDay].notes = workType === "REMOTE" ? (noteModalText.value || "") : "";
+        clearSelectedDays();
+        renderCalendar(dayValues);
+        refreshPlanningActions();
+        persistLocalDraft();
+        closeNoteModal();
+      }
+
+      function openChangeRequestModal() {
+        changeRequestReason.value = "";
+        changeRequestModal.classList.remove("hidden");
+      }
+
+      function closeChangeRequestModal() {
+        changeRequestModal.classList.add("hidden");
+      }
+
+      async function requestMonthChange(reasonTextValue) {
+        if (!validateRemoteLimitForSend()) {
+          return;
+        }
+        const reason = (reasonTextValue || "").trim();
+        if (!reason) {
+          setFeedback("Inserisci una motivazione per la richiesta variazione", "error");
+          return;
+        }
+        await saveDraft({ silent: true, reloadAfterSave: false });
+        const response = await api(`/plans/${currentPlan.id}/request_change/`, {
+          method: "POST",
+          body: JSON.stringify({ reason }),
+        });
+        const autoApproved = Boolean(response?.auto_approved);
+        setStatus(autoApproved ? "APPROVED" : "PENDING");
+        currentMonthContext.hasPendingChangeRequest = !autoApproved;
+        refreshPlanningActions();
+        clearLocalDraft();
+        closeChangeRequestModal();
+        setFeedback(response?.detail || "Richiesta variazione inviata", "ok");
+        await loadMonth();
+      }
+
+      async function restoreLastApprovedPlan() {
+        if (!currentPlan?.id) return;
+        if (currentDisplayStatus === "REJECTED" && hasDraftChanges()) {
+          const resultDiscard = await askActionDialog({
+            title: "Conferma annullamento modifiche",
+            message: "Vuoi tornare allo stato precedente? Le modifiche correnti non salvate andranno perse.",
+            requireReason: false,
+            confirmLabel: "Ripristina stato precedente",
+          });
+          if (!resultDiscard.confirmed) return;
+          clearSelectedDays();
+          await loadMonth();
+          setFeedback("Stato precedente ripristinato", "ok");
+          return;
+        }
+        const result = await askActionDialog({
+          title: "Conferma ripristino",
+          message: "Vuoi ripristinare l'ultimo piano approvato? Le modifiche correnti andranno perse.",
+          requireReason: false,
+          confirmLabel: "Ripristina",
+        });
+        if (!result.confirmed) return;
+        currentPlan = await api(`/plans/${currentPlan.id}/restore_approved/`, {
+          method: "POST",
+          body: "{}",
+        });
+        clearLocalDraft();
+        setFeedback("Piano ripristinato all'ultima versione approvata", "ok");
+        await loadMonth();
+      }
+
+      async function bootstrap() {
+        purgeLegacyLocalDrafts();
+        if (token()) {
+          try {
+            currentUser = await api("/auth/me/");
+            try {
+              await syncServerToday();
+            } catch (_) {
+              serverToday = null;
+            }
+            localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+            renderUserProfile(currentUser);
+            loginOverlay.classList.add("hidden");
+            mainMenu.classList.remove("hidden");
+            applyMainPageMode();
+            syncMainMenuByRole();
+            restoreMonthYearPreference();
+            if ((APP_PAGE === "approvals" || APP_PAGE === "changes") && !isApprover()) {
+              window.location.replace("/");
+              return;
+            }
+          } catch (err) {
+            if (err.status === 401 || err.status === 403) {
+              localStorage.removeItem(TOKEN_KEY);
+              localStorage.removeItem(USER_KEY);
+            }
+            loginOverlay.classList.remove("hidden");
+            renderCalendar({});
+            return;
+          }
+
+          try {
+            await loadMonth();
+            await loadApproverQueue();
+            startApproverAutoRefresh();
+          } catch (err) {
+            setFeedback(err.message, "error");
+          }
+          return;
+        }
+        loginOverlay.classList.remove("hidden");
+        renderCalendar({});
+      }
+
+      document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        loginError.style.display = "none";
+        try {
+          const data = await api("/auth/login/", {
+            method: "POST",
+            body: JSON.stringify({
+              username: document.getElementById("username").value,
+              password: document.getElementById("password").value,
+            }),
+          });
+          localStorage.setItem(TOKEN_KEY, data.token);
+          localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+          purgeLegacyLocalDrafts();
+          currentUser = data.user;
+          try {
+            await syncServerToday();
+          } catch (_) {
+            serverToday = null;
+          }
+          renderUserProfile(currentUser);
+          loginOverlay.classList.add("hidden");
+          mainMenu.classList.remove("hidden");
+          applyMainPageMode();
+          syncMainMenuByRole();
+          restoreMonthYearPreference();
+          if ((APP_PAGE === "approvals" || APP_PAGE === "changes") && !isApprover()) {
+            window.location.replace("/");
+            return;
+          }
+          try {
+            await loadMonth();
+            await loadApproverQueue();
+            startApproverAutoRefresh();
+          } catch (err) {
+            setFeedback(err.message, "error");
+          }
+        } catch (err) {
+          showTopPopup(err.message, "error");
+          loginError.textContent = err.message;
+          loginError.style.display = "none";
+        }
+      });
+
+      monthToggle.addEventListener("click", () => {
+        monthPanel.classList.toggle("hidden");
+      });
+
+      monthPanel.addEventListener("click", async (event) => {
+        const item = event.target.closest(".custom-select-item[data-value]");
+        if (!item) return;
+        monthPanel.classList.add("hidden");
+        const nextMonth = Number(item.dataset.value);
+        const previousMonth = Number(selectedMonth);
+        if (nextMonth === previousMonth) return;
+        setMonthValue(item.dataset.value);
+        try {
+          await loadSelectedMonthDirectly();
+        } catch (err) {
+          setMonthValue(previousMonth);
+          setFeedback(err.message, "error");
+        }
+      });
+
+      yearInput.addEventListener("change", async () => {
+        const previousYear = Number(yearInput.dataset.prev || currentYearMonth().year);
+        const nextYear = Number(yearInput.value);
+        if (nextYear === previousYear) return;
+        try {
+          await loadSelectedMonthDirectly();
+        } catch (err) {
+          yearInput.value = String(previousYear);
+          setFeedback(err.message, "error");
+        }
+      });
+
+      yearInput.addEventListener("focus", () => {
+        yearInput.dataset.prev = yearInput.value;
+      });
+
+      prevMonthBtn.addEventListener("click", async () => {
+        const previousYear = Number(yearInput.value);
+        const previousMonth = Number(selectedMonth);
+        shiftMonth(-1);
+        try {
+          await loadSelectedMonthDirectly();
+        } catch (err) {
+          yearInput.value = String(previousYear);
+          setMonthValue(previousMonth);
+          setFeedback(err.message, "error");
+        }
+      });
+
+      nextMonthBtn.addEventListener("click", async () => {
+        const previousYear = Number(yearInput.value);
+        const previousMonth = Number(selectedMonth);
+        shiftMonth(1);
+        try {
+          await loadSelectedMonthDirectly();
+        } catch (err) {
+          yearInput.value = String(previousYear);
+          setMonthValue(previousMonth);
+          setFeedback(err.message, "error");
+        }
+      });
+
+      document.getElementById("submitBtn").addEventListener("click", async () => {
+        try {
+          await submitPlan();
+          await loadApproverQueue();
+        } catch (err) {
+          setFeedback(err.message, "error");
+        }
+      });
+
+      requestChangeBtn.addEventListener("click", async () => {
+        if (requestChangeBtn.disabled) return;
+        openChangeRequestModal();
+      });
+
+      approverSelectAll.addEventListener("change", (event) => {
+        if (event.target.checked) {
+          selectedApproverPlanIds = new Set(approverQueuePlans.map((plan) => String(plan.id)));
+        } else {
+          selectedApproverPlanIds.clear();
+        }
+        approverBody.querySelectorAll('input[type="checkbox"][data-plan-select]').forEach((cb) => {
+          cb.checked = event.target.checked;
+        });
+        syncApproverSelectionUi();
+      });
+
+      approverBody.addEventListener("change", (event) => {
+        const checkbox = event.target.closest('input[type="checkbox"][data-plan-select]');
+        if (!checkbox) return;
+        const planId = String(checkbox.dataset.planSelect || "");
+        if (!planId) return;
+        if (checkbox.checked) {
+          selectedApproverPlanIds.add(planId);
+        } else {
+          selectedApproverPlanIds.delete(planId);
+        }
+        syncApproverSelectionUi();
+      });
+
+      approverBody.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-id]");
+        if (!button) return;
+        const planId = button.dataset.id;
+        const action = button.dataset.action;
+        let selectedPlan = approverQueuePlans.find((p) => String(p.id) === String(planId));
+        if (!selectedPlan) {
+          const planRows = await api("/plans/");
+          selectedPlan = planRows.find((p) => String(p.id) === String(planId));
+        }
+        if (!selectedPlan) {
+          setReviewFeedback("Piano non trovato", "error");
+          return;
+        }
+        if (action === "details") {
+          openPlanDetails(selectedPlan);
+          return;
+        }
+        try {
+          await reviewPlan(planId, action === "approve");
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      approveSelectedBtn.addEventListener("click", async () => {
+        if (approveSelectedBtn.disabled) return;
+        try {
+          await reviewSelectedPlans(true);
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      rejectSelectedBtn.addEventListener("click", async () => {
+        if (rejectSelectedBtn.disabled) return;
+        try {
+          await reviewSelectedPlans(false);
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      changeReqSelectAll.addEventListener("change", (event) => {
+        if (event.target.checked) {
+          selectedChangeRequestIds = new Set(changeRequestQueueItems.map((item) => String(item.id)));
+        } else {
+          selectedChangeRequestIds.clear();
+        }
+        changeReqBody.querySelectorAll('input[type="checkbox"][data-change-select]').forEach((cb) => {
+          cb.checked = event.target.checked;
+        });
+        syncChangeSelectionUi();
+      });
+
+      changeReqBody.addEventListener("change", (event) => {
+        const checkbox = event.target.closest('input[type="checkbox"][data-change-select]');
+        if (!checkbox) return;
+        const changeId = String(checkbox.dataset.changeSelect || "");
+        if (!changeId) return;
+        if (checkbox.checked) {
+          selectedChangeRequestIds.add(changeId);
+        } else {
+          selectedChangeRequestIds.delete(changeId);
+        }
+        syncChangeSelectionUi();
+      });
+
+      changeReqBody.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-id]");
+        if (!button) return;
+        const changeId = button.dataset.id;
+        const action = button.dataset.changeAction;
+        try {
+          if (action === "details") {
+            const rows = await api("/change-requests/");
+            const item = rows.find((r) => String(r.id) === String(changeId));
+            if (!item) {
+              setReviewFeedback("Richiesta variazione non trovata", "error");
+              return;
+            }
+            const planRows = await api("/plans/");
+            const selectedPlan = planRows.find((p) => String(p.id) === String(item.plan));
+            if (!selectedPlan) {
+              setReviewFeedback("Piano collegato non trovato", "error");
+              return;
+            }
+            openPlanDetails(selectedPlan, { changeRequest: item });
+            return;
+          }
+
+          if (action === "approve" || action === "reject") {
+            const approve = action === "approve";
+            const body = { approve };
+            if (!approve) {
+              const result = await askActionDialog({
+                title: "Rifiuta richiesta variazione",
+                message: "Inserisci la motivazione del rifiuto.",
+                requireReason: true,
+                confirmLabel: "Conferma rifiuto",
+                reasonPlaceholder: "Motivazione rifiuto richiesta variazione",
+              });
+              if (!result.confirmed) return;
+              const reason = (result.reason || "").trim();
+              if (!reason) return;
+              body.reason = reason;
+            }
+            await api(`/change-requests/${changeId}/review/`, {
+              method: "POST",
+              body: JSON.stringify(body),
+            });
+            setReviewFeedback(
+              approve ? "Richiesta variazione approvata" : "Richiesta variazione rifiutata",
+              "ok"
+            );
+            await loadApproverQueue();
+            await loadMonth();
+          }
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      approveChangeSelectedBtn.addEventListener("click", async () => {
+        if (approveChangeSelectedBtn.disabled) return;
+        try {
+          await reviewSelectedChangeRequests(true);
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      rejectChangeSelectedBtn.addEventListener("click", async () => {
+        if (rejectChangeSelectedBtn.disabled) return;
+        try {
+          await reviewSelectedChangeRequests(false);
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      document.addEventListener("visibilitychange", async () => {
+        if (document.hidden || !token()) return;
+        try {
+          if (isApprover() && APP_PAGE !== "programming") {
+            await loadApproverQueue({ clearFeedback: false });
+          }
+        } catch (_) {}
+      });
+
+      window.addEventListener("focus", async () => {
+        if (!token()) return;
+        try {
+          if (isApprover() && APP_PAGE !== "programming") {
+            await loadApproverQueue({ clearFeedback: false });
+          }
+        } catch (_) {}
+      });
+
+      window.addEventListener("resize", () => {
+        const nextMode = shouldHideWeekends();
+        if (nextMode === weekendHiddenMode) return;
+        weekendHiddenMode = nextMode;
+        if (APP_PAGE !== "programming" || calendarCard.classList.contains("hidden")) return;
+        renderCalendar(dayValues);
+      });
+
+      document.getElementById("closeDetailsBtn").addEventListener("click", () => {
+        detailsModal.classList.add("hidden");
+      });
+
+      detailsCalendar.addEventListener("click", (event) => {
+        const dayCell = event.target.closest(".details-day.working[data-day]");
+        if (!dayCell) return;
+        const dayIso = dayCell.dataset.day;
+        const entry = detailsDayMap[dayIso];
+        if (!entry) return;
+        if (!hasPlannedActivities(entry)) return;
+        openDetailsDayModal(dayIso);
+      });
+
+      closeDetailsDayBtn.addEventListener("click", () => {
+        detailsDayModal.classList.add("hidden");
+      });
+
+      detailsRequestReasonBtn.addEventListener("click", () => {
+        if (!detailsChangeRequestReason) return;
+        detailsDayTitle.textContent = "Motivazione della richiesta";
+        detailsDayMode.textContent = "";
+        detailsDayNotes.textContent = detailsChangeRequestReason;
+        detailsDayModal.classList.remove("hidden");
+      });
+
+      calendarBody.addEventListener("click", (event) => {
+        const dayCell = event.target.closest(".calendar-day.working[data-day]");
+        if (!dayCell) return;
+        if (ignoreNextCalendarClick || event.detail > 1) {
+          ignoreNextCalendarClick = false;
+          return;
+        }
+        const day = dayCell.dataset.day;
+        if (!day) return;
+        if (dayModalMode() === "view") {
+          openNoteModal(day, "view");
+          return;
+        }
+        if (selectedDays.has(day)) {
+          selectedDays.delete(day);
+          dayCell.classList.remove("selected");
+        } else {
+          selectedDays.add(day);
+          dayCell.classList.add("selected");
+        }
+        updateSelectionState();
+      });
+
+      calendarBody.addEventListener("dblclick", (event) => {
+        const dayCell = event.target.closest(".calendar-day.working[data-day]");
+        if (!dayCell) return;
+        const mode = dayModalMode();
+        if (mode === "view") {
+          ignoreNextCalendarClick = false;
+          openNoteModal(dayCell.dataset.day, "view");
+          return;
+        }
+        ignoreNextCalendarClick = true;
+        openNoteModal(dayCell.dataset.day, "edit");
+      });
+
+      bulkSetOnSiteBtn.addEventListener("click", () => {
+        applyModeToDays(getSelectedDays(), "ON_SITE");
+      });
+
+      bulkSetRemoteBtn.addEventListener("click", () => {
+        applyModeToDays(getSelectedDays(), "REMOTE");
+      });
+
+      cancelBulkRemoteBtn.addEventListener("click", () => {
+        closeBulkRemoteModal({ clearSelection: true });
+      });
+
+      applyBulkRemoteBtn.addEventListener("click", () => {
+        applyBulkRemoteMode();
+      });
+
+      cancelNoteBtn.addEventListener("click", () => {
+        clearSelectedDays();
+        renderCalendar(dayValues);
+        refreshPlanningActions();
+        closeNoteModal();
+      });
+
+      closeNoteModalBtn.addEventListener("click", () => {
+        closeNoteModal();
+      });
+
+      saveNoteBtn.addEventListener("click", () => {
+        saveNoteModal();
+      });
+
+      noteModalWorkTypeToggle.addEventListener("click", () => {
+        if (noteModalMode === "view") return;
+        noteModalWorkTypePanel.classList.toggle("hidden");
+      });
+
+      noteModalWorkTypePanel.addEventListener("click", (event) => {
+        const item = event.target.closest(".custom-select-item[data-value]");
+        if (!item) return;
+        if (noteModalMode === "view") return;
+        if (item.disabled) return;
+        setNoteModalWorkType(item.dataset.value || "ON_SITE");
+        noteModalWorkTypePanel.classList.add("hidden");
+        const onSite = noteModalWorkTypeValue === "ON_SITE";
+        noteModalText.disabled = false;
+        noteModalText.readOnly = onSite;
+        if (onSite) {
+          noteModalText.value = "";
+        }
+      });
+
+      viewReasonBtn.addEventListener("click", () => {
+        const changeReqRejectReason =
+          currentPlan?.latest_change_request_status === "REJECTED"
+            ? (currentPlan?.latest_change_request_response_reason || "").trim()
+            : "";
+        const text = changeReqRejectReason || currentPlan?.rejection_reason || "Nessuna motivazione disponibile";
+        reasonText.textContent = text;
+        reasonModal.classList.remove("hidden");
+      });
+
+      restoreApprovedBtn.addEventListener("click", async () => {
+        try {
+          await restoreLastApprovedPlan();
+        } catch (err) {
+          setFeedback(err.message || "Impossibile ripristinare il piano approvato", "error");
+        }
+      });
+
+      closeReasonModalBtn.addEventListener("click", () => {
+        reasonModal.classList.add("hidden");
+      });
+
+      closeErrorPopupBtn.addEventListener("click", () => {
+        hideErrorPopup();
+      });
+
+      softwareInfoLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        softwareInfoModal.classList.remove("hidden");
+      });
+
+      closeSoftwareInfoBtn.addEventListener("click", () => {
+        softwareInfoModal.classList.add("hidden");
+      });
+
+      closeChangeRequestModalBtn.addEventListener("click", () => {
+        closeChangeRequestModal();
+      });
+
+      cancelChangeRequestBtn.addEventListener("click", () => {
+        closeChangeRequestModal();
+      });
+
+      confirmChangeRequestBtn.addEventListener("click", async () => {
+        try {
+          await requestMonthChange(changeRequestReason.value);
+        } catch (err) {
+          setFeedback(err.message, "error");
+        }
+      });
+
+      cancelSubmitBtn.addEventListener("click", () => {
+        confirmSubmitModal.classList.add("hidden");
+        if (resolveSubmitConfirm) {
+          resolveSubmitConfirm(false);
+          resolveSubmitConfirm = null;
+        }
+      });
+
+      confirmSubmitBtn.addEventListener("click", () => {
+        confirmSubmitModal.classList.add("hidden");
+        if (resolveSubmitConfirm) {
+          resolveSubmitConfirm(true);
+          resolveSubmitConfirm = null;
+        }
+      });
+
+      function askActionDialog({
+        title = "Conferma",
+        message = "",
+        requireReason = false,
+        confirmLabel = "Conferma",
+        reasonPlaceholder = "Inserisci la motivazione",
+      } = {}) {
+        actionDialogTitle.textContent = title;
+        actionDialogMessage.textContent = message;
+        actionDialogConfirmBtn.textContent = confirmLabel;
+        actionDialogReasonWrap.classList.toggle("hidden", !requireReason);
+        actionDialogReason.value = "";
+        actionDialogReason.placeholder = reasonPlaceholder;
+        actionDialogModal.classList.remove("hidden");
+        if (requireReason) {
+          setTimeout(() => actionDialogReason.focus(), 0);
+        }
+        return new Promise((resolve) => {
+          resolveActionDialog = resolve;
+        });
+      }
+
+      function closeActionDialog(result = { confirmed: false, reason: "" }) {
+        actionDialogModal.classList.add("hidden");
+        if (resolveActionDialog) {
+          resolveActionDialog(result);
+          resolveActionDialog = null;
+        }
+      }
+
+      actionDialogCancelBtn.addEventListener("click", () => {
+        closeActionDialog({ confirmed: false, reason: "" });
+      });
+
+      actionDialogConfirmBtn.addEventListener("click", () => {
+        const needsReason = !actionDialogReasonWrap.classList.contains("hidden");
+        const reason = (actionDialogReason.value || "").trim();
+        if (needsReason && !reason) {
+          setFeedback("Inserisci una motivazione", "warn");
+          actionDialogReason.focus();
+          return;
+        }
+        closeActionDialog({ confirmed: true, reason });
+      });
+
+      mainMenuToggle.addEventListener("click", () => {
+        mainMenuPanel.classList.toggle("hidden");
+      });
+
+      toggleLegendBtn.addEventListener("click", () => {
+        const showLegend = calendarLegend.classList.contains("hidden");
+        calendarLegend.classList.toggle("hidden", !showLegend);
+        toggleLegendBtn.setAttribute("aria-expanded", showLegend ? "true" : "false");
+      });
+
+      [menuProgramming, menuApprovals, menuChanges, menuLogout].forEach((item) => {
+        if (!item) return;
+        item.addEventListener("click", () => {
+          navigateFromMenu(item.dataset.target || "");
+        });
+      });
+
+      document.addEventListener("click", (event) => {
+        if (mainMenu && !mainMenu.classList.contains("hidden") && !mainMenu.contains(event.target)) {
+          closeMainMenuPanel();
+        }
+        if (monthDropdown && !monthDropdown.contains(event.target)) {
+          monthPanel.classList.add("hidden");
+        }
+        if (
+          noteModal &&
+          !noteModal.classList.contains("hidden") &&
+          noteModalWorkTypeDropdown &&
+          !noteModalWorkTypeDropdown.contains(event.target)
+        ) {
+          noteModalWorkTypePanel.classList.add("hidden");
+        }
+      });
+
+      bootstrap();
+    </script>
+  </body>
+</html>

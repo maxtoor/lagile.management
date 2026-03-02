@@ -1,0 +1,34 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_("Django site admin") }}{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}">{{ site_header|default:_("Django administration") }}</a>
+  <span style="margin-left:12px;font-size:13px;font-weight:500">
+    <a href="{% url 'admin:agile_import_tools' %}">Strumenti importazione</a>
+  </span>
+</div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script>
+    (function () {
+      try {
+        var key = "django.admin.navSidebarIsOpen";
+        if (window.localStorage && window.localStorage.getItem(key) === null) {
+          window.localStorage.setItem(key, "false");
+        }
+      } catch (e) {}
+    })();
+  </script>
+{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'agile/admin-user-collapse.css' %}">
+{% endblock %}

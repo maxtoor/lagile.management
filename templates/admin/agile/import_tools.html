@@ -1,0 +1,57 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div style="max-width:980px">
+  <p style="margin-top:0;color:#4b5a54">
+    Flusso consigliato: 1) import LDAP, 2) import CSV dalla versione precedente.
+  </p>
+
+  {% if not is_superuser %}
+    <div class="messagelist">
+      <div class="errornote">Accesso consentito solo ai superuser.</div>
+    </div>
+  {% else %}
+    <div style="display:grid;gap:16px;grid-template-columns:1fr 1fr">
+      <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
+        <h2 style="margin-top:0">1) Import utenti LDAP</h2>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="ldap" />
+          {{ ldap_form.as_p }}
+          <button type="submit" class="default">Esegui import LDAP</button>
+        </form>
+      </section>
+
+      <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
+        <h2 style="margin-top:0">2) Import CSV (versione precedente)</h2>
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="csv" />
+          {{ csv_form.as_p }}
+          <button type="submit" class="default">Esegui import CSV</button>
+        </form>
+      </section>
+    </div>
+  {% endif %}
+
+  {% if logs %}
+    <section style="margin-top:16px;border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
+      <h2 style="margin-top:0">Output</h2>
+      {% for item in logs %}
+        <pre style="white-space:pre-wrap;background:#f7faf8;border:1px solid #e3ebe6;border-radius:8px;padding:10px;margin:0 0 10px 0">{{ item }}</pre>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  <section style="margin-top:16px;border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
+    <h2 style="margin-top:0">Note operative</h2>
+    <ul>
+      <li>CSV atteso: <code>email, lastname, name, department</code>.</li>
+      <li>Con modalita <code>last-word</code>, la sede e l'ultima parola del campo <code>department</code>.</li>
+      <li>Con <code>Importa anche i gruppi</code>, la prima parola di <code>department</code> e usata come nome gruppo (creato se mancante).</li>
+      <li>Se <code>department</code> contiene <code>Default</code>, la riga viene ignorata.</li>
+      <li>Se la sede e valida, viene impostata anche <code>Sottoscrizione AILA = Si</code>.</li>
+    </ul>
+  </section>
+</div>
+{% endblock %}

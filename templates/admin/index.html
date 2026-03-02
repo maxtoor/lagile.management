@@ -1,0 +1,28 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+  <div class="app-agile module" style="margin-bottom:16px;">
+    <table>
+      <caption>
+        <a href="{% url 'admin:agile_import_tools' %}" class="section" title="Apri strumenti importazione">
+          Strumenti importazione
+        </a>
+      </caption>
+      <tbody>
+        <tr class="model-user">
+          <th scope="row">
+            <a href="{% url 'admin:agile_import_tools' %}">
+              Import LDAP + Import CSV (migrazione da versione precedente)
+            </a>
+          </th>
+          <td>
+            <a href="{% url 'admin:agile_import_tools' %}" class="viewlink">Apri</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  {{ block.super }}
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
