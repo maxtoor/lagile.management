@@ -111,6 +111,9 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+Riferimento rapido configurazione:
+- dettagli di tutte le variabili `.env`: [`docs/variabili_env.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/variabili_env.md)
+
 ## Deploy con Portainer (Docker Compose)
 
 Questa procedura usa direttamente `docker-compose.yml` e file `.env`, senza modifiche lato host oltre a Docker/Portainer.
