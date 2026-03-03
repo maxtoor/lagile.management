@@ -112,7 +112,7 @@ python manage.py runserver
 ```
 
 Riferimento rapido configurazione:
-- dettagli di tutte le variabili `.env`: [`docs/variabili_env.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/variabili_env.md)
+- dettagli di tutte le variabili `.env`: [`docs/variabili_env.md`](docs/variabili_env.md)
 
 ## Deploy con Portainer (Docker Compose)
 
@@ -400,7 +400,7 @@ python manage.py sync_holidays --year 2026 --overwrite
 ## Licenza
 
 Questo progetto e distribuito con licenza **GNU GPL v3.0 o successiva (GPL-3.0-or-later)**.
-Per i dettagli completi, vedi il file [`LICENSE`](/Users/master/Documents/projects/lagile.new/agile_work/LICENSE).
+Per i dettagli completi, vedi il file [`LICENSE`](LICENSE).
 
 ## Nota su Codex
 
