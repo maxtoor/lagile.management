@@ -308,6 +308,11 @@
         border-color: #cfd6de;
       }
 
+      .calendar-day.working.no-aila {
+        background: #f7f6e9;
+        border-color: #d8d1a8;
+      }
+
       .calendar-day-head {
         display: flex;
         align-items: center;
@@ -520,6 +525,12 @@
 
       .status.PROCESSED {
         background: #e4f5e9;
+      }
+
+      .status.NO_AILA {
+        background: #f7f6e9;
+        border-color: #d8d1a8;
+        color: #5c5424;
       }
 
       .msg {
@@ -1885,6 +1896,7 @@
       }
 
       function normalizePlanVisualStatus(status) {
+        if (status === "NO_AILA") return "NO_AILA";
         if (status === "SUBMITTED" || status === "CHANGE_REQUESTED" || status === "PENDING") return "PENDING";
         if (status === "REJECTED" || status === "CHANGE_REJECTED") return "REJECTED";
         if (status === "APPROVED") return "APPROVED";
@@ -2340,6 +2352,9 @@
           } else {
             cell.classList.add("mode-onsite");
           }
+          if (!hasAilaSubscription()) {
+            cell.classList.add("no-aila");
+          }
           const dayApprovalState = dayApprovalStateForDay(iso);
           if (dayApprovalState === "pending") {
             cell.classList.add("pending-approval");
@@ -2634,6 +2649,9 @@
         const readonlyByMonth = !editableMonth;
         const readonlyByPendingChangeRequest = isCurrentMonth && hasPendingChangeRequest;
         const readonlyByAilaSubscription = !hasAilaSubscription();
+        if (readonlyByAilaSubscription) {
+          setStatus("NO_AILA");
+        }
         const readonly = readonlyByMonth || readonlyByPendingChangeRequest || readonlyByAilaSubscription;
         if (readonly) {
           clearSelectedDays();
@@ -2795,6 +2813,7 @@
         if (code === "SUBMITTED") return "In attesa approvazione";
         if (code === "APPROVED") return "Approvato";
         if (code === "REJECTED") return "Rifiutato";
+        if (code === "NO_AILA") return "No AILA";
         if (code === "CHANGE_REQUESTED") return "Richiesta variazione";
         if (code === "CHANGE_REJECTED") return "Variazione rifiutata";
         if (code === "PROCESSED") return "Processata";
