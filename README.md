@@ -90,6 +90,30 @@ docker compose up --build
 - API: `http://localhost:8001/api/`
 - Admin: `http://localhost:8001/admin/`
 
+### Installazione automatica da zero (Linux)
+
+E disponibile uno script installer idempotente che:
+- verifica/installa Docker + Docker Compose (apt/dnf)
+- crea directory di installazione
+- clona/aggiorna il repository
+- prepara `.env` da `.env.example`
+- avvia lo stack Docker
+
+Esempio:
+
+```bash
+bash scripts/install.sh \
+  --install-dir /opt/lagile-management \
+  --repo-url https://github.com/maxtoor/lagile.managemet.git \
+  --branch main \
+  --port 8001
+```
+
+Opzioni principali:
+- `--app-user <utente>` proprietario file installazione
+- `--skip-docker-install` se Docker e gia presente
+- `--help` elenco completo opzioni
+
 Nota Docker:
 - e presente un servizio `scheduler` che esegue periodicamente:
   - `send_submission_reminders` (promemoria utente ultimo giorno mese)
