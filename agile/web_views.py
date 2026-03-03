@@ -26,3 +26,7 @@ class AdminApprovalsView(BasePortalView):
 
 class AdminChangeRequestsView(BasePortalView):
     app_page = 'changes'
+
+
+class AdminOverviewPageView(BasePortalView):
+    app_page = 'overview'

@@ -245,7 +245,7 @@ Note:
 Nota: questa procedura riguarda esclusivamente gli Istituti del CNR che avevano adottato la versione precedente di questo software.
 
 Dettagli operativi nel documento dedicato:
-- [`docs/migrazione_cnr.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/migrazione_cnr.md)
+- [`docs/migrazione_cnr.md`](docs/migrazione_cnr.md)
 
 ## Email notifiche
 

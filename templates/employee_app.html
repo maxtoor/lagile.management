@@ -205,6 +205,7 @@
         flex-wrap: wrap;
         gap: 8px 12px;
         align-items: center;
+        justify-content: center;
         margin: 0 0 10px 0;
         font-size: 0.78rem;
         color: var(--muted);
@@ -213,11 +214,13 @@
       .legend-toggle-btn {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 6px;
         font-size: 0.8rem;
         padding: 6px 10px;
         line-height: 1;
         white-space: nowrap;
+        min-width: 96px;
       }
 
       .legend-toggle-btn .legend-icon {
@@ -797,7 +800,10 @@
 
       .profile-planning-toolbar {
         margin-top: 2px;
-        justify-content: center;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: flex-end;
+        gap: 10px;
       }
 
       .fixed-month-bar {
@@ -807,13 +813,14 @@
       }
 
       .fixed-month-bar .toolbar {
-        justify-content: center;
+        justify-content: unset;
       }
 
       .month-nav-inline {
         display: flex;
         align-items: flex-end;
         gap: 6px;
+        justify-self: center;
       }
 
       .month-nav-inline .toolbar-field {
@@ -841,6 +848,18 @@
         line-height: 1;
         font-size: 0;
         position: relative;
+      }
+
+      #todayBtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        padding: 6px 10px;
+        line-height: 1;
+        white-space: nowrap;
+        min-width: 96px;
       }
 
       #prevMonthBtn::before,
@@ -1163,6 +1182,7 @@
         </button>
         <div id="mainMenuPanel" class="main-menu-panel hidden">
           <button id="menuProgramming" type="button" class="main-menu-item" data-target="/">Programmazione</button>
+          <button id="menuOverview" type="button" class="main-menu-item" data-target="/admin/overview/">Quadro generale</button>
           <button id="menuApprovals" type="button" class="main-menu-item" data-target="/admin/approvals/">Richieste approvazione</button>
           <button id="menuChanges" type="button" class="main-menu-item" data-target="/admin/change-requests/">Richieste variazioni</button>
           <button id="menuLogout" type="button" class="main-menu-item" data-target="__logout__">Logout</button>
@@ -1190,6 +1210,7 @@
         <section id="calendarCard" class="card">
           <section id="planningControls" class="fixed-month-bar hidden">
             <div class="toolbar profile-planning-toolbar">
+              <button id="todayBtn" type="button">Oggi</button>
               <div class="month-nav-inline">
                 <button id="prevMonthBtn" type="button" title="Mese precedente">◀</button>
                 <div class="toolbar-field">
@@ -1314,11 +1335,78 @@
               <tbody id="changeReqBody"></tbody>
             </table>
           </div>
+          <div id="overviewPanel">
+            <h3 style="margin-top:0">Quadro generale</h3>
+            <p class="subtitle" style="margin-top:0">Panoramica mensile utenti assegnati</p>
+            <div class="review-batch-bar" style="align-items:flex-end">
+              <div class="toolbar-field">
+                <label class="toolbar-status-label" for="overviewYearInput">Anno</label>
+                <input id="overviewYearInput" type="number" min="2024" max="2100" style="width:100px" />
+              </div>
+              <div class="toolbar-field">
+                <label class="toolbar-status-label" for="overviewMonthToggle">Mese</label>
+                <div id="overviewMonthDropdown" class="custom-select" style="min-width:86px">
+                  <button id="overviewMonthToggle" type="button" class="custom-select-toggle">
+                    <span id="overviewMonthLabel">01</span>
+                    <span aria-hidden="true">▾</span>
+                  </button>
+                  <div id="overviewMonthPanel" class="custom-select-panel hidden"></div>
+                </div>
+              </div>
+              <div class="toolbar-field">
+                <label class="toolbar-status-label" for="overviewStatusToggle">Stato</label>
+                <div id="overviewStatusDropdown" class="custom-select" style="min-width:170px">
+                  <button id="overviewStatusToggle" type="button" class="custom-select-toggle">
+                    <span id="overviewStatusLabel">Tutti</span>
+                    <span aria-hidden="true">▾</span>
+                  </button>
+                  <div id="overviewStatusPanel" class="custom-select-panel hidden">
+                    <button type="button" class="custom-select-item" data-value="">Tutti</button>
+                    <button type="button" class="custom-select-item" data-value="MISSING">Non compilato</button>
+                    <button type="button" class="custom-select-item" data-value="DRAFT">Bozza</button>
+                    <button type="button" class="custom-select-item" data-value="SUBMITTED">In attesa approvazione</button>
+                    <button type="button" class="custom-select-item" data-value="APPROVED">Approvato</button>
+                    <button type="button" class="custom-select-item" data-value="REJECTED">Rifiutato</button>
+                  </div>
+                </div>
+              </div>
+              <div class="toolbar-field">
+                <label class="toolbar-status-label" for="overviewSiteToggle">Sede</label>
+                <div id="overviewSiteDropdown" class="custom-select" style="min-width:150px">
+                  <button id="overviewSiteToggle" type="button" class="custom-select-toggle">
+                    <span id="overviewSiteLabel">Tutte</span>
+                    <span aria-hidden="true">▾</span>
+                  </button>
+                  <div id="overviewSitePanel" class="custom-select-panel hidden">
+                    <button type="button" class="custom-select-item" data-value="">Tutte</button>
+                  </div>
+                </div>
+              </div>
+              <button id="overviewReloadBtn" type="button" class="btn-small">Aggiorna</button>
+              <div id="overviewSummary" class="review-batch-info" style="margin-left:auto">Utenti: 0</div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Utente</th>
+                  <th>Sede</th>
+                  <th>Mese</th>
+                  <th>Stato</th>
+                  <th>In sede</th>
+                  <th>Lavoro agile</th>
+                  <th>Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="overviewBody"></tbody>
+            </table>
+          </div>
         </section>
       </div>
       <footer class="page-footer">
         <span>{{ copyright_year }} © {{ company_name }}</span>
-        <a href="#" id="helpGuideLink" class="page-footer-link">Guida rapida</a>
+        {% if app_page == 'programming' %}
+        <a href="#" id="helpGuideLink" class="page-footer-link hidden">Guida rapida</a>
+        {% endif %}
         <a href="#" id="softwareInfoLink" class="page-footer-link">Informazioni software</a>
       </footer>
     </div>
@@ -1558,6 +1646,7 @@
       const monthToggle = document.getElementById("monthToggle");
       const monthLabel = document.getElementById("monthLabel");
       const monthPanel = document.getElementById("monthPanel");
+      const todayBtn = document.getElementById("todayBtn");
       const prevMonthBtn = document.getElementById("prevMonthBtn");
       const nextMonthBtn = document.getElementById("nextMonthBtn");
       const yearInput = document.getElementById("yearInput");
@@ -1583,6 +1672,7 @@
       const mainMenuPanel = document.getElementById("mainMenuPanel");
       const mainMenuLabel = document.getElementById("mainMenuLabel");
       const menuProgramming = document.getElementById("menuProgramming");
+      const menuOverview = document.getElementById("menuOverview");
       const menuApprovals = document.getElementById("menuApprovals");
       const menuChanges = document.getElementById("menuChanges");
       const menuLogout = document.getElementById("menuLogout");
@@ -1603,6 +1693,7 @@
       const approverCard = document.getElementById("approverCard");
       const approvalsPanel = document.getElementById("approvalsPanel");
       const changesPanel = document.getElementById("changesPanel");
+      const overviewPanel = document.getElementById("overviewPanel");
       const approvalsBatchBar = document.getElementById("approvalsBatchBar");
       const approvalsBatchInfo = document.getElementById("approvalsBatchInfo");
       const approverSelectAll = document.getElementById("approverSelectAll");
@@ -1616,6 +1707,22 @@
       const approverBody = document.getElementById("approverBody");
       const changeReqBody = document.getElementById("changeReqBody");
       const reviewFeedback = document.getElementById("reviewFeedback");
+      const overviewYearInput = document.getElementById("overviewYearInput");
+      const overviewMonthDropdown = document.getElementById("overviewMonthDropdown");
+      const overviewMonthToggle = document.getElementById("overviewMonthToggle");
+      const overviewMonthLabel = document.getElementById("overviewMonthLabel");
+      const overviewMonthPanel = document.getElementById("overviewMonthPanel");
+      const overviewStatusDropdown = document.getElementById("overviewStatusDropdown");
+      const overviewStatusToggle = document.getElementById("overviewStatusToggle");
+      const overviewStatusLabel = document.getElementById("overviewStatusLabel");
+      const overviewStatusPanel = document.getElementById("overviewStatusPanel");
+      const overviewSiteDropdown = document.getElementById("overviewSiteDropdown");
+      const overviewSiteToggle = document.getElementById("overviewSiteToggle");
+      const overviewSiteLabel = document.getElementById("overviewSiteLabel");
+      const overviewSitePanel = document.getElementById("overviewSitePanel");
+      const overviewReloadBtn = document.getElementById("overviewReloadBtn");
+      const overviewSummary = document.getElementById("overviewSummary");
+      const overviewBody = document.getElementById("overviewBody");
       const detailsModal = document.getElementById("detailsModal");
       const detailsTitle = document.getElementById("detailsTitle");
       const detailsSummary = document.getElementById("detailsSummary");
@@ -1695,6 +1802,10 @@
       let selectedApproverPlanIds = new Set();
       let changeRequestQueueItems = [];
       let selectedChangeRequestIds = new Set();
+      let overviewRows = [];
+      let overviewMonthValue = 1;
+      let overviewStatusValue = "";
+      let overviewSiteValue = "";
       let serverToday = null;
       let currentMonthContext = {
         isCurrentMonth: false,
@@ -1712,6 +1823,15 @@
         item.dataset.value = String(m);
         item.textContent = String(m).padStart(2, "0");
         monthPanel.appendChild(item);
+
+        if (overviewMonthPanel) {
+          const opt = document.createElement("button");
+          opt.type = "button";
+          opt.className = "custom-select-item";
+          opt.dataset.value = String(m);
+          opt.textContent = String(m).padStart(2, "0");
+          overviewMonthPanel.appendChild(opt);
+        }
       }
 
       function localTodayParts() {
@@ -1723,6 +1843,15 @@
       yearInput.value = initialToday.year;
       let selectedMonth = initialToday.month;
       monthLabel.textContent = String(selectedMonth).padStart(2, "0");
+      if (overviewYearInput) {
+        overviewYearInput.value = String(initialToday.year);
+      }
+      if (overviewMonthLabel) {
+        overviewMonthValue = initialToday.month;
+        overviewMonthLabel.textContent = String(initialToday.month).padStart(2, "0");
+      }
+      setOverviewStatusValue("");
+      setOverviewSiteValue("");
 
       async function syncServerToday() {
         const data = await api("/auth/server-date/");
@@ -2096,6 +2225,9 @@
       }
 
       function renderUserProfile(user) {
+        if (helpGuideLink) {
+          helpGuideLink.classList.toggle("hidden", !user);
+        }
         if (!user) {
           document.body.classList.remove("has-fixed-profile");
           userProfileCard.classList.add("hidden");
@@ -2116,26 +2248,31 @@
 
       function applyMainPageMode() {
         const isProgramming = APP_PAGE === "programming";
+        const isOverviewPage = APP_PAGE === "overview";
         const isApprovalsPage = APP_PAGE === "approvals";
         const isChangesPage = APP_PAGE === "changes";
         if (mainMenuLabel) {
-          mainMenuLabel.textContent = isApprovalsPage
-            ? "Richieste approvazione"
-            : isChangesPage
-              ? "Richieste variazioni"
-              : "Programmazione";
+          mainMenuLabel.textContent = isOverviewPage
+            ? "Quadro generale"
+            : isApprovalsPage
+              ? "Richieste approvazione"
+              : isChangesPage
+                ? "Richieste variazioni"
+                : "Programmazione";
         }
 
         planningControls.classList.toggle("hidden", !isProgramming);
         mainGrid.classList.toggle("programming-grid", isProgramming);
         calendarCard.classList.toggle("hidden", !isProgramming);
         actionsCard.classList.toggle("hidden", !isProgramming);
+        overviewPanel.classList.toggle("hidden", !isOverviewPage);
         approvalsPanel.classList.toggle("hidden", !isApprovalsPage);
         changesPanel.classList.toggle("hidden", !isChangesPage);
       }
 
       function syncMainMenuByRole() {
         const approver = isApprover();
+        if (menuOverview) menuOverview.hidden = !approver;
         if (menuApprovals) menuApprovals.hidden = !approver;
         if (menuChanges) menuChanges.hidden = !approver;
       }
@@ -2827,6 +2964,16 @@
         return labelStatus(code);
       }
 
+      function labelOverviewStatus(code) {
+        if (code === "MISSING") return "Non compilato";
+        return labelStatus(code);
+      }
+
+      function statusClassForOverview(code) {
+        if (code === "MISSING") return "DRAFT";
+        return code || "DRAFT";
+      }
+
       function hasPlannedActivities(entry) {
         if (!entry) return false;
         const notesValue = (entry.notes || "").trim();
@@ -2942,6 +3089,114 @@
         detailsDayModal.classList.remove("hidden");
       }
 
+      function overviewYearMonth() {
+        const year = Number(overviewYearInput?.value || yearInput?.value || currentYearMonth().year);
+        const month = Number(overviewMonthValue || selectedMonth || currentYearMonth().month);
+        return { year, month };
+      }
+
+      function setOverviewMonthValue(value) {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed < 1 || parsed > 12) return;
+        overviewMonthValue = parsed;
+        if (overviewMonthLabel) {
+          overviewMonthLabel.textContent = String(parsed).padStart(2, "0");
+        }
+      }
+
+      function setOverviewStatusValue(value) {
+        overviewStatusValue = (value || "").trim();
+        if (overviewStatusLabel) {
+          const item = overviewStatusPanel?.querySelector(`.custom-select-item[data-value="${overviewStatusValue}"]`);
+          overviewStatusLabel.textContent = item?.textContent || "Tutti";
+        }
+      }
+
+      function setOverviewSiteValue(value) {
+        overviewSiteValue = (value || "").trim();
+        if (overviewSiteLabel) {
+          overviewSiteLabel.textContent = overviewSiteValue || "Tutte";
+        }
+      }
+
+      function renderOverviewRows() {
+        if (!overviewBody) return;
+        const statusFilter = overviewStatusValue;
+        const siteFilter = overviewSiteValue;
+        const filtered = overviewRows.filter((row) => {
+          if (statusFilter && row.status !== statusFilter) return false;
+          if (siteFilter && (row.department || "") !== siteFilter) return false;
+          return true;
+        });
+        overviewBody.innerHTML = "";
+        if (!filtered.length) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td colspan="7">Nessun risultato per i filtri selezionati</td>`;
+          overviewBody.appendChild(tr);
+          return;
+        }
+
+        const ym = overviewYearMonth();
+        filtered.forEach((row) => {
+          const tr = document.createElement("tr");
+          const userLabel = queueUserLabel(row);
+          const monthLabel = `${String(ym.month).padStart(2, "0")}/${ym.year}`;
+          const detailAction = row.plan_id
+            ? `<button class="btn-small" data-overview-plan-id="${row.plan_id}">Dettaglio</button>`
+            : "-";
+          tr.innerHTML = `
+            <td>${userLabel}</td>
+            <td>${row.department || "-"}</td>
+            <td>${monthLabel}</td>
+            <td><span class="status ${statusClassForOverview(row.status)}">${labelOverviewStatus(row.status)}</span></td>
+            <td>${row.on_site_days ?? 0}</td>
+            <td>${row.remote_days ?? 0}</td>
+            <td>${detailAction}</td>
+          `;
+          overviewBody.appendChild(tr);
+        });
+      }
+
+      function syncOverviewSiteOptions() {
+        if (!overviewSitePanel) return;
+        const prev = overviewSiteValue;
+        const sites = Array.from(
+          new Set(
+            overviewRows
+              .map((row) => (row.department || "").trim())
+              .filter((value) => value)
+          )
+        ).sort((a, b) => a.localeCompare(b, "it"));
+        overviewSitePanel.innerHTML = '<button type="button" class="custom-select-item" data-value="">Tutte</button>';
+        sites.forEach((site) => {
+          const option = document.createElement("button");
+          option.type = "button";
+          option.className = "custom-select-item";
+          option.dataset.value = site;
+          option.textContent = site;
+          overviewSitePanel.appendChild(option);
+        });
+        if (prev && sites.includes(prev)) {
+          setOverviewSiteValue(prev);
+          return;
+        }
+        setOverviewSiteValue("");
+      }
+
+      async function loadOverviewDashboard() {
+        if (!isApprover()) return;
+        const { year, month } = overviewYearMonth();
+        const data = await api(`/admin/overview/?year=${year}&month=${month}`);
+        overviewRows = data?.rows || [];
+        syncOverviewSiteOptions();
+        renderOverviewRows();
+        if (overviewSummary) {
+          const totals = data?.totals || {};
+          overviewSummary.textContent =
+            `Utenti: ${totals.users || 0} | Piani: ${totals.plans || 0} | Non compilati: ${totals.missing || 0}`;
+        }
+      }
+
       async function loadApproverQueue({ clearFeedback = true } = {}) {
         if (!isApprover()) {
           approverCard.classList.add("hidden");
@@ -2958,6 +3213,10 @@
         approverCard.classList.remove("hidden");
         if (clearFeedback) {
           clearReviewFeedback();
+        }
+        if (APP_PAGE === "overview") {
+          await loadOverviewDashboard();
+          return;
         }
         if (APP_PAGE === "approvals") {
           const plans = await api("/plans/");
@@ -3285,7 +3544,7 @@
             applyMainPageMode();
             syncMainMenuByRole();
             restoreMonthYearPreference();
-            if ((APP_PAGE === "approvals" || APP_PAGE === "changes") && !isApprover()) {
+            if ((APP_PAGE === "overview" || APP_PAGE === "approvals" || APP_PAGE === "changes") && !isApprover()) {
               window.location.replace("/");
               return;
             }
@@ -3339,7 +3598,7 @@
           applyMainPageMode();
           syncMainMenuByRole();
           restoreMonthYearPreference();
-          if ((APP_PAGE === "approvals" || APP_PAGE === "changes") && !isApprover()) {
+          if ((APP_PAGE === "overview" || APP_PAGE === "approvals" || APP_PAGE === "changes") && !isApprover()) {
             window.location.replace("/");
             return;
           }
@@ -3410,6 +3669,21 @@
         const previousYear = Number(yearInput.value);
         const previousMonth = Number(selectedMonth);
         shiftMonth(1);
+        try {
+          await loadSelectedMonthDirectly();
+        } catch (err) {
+          yearInput.value = String(previousYear);
+          setMonthValue(previousMonth);
+          setFeedback(err.message, "error");
+        }
+      });
+
+      todayBtn?.addEventListener("click", async () => {
+        const previousYear = Number(yearInput.value);
+        const previousMonth = Number(selectedMonth);
+        const currentYm = currentYearMonth();
+        yearInput.value = String(currentYm.year);
+        setMonthValue(currentYm.month);
         try {
           await loadSelectedMonthDirectly();
         } catch (err) {
@@ -3576,6 +3850,83 @@
             await loadApproverQueue();
             await loadMonth();
           }
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      overviewReloadBtn?.addEventListener("click", async () => {
+        try {
+          await loadOverviewDashboard();
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      overviewYearInput?.addEventListener("change", async () => {
+        try {
+          await loadOverviewDashboard();
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      overviewMonthToggle?.addEventListener("click", () => {
+        overviewMonthPanel?.classList.toggle("hidden");
+      });
+
+      overviewStatusToggle?.addEventListener("click", () => {
+        overviewStatusPanel?.classList.toggle("hidden");
+      });
+
+      overviewSiteToggle?.addEventListener("click", () => {
+        overviewSitePanel?.classList.toggle("hidden");
+      });
+
+      overviewMonthPanel?.addEventListener("click", async (event) => {
+        const item = event.target.closest(".custom-select-item[data-value]");
+        if (!item) return;
+        overviewMonthPanel.classList.add("hidden");
+        const previous = overviewMonthValue;
+        setOverviewMonthValue(item.dataset.value || previous);
+        if (overviewMonthValue === previous) return;
+        try {
+          await loadOverviewDashboard();
+        } catch (err) {
+          setOverviewMonthValue(previous);
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      overviewStatusPanel?.addEventListener("click", (event) => {
+        const item = event.target.closest(".custom-select-item[data-value]");
+        if (!item) return;
+        overviewStatusPanel.classList.add("hidden");
+        setOverviewStatusValue(item.dataset.value || "");
+        renderOverviewRows();
+      });
+
+      overviewSitePanel?.addEventListener("click", (event) => {
+        const item = event.target.closest(".custom-select-item[data-value]");
+        if (!item) return;
+        overviewSitePanel.classList.add("hidden");
+        setOverviewSiteValue(item.dataset.value || "");
+        renderOverviewRows();
+      });
+
+      overviewBody?.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-overview-plan-id]");
+        if (!button) return;
+        const planId = button.dataset.overviewPlanId;
+        if (!planId) return;
+        try {
+          const planRows = await api("/plans/");
+          const selectedPlan = planRows.find((p) => String(p.id) === String(planId));
+          if (!selectedPlan) {
+            setReviewFeedback("Piano non trovato", "error");
+            return;
+          }
+          openPlanDetails(selectedPlan);
         } catch (err) {
           setReviewFeedback(err.message, "error");
         }
@@ -3764,7 +4115,7 @@
         hideErrorPopup();
       });
 
-      helpGuideLink.addEventListener("click", (event) => {
+      helpGuideLink?.addEventListener("click", (event) => {
         event.preventDefault();
         openHelpGuideModal({ force: true });
       });
@@ -3873,7 +4224,7 @@
         toggleLegendBtn.setAttribute("aria-expanded", showLegend ? "true" : "false");
       });
 
-      [menuProgramming, menuApprovals, menuChanges, menuLogout].forEach((item) => {
+      [menuProgramming, menuOverview, menuApprovals, menuChanges, menuLogout].forEach((item) => {
         if (!item) return;
         item.addEventListener("click", () => {
           navigateFromMenu(item.dataset.target || "");
@@ -3886,6 +4237,15 @@
         }
         if (monthDropdown && !monthDropdown.contains(event.target)) {
           monthPanel.classList.add("hidden");
+        }
+        if (overviewMonthDropdown && !overviewMonthDropdown.contains(event.target)) {
+          overviewMonthPanel?.classList.add("hidden");
+        }
+        if (overviewStatusDropdown && !overviewStatusDropdown.contains(event.target)) {
+          overviewStatusPanel?.classList.add("hidden");
+        }
+        if (overviewSiteDropdown && !overviewSiteDropdown.contains(event.target)) {
+          overviewSitePanel?.classList.add("hidden");
         }
         if (
           noteModal &&

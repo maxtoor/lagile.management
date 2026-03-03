@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    AdminOverviewView,
     ChangeRequestViewSet,
     LoginView,
     MeView,
@@ -18,6 +19,7 @@ urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/me/', MeView.as_view(), name='me'),
     path('auth/server-date/', ServerDateView.as_view(), name='server-date'),
+    path('admin/overview/', AdminOverviewView.as_view(), name='admin-overview'),
     path('holidays/month/', MonthHolidaysView.as_view(), name='month-holidays'),
     path('', include(router.urls)),
 ]

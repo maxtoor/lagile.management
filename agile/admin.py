@@ -67,12 +67,17 @@ class CustomUserAdminForm(UserChangeForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'aila_subscribed' in self.fields:
-            current = bool(getattr(self.instance, 'aila_subscribed', False))
-            self.fields['aila_subscribed'].initial = '1' if current else '0'
-        if 'auto_approve' in self.fields:
-            current = bool(getattr(self.instance, 'auto_approve', False))
-            self.fields['auto_approve'].initial = '1' if current else '0'
+        if not self.is_bound and getattr(self.instance, 'pk', None):
+            if 'aila_subscribed' in self.fields:
+                current = bool(getattr(self.instance, 'aila_subscribed', False))
+                value = '1' if current else '0'
+                self.fields['aila_subscribed'].initial = value
+                self.initial['aila_subscribed'] = value
+            if 'auto_approve' in self.fields:
+                current = bool(getattr(self.instance, 'auto_approve', False))
+                value = '1' if current else '0'
+                self.fields['auto_approve'].initial = value
+                self.initial['auto_approve'] = value
         if 'manager' in self.fields:
             self.fields['manager'].queryset = User.objects.filter(
                 Q(role__in=['ADMIN', 'SUPERADMIN']) | Q(is_superuser=True)

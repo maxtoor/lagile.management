@@ -16,7 +16,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import AuditLog, ChangeRequest, MonthlyPlan, SystemEmailTemplate
+from .models import AuditLog, ChangeRequest, MonthlyPlan, SystemEmailTemplate, User
 from .permissions import IsAdminOrSuperAdmin
 from .serializers import (
     ApprovalSerializer,
@@ -281,6 +281,111 @@ class MonthHolidaysView(APIView):
                 'days': [day.isoformat() for day in holiday_days],
                 'items': items,
                 'count': len(holiday_days),
+            }
+        )
+
+
+class AdminOverviewView(APIView):
+    permission_classes = [IsAdminOrSuperAdmin]
+
+    @staticmethod
+    def _current_year_month() -> tuple[int, int]:
+        today = timezone.localdate()
+        return today.year, today.month
+
+    @staticmethod
+    def _is_superadmin_user(user) -> bool:
+        return bool(user.is_superuser or user.role == 'SUPERADMIN')
+
+    def get(self, request):
+        year_raw = request.query_params.get('year')
+        month_raw = request.query_params.get('month')
+        if year_raw and month_raw:
+            try:
+                year = int(year_raw)
+                month = int(month_raw)
+            except (TypeError, ValueError):
+                return Response({'detail': 'Parametri year e month non validi'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            year, month = self._current_year_month()
+
+        if month < 1 or month > 12:
+            return Response({'detail': 'Mese non valido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if self._is_superadmin_user(request.user):
+            users_qs = User.objects.filter(is_active=True).order_by('last_name', 'first_name', 'username')
+        else:
+            users_qs = User.objects.filter(is_active=True, manager=request.user).order_by('last_name', 'first_name', 'username')
+
+        users = list(users_qs.only('id', 'username', 'first_name', 'last_name', 'department'))
+        plans = list(
+            MonthlyPlan.objects.filter(user__in=users_qs, year=year, month=month)
+            .prefetch_related('days')
+            .select_related('user')
+        )
+        plans_by_user_id = {plan.user_id: plan for plan in plans}
+
+        rows = []
+        status_totals = {
+            'MISSING': 0,
+            'DRAFT': 0,
+            'SUBMITTED': 0,
+            'APPROVED': 0,
+            'REJECTED': 0,
+        }
+        for user in users:
+            plan = plans_by_user_id.get(user.id)
+            if not plan:
+                rows.append(
+                    {
+                        'user_id': user.id,
+                        'username': user.username,
+                        'first_name': user.first_name or '',
+                        'last_name': user.last_name or '',
+                        'department': user.department or '',
+                        'plan_id': None,
+                        'status': 'MISSING',
+                        'remote_days': 0,
+                        'on_site_days': 0,
+                        'total_days': 0,
+                    }
+                )
+                status_totals['MISSING'] += 1
+                continue
+
+            remote_days = sum(1 for day in plan.days.all() if day.work_type == 'REMOTE')
+            on_site_days = sum(1 for day in plan.days.all() if day.work_type == 'ON_SITE')
+            total_days = remote_days + on_site_days
+            status_totals[plan.status] = status_totals.get(plan.status, 0) + 1
+            rows.append(
+                {
+                    'user_id': user.id,
+                    'username': user.username,
+                    'first_name': user.first_name or '',
+                    'last_name': user.last_name or '',
+                    'department': user.department or '',
+                    'plan_id': plan.id,
+                    'status': plan.status,
+                    'remote_days': remote_days,
+                    'on_site_days': on_site_days,
+                    'total_days': total_days,
+                }
+            )
+
+        return Response(
+            {
+                'year': year,
+                'month': month,
+                'rows': rows,
+                'totals': {
+                    'users': len(users),
+                    'plans': len(plans),
+                    'missing': status_totals.get('MISSING', 0),
+                    'draft': status_totals.get('DRAFT', 0),
+                    'submitted': status_totals.get('SUBMITTED', 0),
+                    'approved': status_totals.get('APPROVED', 0),
+                    'rejected': status_totals.get('REJECTED', 0),
+                },
             }
         )
 
