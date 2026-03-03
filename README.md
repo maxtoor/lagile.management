@@ -118,6 +118,19 @@ Opzioni principali:
 - `--dry-run` mostra i comandi senza eseguirli
 - `--help` elenco completo opzioni
 
+Comandi rapidi da server nuovo:
+
+```bash
+git clone https://github.com/maxtoor/lagile.managemet.git
+cd lagile.managemet
+
+# Simulazione (consigliata prima esecuzione)
+bash scripts/install.sh --dry-run --install-dir /opt/lagile-management --branch main --port 8001
+
+# Installazione reale
+bash scripts/install.sh --install-dir /opt/lagile-management --branch main --port 8001
+```
+
 Nota Docker:
 - e presente un servizio `scheduler` che esegue periodicamente:
   - `send_submission_reminders` (promemoria utente ultimo giorno mese)
