@@ -10,6 +10,7 @@ BRANCH="${BRANCH:-main}"
 APP_USER="${APP_USER:-${SUDO_USER:-$USER}}"
 APP_PORT="${APP_PORT:-8001}"
 SKIP_DOCKER_INSTALL="${SKIP_DOCKER_INSTALL:-0}"
+DRY_RUN="${DRY_RUN:-0}"
 
 print_help() {
   cat <<'EOF'
@@ -23,10 +24,11 @@ Opzioni:
   --app-user USER          Utente proprietario dei file (default: utente corrente/sudo)
   --port PORT              Porta pubblica web (default: 8001)
   --skip-docker-install    Non tenta l'installazione Docker
+  --dry-run                Mostra le azioni senza applicare modifiche
   -h, --help               Mostra aiuto
 
 Variabili ambiente equivalenti:
-  INSTALL_DIR, REPO_URL, BRANCH, APP_USER, APP_PORT, SKIP_DOCKER_INSTALL
+  INSTALL_DIR, REPO_URL, BRANCH, APP_USER, APP_PORT, SKIP_DOCKER_INSTALL, DRY_RUN
 EOF
 }
 
@@ -38,6 +40,7 @@ while [[ $# -gt 0 ]]; do
     --app-user) APP_USER="$2"; shift 2 ;;
     --port) APP_PORT="$2"; shift 2 ;;
     --skip-docker-install) SKIP_DOCKER_INSTALL=1; shift ;;
+    --dry-run) DRY_RUN=1; shift ;;
     -h|--help) print_help; exit 0 ;;
     *) echo "Opzione non riconosciuta: $1" >&2; exit 1 ;;
   esac
@@ -45,24 +48,35 @@ done
 
 log() { printf '[install] %s\n' "$*"; }
 err() { printf '[install][errore] %s\n' "$*" >&2; }
+run_or_print() {
+  if [[ "$DRY_RUN" == "1" ]]; then
+    printf '[install][dry-run] %s\n' "$*"
+  else
+    "$@"
+  fi
+}
 
 run_privileged() {
   if [[ "$(id -u)" -eq 0 ]]; then
-    "$@"
+    run_or_print "$@"
   else
-    sudo "$@"
+    run_or_print sudo "$@"
   fi
 }
 
 run_as_app_user() {
   if [[ "$(id -u)" -eq 0 && "$APP_USER" != "root" ]]; then
-    sudo -u "$APP_USER" "$@"
+    run_or_print sudo -u "$APP_USER" "$@"
   else
-    "$@"
+    run_or_print "$@"
   fi
 }
 
 docker_cmd() {
+  if [[ "$DRY_RUN" == "1" ]]; then
+    printf '[install][dry-run] docker %s\n' "$*"
+    return 0
+  fi
   if docker info >/dev/null 2>&1; then
     docker "$@"
   else
@@ -178,7 +192,7 @@ setup_env() {
 
   if [[ ! -f "$env_file" ]]; then
     log "Creo .env da .env.example"
-    cp "$env_example" "$env_file"
+    run_as_app_user cp "$env_example" "$env_file"
   else
     log ".env già presente, non lo sovrascrivo."
   fi
@@ -191,16 +205,20 @@ setup_env() {
       secret="$(date +%s)-$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"
     fi
     if grep -q '^DJANGO_SECRET_KEY=' "$env_file"; then
-      sed -i.bak -E "s|^DJANGO_SECRET_KEY=.*|DJANGO_SECRET_KEY=${secret}|" "$env_file"
-      rm -f "$env_file.bak"
+      run_as_app_user sed -i.bak -E "s|^DJANGO_SECRET_KEY=.*|DJANGO_SECRET_KEY=${secret}|" "$env_file"
+      run_as_app_user rm -f "$env_file.bak"
     else
-      printf '\nDJANGO_SECRET_KEY=%s\n' "$secret" >> "$env_file"
+      if [[ "$DRY_RUN" == "1" ]]; then
+        printf '[install][dry-run] append DJANGO_SECRET_KEY to %s\n' "$env_file"
+      else
+        printf '\nDJANGO_SECRET_KEY=%s\n' "$secret" >> "$env_file"
+      fi
     fi
   fi
 }
 
 ensure_logs_dir() {
-  mkdir -p "$INSTALL_DIR/logs"
+  run_as_app_user mkdir -p "$INSTALL_DIR/logs"
   run_privileged chown -R "$APP_USER":"$APP_USER" "$INSTALL_DIR/logs"
 }
 
@@ -211,8 +229,8 @@ set_compose_port() {
     exit 1
   fi
   # Patch only the web published port in a stable way.
-  sed -i.bak -E "s|\"[0-9]+:8000\"|\"${APP_PORT}:8000\"|" "$compose_file"
-  rm -f "$compose_file.bak"
+  run_as_app_user sed -i.bak -E "s|\"[0-9]+:8000\"|\"${APP_PORT}:8000\"|" "$compose_file"
+  run_as_app_user rm -f "$compose_file.bak"
 }
 
 start_stack() {
@@ -229,6 +247,9 @@ final_checks() {
 }
 
 main() {
+  if [[ "$DRY_RUN" == "1" ]]; then
+    log "Modalita dry-run attiva: nessuna modifica verra applicata."
+  fi
   require_linux
   require_cmd git
   require_cmd sed

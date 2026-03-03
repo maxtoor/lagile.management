@@ -107,11 +107,15 @@ bash scripts/install.sh \
   --repo-url https://github.com/maxtoor/lagile.managemet.git \
   --branch main \
   --port 8001
+
+# Solo simulazione (nessuna modifica)
+bash scripts/install.sh --dry-run
 ```
 
 Opzioni principali:
 - `--app-user <utente>` proprietario file installazione
 - `--skip-docker-install` se Docker e gia presente
+- `--dry-run` mostra i comandi senza eseguirli
 - `--help` elenco completo opzioni
 
 Nota Docker:
