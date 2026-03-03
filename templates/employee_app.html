@@ -1307,8 +1307,35 @@
       </div>
       <footer class="page-footer">
         <span>{{ copyright_year }} © {{ company_name }}</span>
+        <a href="#" id="helpGuideLink" class="page-footer-link">Guida rapida</a>
         <a href="#" id="softwareInfoLink" class="page-footer-link">Informazioni software</a>
       </footer>
+    </div>
+
+    <div id="helpGuideModal" class="modal-backdrop hidden">
+      <div class="modal-box" style="width:min(680px, 100%)">
+        <div class="modal-head">
+          <h3 class="modal-title">Guida rapida</h3>
+          <button id="closeHelpGuideBtn" class="ghost">Chiudi</button>
+        </div>
+        <div style="font-size:0.9rem;line-height:1.55;color:var(--ink)">
+          <ul style="margin:0 0 10px 18px;padding:0;display:grid;gap:6px">
+            <li><strong>Click singolo</strong>: seleziona o deseleziona un giorno.</li>
+            <li><strong>Doppio click</strong>: apre il dettaglio della giornata per impostare modalita e attivita.</li>
+            <li><strong>Selezione multipla</strong>: dopo aver selezionato i giorni puoi applicare in blocco <em>In sede</em> o <em>Lavoro agile</em>.</li>
+            <li><strong>Colori giorni</strong>: grigio (in modifica), arancio (in attesa), verde (approvato), rosso (rifiutato).</li>
+            <li><strong>Invio richieste</strong>: usa il pulsante in fondo per richiedere approvazione o variazione in base al mese/stato.</li>
+            <li><strong>Attivita programmate</strong>: puoi inserirle in blocco o modificarle giorno per giorno.</li>
+          </ul>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:6px 0 10px 0;font-size:0.88rem;color:var(--ink)">
+          <input id="dontShowHelpGuideCheckbox" type="checkbox" />
+          Non aprire piu questa finesta (potrai sempre aprirla dal link guida rapida in basso)
+        </label>
+        <div class="toolbar-actions">
+          <button id="ackHelpGuideBtn" class="primary" type="button">Ho capito</button>
+        </div>
+      </div>
     </div>
 
     <div id="softwareInfoModal" class="modal-backdrop hidden">
@@ -1512,6 +1539,7 @@
       const TOKEN_KEY = "agile_token";
       const USER_KEY = "agile_user";
       const YM_PREF_PREFIX = "agile_ym_pref_v1";
+      const HELP_GUIDE_PREF_PREFIX = "agile_help_guide_hidden_v1";
       const APP_PAGE = document.body.dataset.appPage || "programming";
       const DATE_DISPLAY_FORMAT = (document.body.dataset.dateDisplayFormat || "IT").toUpperCase();
 
@@ -1531,6 +1559,11 @@
       const errorPopup = document.getElementById("errorPopup");
       const errorPopupText = document.getElementById("errorPopupText");
       const closeErrorPopupBtn = document.getElementById("closeErrorPopupBtn");
+      const helpGuideLink = document.getElementById("helpGuideLink");
+      const helpGuideModal = document.getElementById("helpGuideModal");
+      const closeHelpGuideBtn = document.getElementById("closeHelpGuideBtn");
+      const ackHelpGuideBtn = document.getElementById("ackHelpGuideBtn");
+      const dontShowHelpGuideCheckbox = document.getElementById("dontShowHelpGuideCheckbox");
       const softwareInfoLink = document.getElementById("softwareInfoLink");
       const softwareInfoModal = document.getElementById("softwareInfoModal");
       const closeSoftwareInfoBtn = document.getElementById("closeSoftwareInfoBtn");
@@ -1756,6 +1789,42 @@
         const userId = currentUser?.id;
         if (!userId) return null;
         return `${YM_PREF_PREFIX}:${userId}`;
+      }
+
+      function helpGuidePrefKey() {
+        const userId = currentUser?.id;
+        if (!userId) return null;
+        return `${HELP_GUIDE_PREF_PREFIX}:${userId}`;
+      }
+
+      function isHelpGuideSuppressed() {
+        const key = helpGuidePrefKey();
+        if (!key) return false;
+        return localStorage.getItem(key) === "1";
+      }
+
+      function setHelpGuideSuppressed(value) {
+        const key = helpGuidePrefKey();
+        if (!key) return;
+        if (value) {
+          localStorage.setItem(key, "1");
+          return;
+        }
+        localStorage.removeItem(key);
+      }
+
+      function openHelpGuideModal({ force = false } = {}) {
+        if (!helpGuideModal) return;
+        if (!force && APP_PAGE !== "programming") return;
+        if (!force && isHelpGuideSuppressed()) return;
+        dontShowHelpGuideCheckbox.checked = isHelpGuideSuppressed();
+        helpGuideModal.classList.remove("hidden");
+      }
+
+      function closeHelpGuideModal() {
+        if (!helpGuideModal) return;
+        setHelpGuideSuppressed(Boolean(dontShowHelpGuideCheckbox.checked));
+        helpGuideModal.classList.add("hidden");
       }
 
       function saveMonthYearPreference(year = Number(yearInput.value), month = Number(selectedMonth)) {
@@ -3192,6 +3261,7 @@
             localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
             renderUserProfile(currentUser);
             loginOverlay.classList.add("hidden");
+            openHelpGuideModal();
             mainMenu.classList.remove("hidden");
             applyMainPageMode();
             syncMainMenuByRole();
@@ -3245,6 +3315,7 @@
           }
           renderUserProfile(currentUser);
           loginOverlay.classList.add("hidden");
+          openHelpGuideModal();
           mainMenu.classList.remove("hidden");
           applyMainPageMode();
           syncMainMenuByRole();
@@ -3672,6 +3743,19 @@
 
       closeErrorPopupBtn.addEventListener("click", () => {
         hideErrorPopup();
+      });
+
+      helpGuideLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        openHelpGuideModal({ force: true });
+      });
+
+      closeHelpGuideBtn.addEventListener("click", () => {
+        closeHelpGuideModal();
+      });
+
+      ackHelpGuideBtn.addEventListener("click", () => {
+        closeHelpGuideModal();
       });
 
       softwareInfoLink.addEventListener("click", (event) => {
