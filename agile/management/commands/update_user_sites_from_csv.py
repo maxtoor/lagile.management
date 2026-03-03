@@ -385,7 +385,7 @@ class Command(BaseCommand):
                                 if manager_user.role not in {'ADMIN', 'SUPERADMIN'}:
                                     manager_user.role = 'ADMIN'
                                     if not dry_run:
-                                        manager_user.save(update_fields=['role'])
+                                        manager_user.save(update_fields=['role', 'is_staff'])
                                     managers_role_promoted += 1
                                     manager_promoted = True
                                     self.stdout.write(

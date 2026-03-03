@@ -7,5 +7,5 @@ class IsAdminOrSuperAdmin(BasePermission):
         return bool(
             user
             and user.is_authenticated
-            and (user.role in {'ADMIN', 'SUPERADMIN'} or user.is_staff or user.is_superuser)
+            and (user.role in {'ADMIN', 'SUPERADMIN'} or user.is_superuser)
         )

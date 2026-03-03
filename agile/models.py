@@ -44,9 +44,8 @@ class User(AbstractUser):
     def _align_role_permissions(self):
         # Allineamento automatico ruolo/permesse:
         # - superuser => SUPERADMIN + staff
-        # - SUPERADMIN/ADMIN => staff
-        # - staff senza ruolo admin => ADMIN
-        # - EMPLOYEE puro => non staff
+        # - SUPERADMIN => staff
+        # - ADMIN/EMPLOYEE => non staff
         if self.is_superuser:
             self.role = self.Role.SUPERADMIN
             self.is_staff = True
@@ -54,14 +53,6 @@ class User(AbstractUser):
 
         if self.role == self.Role.SUPERADMIN:
             self.is_staff = True
-            return
-
-        if self.role == self.Role.ADMIN:
-            self.is_staff = True
-            return
-
-        if self.is_staff and self.role == self.Role.EMPLOYEE:
-            self.role = self.Role.ADMIN
             return
 
         self.is_staff = False

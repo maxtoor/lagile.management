@@ -11,16 +11,26 @@ class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(trim_whitespace=False)
 
+    @staticmethod
+    def _normalize_login_username(raw_username: str) -> str:
+        username = (raw_username or '').strip()
+        if '@' in username:
+            local_part = username.split('@', 1)[0].strip()
+            if local_part:
+                return local_part
+        return username
+
     def validate(self, attrs):
-        user = authenticate(username=attrs['username'], password=attrs['password'])
+        normalized_username = self._normalize_login_username(attrs.get('username', ''))
+        user = authenticate(username=normalized_username, password=attrs['password'])
         if not user:
-            username = (attrs.get('username') or '').strip()
-            if username:
+            if normalized_username:
                 user_model = get_user_model()
-                candidate = user_model.objects.filter(username=username).only('id', 'is_active').first()
+                candidate = user_model.objects.filter(username=normalized_username).only('id', 'is_active').first()
                 if candidate and not candidate.is_active:
                     raise serializers.ValidationError('Utente non attivo, contattare amministratore')
             raise serializers.ValidationError('Credenziali non valide')
+        attrs['username'] = normalized_username
         attrs['user'] = user
         return attrs
 

@@ -304,7 +304,7 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
 
     @classmethod
     def _is_admin_user(cls, user) -> bool:
-        return bool(cls._is_superadmin_user(user) or user.is_staff or user.role == 'ADMIN')
+        return bool(cls._is_superadmin_user(user) or user.role == 'ADMIN')
 
     @staticmethod
     def _has_aila_subscription(user) -> bool:

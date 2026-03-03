@@ -24,6 +24,16 @@ Backend Django per gestione mensile del calendario di lavoro agile con autentica
 - PostgreSQL 16
 - LDAP opzionale con `django-auth-ldap`
 
+## Perche Django
+
+La scelta di Django e stata fatta per motivi pratici:
+
+- copre in modo nativo autenticazione, ruoli, amministrazione e workflow applicativi
+- semplifica la gestione on-premise su Linux con stack stabile e noto
+- con il numero di utenti coinvolti, non e necessario introdurre architetture piu complesse
+- il Django Admin riduce sviluppo custom per gestione utenti, referenti, import e template email
+- facilita manutenzione e evoluzione delle regole di business lato server
+
 ## Avvio rapido (Docker)
 
 1. Copia variabili ambiente:
@@ -47,6 +57,12 @@ POSTGRES_HOST=db
 POSTGRES_PORT=5432
 LDAP_ENABLED=0
 ```
+
+`ALLOWED_HOSTS` (Django):
+- definisce gli hostname/domini autorizzati a raggiungere l'applicazione
+- richieste con `Host` non presente in elenco vengono rifiutate (`DisallowedHost`)
+- sviluppo locale tipico: `ALLOWED_HOSTS=localhost,127.0.0.1`
+- produzione: inserire i domini/IP reali esposti (es. `lagile.example.org,10.0.0.15`)
 
 Formato data nel portale:
 - `AGILE_DATE_DISPLAY_FORMAT=IT` -> `gg/mm/aaaa` (default)
@@ -419,12 +435,12 @@ Per evitare ambiguita, i livelli sono due:
 
 Comportamento nel portale applicativo:
 - un utente `is_superuser=True` viene trattato come super admin anche nell'app (equivalente operativo a `SUPERADMIN`)
-- un utente `is_staff=True` viene considerato approvatore anche se `role` non e `ADMIN`
+- l'accesso a code approvazione/variazioni dipende dal ruolo applicativo (`ADMIN`/`SUPERADMIN`), non dal flag `is_staff`
 
 Allineamento automatico implementato:
 - `is_superuser=True` forza automaticamente `role=SUPERADMIN` e `is_staff=True`
-- `role=SUPERADMIN` o `role=ADMIN` forza `is_staff=True`
-- `is_staff=True` con `role=EMPLOYEE` riallinea automaticamente a `role=ADMIN`
+- `role=SUPERADMIN` forza `is_staff=True`
+- `role=ADMIN` mantiene `is_staff=False` (resta approvatore nell'app ma senza accesso Django Admin)
 - utente `EMPLOYEE` non superuser viene riallineato con `is_staff=False`
 
 ### Sync automatico festivita nazionali
