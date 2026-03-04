@@ -16,6 +16,7 @@ from django.http import JsonResponse
 import io
 import os
 import tempfile
+from datetime import date
 from collections import deque
 from pathlib import Path
 from email.utils import formataddr
@@ -250,6 +251,15 @@ class ImportCsvAdminForm(forms.Form):
     dry_run = forms.BooleanField(label='Dry run', required=False, initial=True)
 
 
+class SyncHolidaysAdminForm(forms.Form):
+    year = forms.IntegerField(label='Anno', required=True, initial=date.today().year, min_value=2000, max_value=2100)
+    overwrite = forms.BooleanField(
+        label='Aggiorna festivita gia presenti',
+        required=False,
+        initial=False,
+    )
+
+
 class SendTestEmailForm(forms.Form):
     recipient = forms.EmailField(label='Destinatario test')
 
@@ -327,6 +337,7 @@ def import_tools_view(request):
                 'ldap_form': ImportLdapAdminForm(),
                 'sync_form': SyncLdapAdminForm(),
                 'csv_form': ImportCsvAdminForm(),
+                'holidays_form': SyncHolidaysAdminForm(),
                 'logs': [],
             },
         )
@@ -335,6 +346,7 @@ def import_tools_view(request):
     ldap_form = ImportLdapAdminForm(prefix='ldap')
     sync_form = SyncLdapAdminForm(prefix='sync')
     csv_form = ImportCsvAdminForm(prefix='csv')
+    holidays_form = SyncHolidaysAdminForm(prefix='holidays')
 
     if request.method == 'POST':
         action = (request.POST.get('action') or '').strip()
@@ -432,6 +444,27 @@ def import_tools_view(request):
                             os.unlink(tmp_path)
                         except OSError:
                             pass
+        elif action == 'holidays_sync':
+            holidays_form = SyncHolidaysAdminForm(request.POST, prefix='holidays')
+            if holidays_form.is_valid():
+                out = io.StringIO()
+                err = io.StringIO()
+                kwargs = {
+                    'year': int(holidays_form.cleaned_data['year']),
+                }
+                if holidays_form.cleaned_data.get('overwrite'):
+                    kwargs['overwrite'] = True
+                try:
+                    call_command('sync_holidays', stdout=out, stderr=err, **kwargs)
+                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
+                    logs.append(output or 'Aggiornamento festivita completato')
+                    messages.success(request, 'Aggiornamento festivita eseguito')
+                except Exception as exc:
+                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
+                    if output:
+                        logs.append(output)
+                    logs.append(str(exc))
+                    messages.error(request, f'Errore aggiornamento festivita: {exc}')
 
     return TemplateResponse(
         request,
@@ -442,6 +475,7 @@ def import_tools_view(request):
             'ldap_form': ldap_form,
             'sync_form': sync_form,
             'csv_form': csv_form,
+            'holidays_form': holidays_form,
             'logs': logs,
             'is_superuser': request.user.is_superuser,
             'opts': User._meta,
