@@ -1,6 +1,8 @@
 {% extends "admin/index.html" %}
 
 {% block content %}
+  {{ block.super }}
+
   <div class="app-agile module" style="margin-bottom:16px;">
     <table>
       <caption>
@@ -32,7 +34,6 @@
       </tbody>
     </table>
   </div>
-  {{ block.super }}
 {% endblock %}
 
 {% block sidebar %}{% endblock %}

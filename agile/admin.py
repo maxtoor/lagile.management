@@ -202,6 +202,29 @@ class ImportLdapAdminForm(forms.Form):
     )
 
 
+class SyncLdapAdminForm(forms.Form):
+    ldap_filter = forms.CharField(
+        label='Filtro LDAP',
+        required=False,
+        help_text='Lascia vuoto per usare LDAP_IMPORT_FILTER da .env',
+    )
+    base_dn = forms.CharField(
+        label='Base DN',
+        required=False,
+        help_text='Lascia vuoto per usare LDAP_USER_BASE_DN da .env',
+    )
+    deactivate_missing = forms.BooleanField(
+        label='Disattiva assenti in LDAP',
+        required=False,
+        initial=False,
+    )
+    dry_run = forms.BooleanField(
+        label='Dry run',
+        required=False,
+        initial=True,
+    )
+
+
 class ImportCsvAdminForm(forms.Form):
     csv_file = forms.FileField(label='File CSV')
     email_column = forms.CharField(label='Colonna email', required=False, initial='email')
@@ -299,8 +322,10 @@ def import_tools_view(request):
             request,
             'admin/agile/import_tools.html',
             {
+                **admin.site.each_context(request),
                 'title': 'Strumenti',
                 'ldap_form': ImportLdapAdminForm(),
+                'sync_form': SyncLdapAdminForm(),
                 'csv_form': ImportCsvAdminForm(),
                 'logs': [],
             },
@@ -308,6 +333,7 @@ def import_tools_view(request):
 
     logs = []
     ldap_form = ImportLdapAdminForm(prefix='ldap')
+    sync_form = SyncLdapAdminForm(prefix='sync')
     csv_form = ImportCsvAdminForm(prefix='csv')
 
     if request.method == 'POST':
@@ -337,6 +363,33 @@ def import_tools_view(request):
                         logs.append(output)
                     logs.append(str(exc))
                     messages.error(request, f'Errore import LDAP: {exc}')
+        elif action == 'ldap_sync':
+            sync_form = SyncLdapAdminForm(request.POST, prefix='sync')
+            if sync_form.is_valid():
+                out = io.StringIO()
+                err = io.StringIO()
+                kwargs = {
+                    'dry_run': bool(sync_form.cleaned_data.get('dry_run')),
+                }
+                ldap_filter = (sync_form.cleaned_data.get('ldap_filter') or '').strip()
+                base_dn = (sync_form.cleaned_data.get('base_dn') or '').strip()
+                if ldap_filter:
+                    kwargs['ldap_filter'] = ldap_filter
+                if base_dn:
+                    kwargs['base_dn'] = base_dn
+                if sync_form.cleaned_data.get('deactivate_missing'):
+                    kwargs['deactivate_missing'] = True
+                try:
+                    call_command('sync_ldap_users', stdout=out, stderr=err, **kwargs)
+                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
+                    logs.append(output or 'Sync LDAP completato')
+                    messages.success(request, 'Sync LDAP eseguito')
+                except Exception as exc:
+                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
+                    if output:
+                        logs.append(output)
+                    logs.append(str(exc))
+                    messages.error(request, f'Errore sync LDAP: {exc}')
         elif action == 'csv':
             csv_form = ImportCsvAdminForm(request.POST, request.FILES, prefix='csv')
             if csv_form.is_valid():
@@ -384,8 +437,10 @@ def import_tools_view(request):
         request,
         'admin/agile/import_tools.html',
         {
+            **admin.site.each_context(request),
             'title': 'Strumenti',
             'ldap_form': ldap_form,
+            'sync_form': sync_form,
             'csv_form': csv_form,
             'logs': logs,
             'is_superuser': request.user.is_superuser,
@@ -401,6 +456,7 @@ def log_monitor_view(request):
             request,
             'admin/agile/log_monitor.html',
             {
+                **admin.site.each_context(request),
                 'title': 'Monitor log',
                 'log_lines': '',
                 'log_error': 'Permessi insufficienti',
@@ -422,6 +478,7 @@ def log_monitor_view(request):
         request,
         'admin/agile/log_monitor.html',
         {
+            **admin.site.each_context(request),
             'title': 'Monitor log',
             'log_lines': log_lines,
             'log_error': log_error,

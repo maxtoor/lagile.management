@@ -281,6 +281,23 @@ Note:
 - agli utenti importati viene impostata password locale non utilizzabile
 - il campo `Sede` viene valorizzato solo se il valore LDAP e tra quelli ammessi da `AGILE_SITES`, altrimenti resta vuoto
 
+### Sync periodico utenti LDAP (allineamento)
+
+Per allineare gli utenti gia importati quando LDAP cambia:
+
+```bash
+python manage.py sync_ldap_users --dry-run
+python manage.py sync_ldap_users
+python manage.py sync_ldap_users --deactivate-missing
+```
+
+Regole sync:
+- chiave di allineamento: `username`
+- campi aggiornati dal sync: `first_name`, `last_name`, `email`
+- campi non toccati: `Sede`, `Referente amministrativo`, `Sottoscrizione AILA`, `Ruolo`, `Auto-approvazione`
+- gli account locali con password utilizzabile non vengono modificati
+- con `--deactivate-missing` vengono disattivati gli account LDAP locali non piu presenti su LDAP (solo account con password non utilizzabile)
+
 ## Migrazione dalla versione precedente
 
 Nota: questa procedura riguarda esclusivamente gli Istituti del CNR che avevano adottato la versione precedente di questo software.

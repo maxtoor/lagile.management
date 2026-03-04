@@ -3,7 +3,7 @@
 {% block content %}
 <div style="max-width:980px">
   <p style="margin-top:0;color:#4b5a54">
-    Flusso consigliato: 1) import LDAP, 2) import CSV dalla versione precedente.
+    Flusso consigliato: 1) import LDAP, 2) sync LDAP periodico, 3) import CSV dalla versione precedente.
   </p>
 
   {% if not is_superuser %}
@@ -11,7 +11,7 @@
       <div class="errornote">Accesso consentito solo ai superuser.</div>
     </div>
   {% else %}
-    <div style="display:grid;gap:16px;grid-template-columns:1fr 1fr">
+    <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
       <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
         <h2 style="margin-top:0">1) Import utenti LDAP</h2>
         <form method="post" novalidate>
@@ -23,7 +23,17 @@
       </section>
 
       <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
-        <h2 style="margin-top:0">2) Import CSV (versione precedente)</h2>
+        <h2 style="margin-top:0">2) Sync utenti LDAP</h2>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="ldap_sync" />
+          {{ sync_form.as_p }}
+          <button type="submit" class="default">Esegui sync LDAP</button>
+        </form>
+      </section>
+
+      <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
+        <h2 style="margin-top:0">3) Import CSV (versione precedente)</h2>
         <form method="post" enctype="multipart/form-data" novalidate>
           {% csrf_token %}
           <input type="hidden" name="action" value="csv" />
