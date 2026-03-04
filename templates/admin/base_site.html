@@ -5,13 +5,7 @@
 
 {% block branding %}
 <div id="site-name">
-  <a href="{% url 'admin:index' %}">{{ site_header|default:_("Django administration") }}</a>
-  <span style="margin-left:12px;font-size:13px;font-weight:500">
-    <a href="{% url 'admin:agile_import_tools' %}">Strumenti</a>
-  </span>
-  <span style="margin-left:12px;font-size:13px;font-weight:500">
-    <a href="{% url 'admin:agile_log_monitor' %}">Monitor log</a>
-  </span>
+  <a class="site-title" href="{% url 'admin:index' %}">{{ site_header|default:_("Django administration") }}</a>
 </div>
 {% endblock %}
 
@@ -33,5 +27,6 @@
 
 {% block extrastyle %}
   {{ block.super }}
+  <link rel="stylesheet" href="{% static 'agile/admin-theme.css' %}">
   <link rel="stylesheet" href="{% static 'agile/admin-user-collapse.css' %}">
 {% endblock %}

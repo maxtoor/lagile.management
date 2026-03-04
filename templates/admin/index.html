@@ -1,36 +1,52 @@
 {% extends "admin/index.html" %}
 
 {% block content %}
-  {{ block.super }}
+  <div class="app-agile module" style="margin-bottom:16px;">
+    <table>
+      <caption>
+        <span class="section">LAGILE</span>
+      </caption>
+      <tbody>
+        <tr><th scope="row"><a href="{% url 'admin:agile_user_changelist' %}">Utenti</a></th><td><a href="{% url 'admin:agile_user_changelist' %}" class="viewlink">Apri</a></td></tr>
+        <tr><th scope="row"><a href="{% url 'admin:agile_agilegroup_changelist' %}">Gruppi</a></th><td><a href="{% url 'admin:agile_agilegroup_changelist' %}" class="viewlink">Apri</a></td></tr>
+        <tr><th scope="row"><a href="{% url 'admin:agile_holiday_changelist' %}">Holiday</a></th><td><a href="{% url 'admin:agile_holiday_changelist' %}" class="viewlink">Apri</a></td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <div class="app-agile module" style="margin-bottom:16px;">
     <table>
       <caption>
-        <a href="{% url 'admin:agile_import_tools' %}" class="section" title="Apri strumenti">
-          Strumenti
-        </a>
+        <span class="section">CONTROLLO</span>
       </caption>
       <tbody>
-        <tr class="model-user">
-          <th scope="row">
-            <a href="{% url 'admin:agile_import_tools' %}">
-              Import LDAP + Import CSV (migrazione da versione precedente)
-            </a>
-          </th>
-          <td>
-            <a href="{% url 'admin:agile_import_tools' %}" class="viewlink">Apri</a>
-          </td>
-        </tr>
-        <tr class="model-user">
-          <th scope="row">
-            <a href="{% url 'admin:agile_log_monitor' %}">
-              Monitor log applicativo (aggiornamento live)
-            </a>
-          </th>
-          <td>
-            <a href="{% url 'admin:agile_log_monitor' %}" class="viewlink">Apri</a>
-          </td>
-        </tr>
+        <tr><th scope="row"><a href="{% url 'admin:agile_auditlog_changelist' %}">Audit logs</a></th><td><a href="{% url 'admin:agile_auditlog_changelist' %}" class="viewlink">Apri</a></td></tr>
+        <tr><th scope="row"><a href="{% url 'admin:agile_changerequest_changelist' %}">Change Request</a></th><td><a href="{% url 'admin:agile_changerequest_changelist' %}" class="viewlink">Apri</a></td></tr>
+        <tr><th scope="row"><a href="{% url 'admin:agile_departmentpolicy_changelist' %}">Department Policy</a></th><td><a href="{% url 'admin:agile_departmentpolicy_changelist' %}" class="viewlink">Apri</a></td></tr>
+        <tr><th scope="row"><a href="{% url 'admin:agile_monthlyplan_changelist' %}">Montly plans</a></th><td><a href="{% url 'admin:agile_monthlyplan_changelist' %}" class="viewlink">Apri</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="app-agile module" style="margin-bottom:16px;">
+    <table>
+      <caption>
+        <span class="section">STRUMENTI</span>
+      </caption>
+      <tbody>
+        <tr><th scope="row"><a href="{% url 'admin:agile_import_tools' %}">Import LDAP + Import CSV</a></th><td><a href="{% url 'admin:agile_import_tools' %}" class="viewlink">Apri</a></td></tr>
+        <tr><th scope="row"><a href="{% url 'admin:agile_systememailtemplate_changelist' %}">Template Email</a></th><td><a href="{% url 'admin:agile_systememailtemplate_changelist' %}" class="viewlink">Apri</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="app-agile module" style="margin-bottom:16px;">
+    <table>
+      <caption>
+        <span class="section">AUTENTICAZIONE</span>
+      </caption>
+      <tbody>
+        <tr><th scope="row"><a href="{% url 'admin:authtoken_tokenproxy_changelist' %}">Token</a></th><td><a href="{% url 'admin:authtoken_tokenproxy_changelist' %}" class="viewlink">Apri</a></td></tr>
       </tbody>
     </table>
   </div>
