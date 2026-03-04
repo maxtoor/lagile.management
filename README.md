@@ -1,4 +1,6 @@
-# Gestione Lavoro Agile (MVP)
+# Gestione Lavoro Agile
+
+Applicazione on-premise per pianificazione e approvazione del lavoro agile. Versione 2.0.0.
 
 Backend Django per gestione mensile del calendario di lavoro agile con autenticazione LDAP o locale, workflow di approvazione e audit log.
 
