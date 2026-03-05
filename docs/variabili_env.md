@@ -92,7 +92,7 @@ Per evitare messaggi di errore ad ogni avvio, puoi impostare:
 
 ## Nota su override da Admin
 
-Alcune variabili possono essere sovrascritte da Django Admin in `Strumenti -> Impostazioni applicazione`.
+Alcune variabili possono essere sovrascritte dalla Pagina di Amministrazione in `Strumenti -> Impostazioni applicazione`.
 Se valorizzate in pagina admin, prevalgono sui valori `.env` per:
 - `AGILE_DATE_DISPLAY_FORMAT`
 - `AGILE_LOGIN_LOGO_URL`

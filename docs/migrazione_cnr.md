@@ -20,7 +20,7 @@ python manage.py import_release_data /percorso/release-export.json --mode merge
 python manage.py update_user_sites_from_csv /percorso/file.csv --site-column department --site-mode last-word
 ```
 
-In alternativa, i passaggi CSV ICB sono disponibili anche da Django Admin:
+In alternativa, i passaggi CSV ICB sono disponibili anche dalla Pagina di Amministrazione:
 - URL: `/admin/agile/import-tools/`
 - accesso: solo `superuser`
 

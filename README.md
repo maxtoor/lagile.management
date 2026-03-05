@@ -33,7 +33,7 @@ La scelta di Django e stata fatta per motivi pratici:
 - copre in modo nativo autenticazione, ruoli, amministrazione e workflow applicativi
 - semplifica la gestione on-premise su Linux con stack stabile e noto
 - con il numero di utenti coinvolti, non e necessario introdurre architetture piu complesse
-- il Django Admin riduce sviluppo custom per gestione utenti, referenti, import e template email
+- la Pagina di Amministrazione riduce sviluppo custom per gestione utenti, referenti, import e template email
 - facilita manutenzione e evoluzione delle regole di business lato server
 
 ## Avvio rapido (Docker)
@@ -188,7 +188,7 @@ Nota Docker:
   - `prepare_next_year_holidays` (il 1 dicembre prepara le festivita dell'anno successivo e invia report ai superuser)
 - intervallo controllo configurabile con `REMINDER_CHECK_INTERVAL_SECONDS` (default `86400`)
 - i comandi inviano realmente email solo nel loro giorno previsto (a meno di `--force`)
-- in Django Admin e disponibile il link `Monitor log` per visualizzare il tail live e selezionare la sorgente (es. `app` / `scheduler`)
+- nella Pagina di Amministrazione e disponibile il link `Monitor log` per visualizzare il tail live e selezionare la sorgente (es. `app` / `scheduler`)
 
 ## Avvio locale (senza Docker)
 
@@ -206,7 +206,7 @@ python manage.py runserver
 Riferimento rapido configurazione:
 - dettagli di tutte le variabili `.env`: [`docs/variabili_env.md`](docs/variabili_env.md)
 
-Override da interfaccia Django Admin:
+Override da interfaccia Pagina di Amministrazione:
 - in `Strumenti` e disponibile `Impostazioni applicazione`
 - i valori salvati in questa pagina hanno priorita su `.env` per:
   - formato data portale
@@ -419,7 +419,7 @@ AGILE_EMAIL_FROM_NAME=Lagile.management
 Nota: in assenza di configurazione SMTP resta il backend console (`EMAIL_BACKEND` di default), utile in sviluppo.
 Se `AGILE_EMAIL_FROM_NAME` e valorizzato, il mittente viene inviato nel formato `Nome <indirizzo>`.
 
-Template email modificabili da Django admin:
+Template email modificabili dalla Pagina di Amministrazione:
 - sezione: `Template email di sistema`
 - chiavi disponibili:
   - `CHANGE_REQUEST_SUBMITTED`
@@ -485,7 +485,7 @@ I vincoli sono validati sia in fase di creazione/modifica del piano, sia al mome
 
 ## Configurazione per reparto
 
-Da Django Admin puoi configurare:
+Dalla Pagina di Amministrazione puoi configurare:
 
 - `DepartmentPolicy`: override dei limiti per singolo reparto
   - `max_remote_days`
@@ -495,7 +495,7 @@ Da Django Admin puoi configurare:
 
 ## Anagrafica utente e referente
 
-In Django Admin, nella scheda utente (`Users`), sono disponibili:
+Nella Pagina di Amministrazione, nella scheda utente (`Users`), sono disponibili:
 - `Afferenza territoriale` (campo tecnico: `department`)
 - `Ruolo` (`EMPLOYEE`, `ADMIN`, `SUPERADMIN`)
 - `Referente amministrativo` (campo tecnico: `manager`)
@@ -519,8 +519,8 @@ Per evitare ambiguita, i livelli sono due:
    - `SUPERADMIN`: visione/operativita globale nell'applicazione
 
 2. Permessi Django (`is_staff`, `is_superuser`):
-   - `is_staff`: accesso all'interfaccia Django admin
-   - `is_superuser`: privilegi massimi Django admin
+   - `is_staff`: accesso all'interfaccia Pagina di Amministrazione
+   - `is_superuser`: privilegi massimi Pagina di Amministrazione
 
 Comportamento nel portale applicativo:
 - un utente `is_superuser=True` viene trattato come super admin anche nell'app (equivalente operativo a `SUPERADMIN`)
@@ -529,7 +529,7 @@ Comportamento nel portale applicativo:
 Allineamento automatico implementato:
 - `is_superuser=True` forza automaticamente `role=SUPERADMIN` e `is_staff=True`
 - `role=SUPERADMIN` forza `is_staff=True`
-- `role=ADMIN` mantiene `is_staff=False` (resta approvatore nell'app ma senza accesso Django Admin)
+- `role=ADMIN` mantiene `is_staff=False` (resta approvatore nell'app ma senza accesso Pagina di Amministrazione)
 - utente `EMPLOYEE` non superuser viene riallineato con `is_staff=False`
 
 ### Sync automatico festivita nazionali
@@ -548,7 +548,7 @@ python manage.py sync_holidays --year 2026 --overwrite
 
 ## Limiti attuali (da discutere)
 
-- Gestione utenti/gruppi avanzata delegata al Django Admin
+- Gestione utenti/gruppi avanzata delegata alla Pagina di Amministrazione
 - Notifiche email di base (template modificabili via admin)
 - Nessun frontend SPA separato (UI server-rendered)
 
