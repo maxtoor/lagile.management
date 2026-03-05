@@ -8,7 +8,7 @@ from django.db import models
 
 
 def _site_choices() -> tuple[tuple[str, str], ...]:
-    sites = getattr(settings, 'AGILE_SITES', ['Napoli', 'Catania', 'Sassari', 'Padova'])
+    sites = getattr(settings, 'AGILE_SITES', ['Sede principale'])
     return tuple((site, site) for site in sites)
 
 

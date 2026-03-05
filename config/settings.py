@@ -5,14 +5,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 def csv_env(name: str, default: str) -> list[str]:
-    return [v.strip() for v in os.getenv(name, default).split(',') if v.strip()]
+    values = [v.strip() for v in os.getenv(name, default).split(',') if v.strip()]
+    if values:
+        return values
+    return [v.strip() for v in default.split(',') if v.strip()]
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-change-me')
 DEBUG = os.getenv('DEBUG', '0') == '1'
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
-AGILE_SITES = csv_env('AGILE_SITES', 'Napoli,Catania,Sassari,Padova')
+AGILE_SITES = csv_env('AGILE_SITES', 'Sede principale')
 AGILE_DATE_DISPLAY_FORMAT = os.getenv('AGILE_DATE_DISPLAY_FORMAT', 'IT').upper()
 AGILE_LOGIN_LOGO_URL = os.getenv('AGILE_LOGIN_LOGO_URL', '').strip()
+AGILE_FAVICON_URL = os.getenv('AGILE_FAVICON_URL', '').strip()
 AGILE_COMPANY_NAME = os.getenv('AGILE_COMPANY_NAME', 'LAgile.Management').strip()
 AGILE_COPYRIGHT_YEAR = int(os.getenv('AGILE_COPYRIGHT_YEAR', '2026'))
 AGILE_LOG_FILE = os.getenv('AGILE_LOG_FILE', str(BASE_DIR / 'logs' / 'agile.log')).strip()

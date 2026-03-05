@@ -1132,8 +1132,8 @@
       }
 
       .login-brand img {
-        max-width: 220px;
-        max-height: 64px;
+        max-width: 300px;
+        max-height: 96px;
         width: auto;
         height: auto;
         object-fit: contain;
@@ -1422,7 +1422,6 @@
       <div class="modal-box" style="width:min(680px, 100%)">
         <div class="modal-head">
           <h3 class="modal-title">Guida rapida</h3>
-          <button id="closeHelpGuideBtn" class="ghost">Chiudi</button>
         </div>
         <div style="font-size:0.9rem;line-height:1.55;color:var(--ink)">
           <ul style="margin:0 0 10px 18px;padding:0;display:grid;gap:6px">
@@ -1707,7 +1706,6 @@
       const closeErrorPopupBtn = document.getElementById("closeErrorPopupBtn");
       const helpGuideLink = document.getElementById("helpGuideLink");
       const helpGuideModal = document.getElementById("helpGuideModal");
-      const closeHelpGuideBtn = document.getElementById("closeHelpGuideBtn");
       const ackHelpGuideBtn = document.getElementById("ackHelpGuideBtn");
       const dontShowHelpGuideCheckbox = document.getElementById("dontShowHelpGuideCheckbox");
       const softwareInfoLink = document.getElementById("softwareInfoLink");
@@ -4263,10 +4261,6 @@
       helpGuideLink?.addEventListener("click", (event) => {
         event.preventDefault();
         openHelpGuideModal({ force: true });
-      });
-
-      closeHelpGuideBtn.addEventListener("click", () => {
-        closeHelpGuideModal();
       });
 
       ackHelpGuideBtn.addEventListener("click", () => {

@@ -49,7 +49,6 @@ cp .env.example .env
 ```env
 DJANGO_SECRET_KEY=una-chiave-forte
 DEBUG=1
-AGILE_SITES=Napoli,Catania,Sassari,Padova
 AGILE_DATE_DISPLAY_FORMAT=IT
 AGILE_LOGIN_LOGO_URL=https://example.org/static/logo-istituto.png
 POSTGRES_DB=agile_work
@@ -69,6 +68,12 @@ LDAP_ENABLED=0
 Formato data nel portale:
 - `AGILE_DATE_DISPLAY_FORMAT=IT` -> `gg/mm/aaaa` (default)
 - `AGILE_DATE_DISPLAY_FORMAT=ISO` -> `aaaa-mm-gg`
+
+Sedi ammesse (opzionale):
+- `AGILE_SITES=Sede principale` (default)
+- serve per definire l'elenco sedi disponibili nell'app e nei processi di import LDAP/CSV
+- non e obbligatoria in `.env`: se assente viene usato il default
+- per piu sedi, usa un CSV: `AGILE_SITES=Napoli,Catania,Sassari,Padova`
 
 Logo nella schermata login (opzionale):
 - `AGILE_LOGIN_LOGO_URL=` URL assoluto dell'immagine (es. `https://.../logo.png`)

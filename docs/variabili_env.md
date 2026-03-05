@@ -10,7 +10,7 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 | `DEBUG` | No | `0` | `1` abilita debug Django (solo sviluppo). |
 | `ALLOWED_HOSTS` | Si | `localhost,127.0.0.1` | Hostname/domini ammessi (separati da virgola). |
 | `TIME_ZONE` | No | `Europe/Rome` | Fuso orario applicazione. |
-| `AGILE_SITES` | No | `Napoli,Catania,Sassari,Padova` | Elenco sedi ammesse (CSV). |
+| `AGILE_SITES` | No | `Sede principale` | Elenco sedi ammesse (CSV). Esempio multi-sede: `Napoli,Catania,Sassari,Padova`. |
 | `AGILE_DATE_DISPLAY_FORMAT` | No | `IT` | Formato data nel portale (`IT` o `ISO`). |
 | `AGILE_LOGIN_LOGO_URL` | No | vuoto | URL assoluto logo schermata login. |
 | `AGILE_COMPANY_NAME` | No | `LAgile.Management` | Nome compagnia mostrato nel footer. |
