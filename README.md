@@ -133,6 +133,32 @@ bash scripts/install.sh --dry-run --install-dir /opt/lagile-management --branch 
 bash scripts/install.sh --install-dir /opt/lagile-management --branch main --port 8001
 ```
 
+### Upgrade applicazione (Linux, Docker)
+
+E disponibile uno script di aggiornamento con backup pre-upgrade:
+- backup DB PostgreSQL + copia `.env`
+- aggiornamento codice (`git pull --ff-only`)
+- rebuild container `web`/`scheduler`
+- migrate + check post-upgrade
+
+Esempi:
+
+```bash
+# Simulazione (consigliata)
+bash scripts/upgrade.sh --dry-run
+
+# Upgrade reale
+bash scripts/upgrade.sh
+```
+
+Opzioni utili:
+- `--project-dir /opt/lagile-management` se il progetto non e nella directory corrente
+- `--branch main` branch remoto da usare
+- `--skip-backup` se vuoi saltare il backup
+- `--skip-fetch` se hai gia fatto fetch/pull manuale
+- `--skip-migrate` se vuoi eseguire migrate separatamente
+- `--allow-dirty` per forzare anche con working tree non pulita
+
 Nota Docker:
 - e presente un servizio `scheduler` che esegue periodicamente:
   - `send_submission_reminders` (promemoria utente ultimo giorno mese)

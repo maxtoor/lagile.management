@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        build-essential \
+       git \
        libpq-dev \
        libldap2-dev \
        libsasl2-dev \
