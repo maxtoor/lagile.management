@@ -89,3 +89,14 @@ Per evitare messaggi di errore ad ogni avvio, puoi impostare:
 - Non versionare `.env` con credenziali reali.
 - In produzione usare valori robusti per `DJANGO_SECRET_KEY`, password DB/LDAP/SMTP.
 - Impostare sempre `DEBUG=0` in produzione.
+
+## Nota su override da Admin
+
+Alcune variabili possono essere sovrascritte da Django Admin in `Strumenti -> Impostazioni applicazione`.
+Se valorizzate in pagina admin, prevalgono sui valori `.env` per:
+- `AGILE_DATE_DISPLAY_FORMAT`
+- `AGILE_LOGIN_LOGO_URL`
+- `AGILE_COMPANY_NAME`
+- `AGILE_COPYRIGHT_YEAR`
+- `DEFAULT_FROM_EMAIL`
+- `AGILE_EMAIL_FROM_NAME`

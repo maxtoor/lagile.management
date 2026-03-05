@@ -21,7 +21,8 @@ from collections import deque
 from pathlib import Path
 from email.utils import formataddr
 
-from .models import AgileGroup, AuditLog, ChangeRequest, DepartmentPolicy, Holiday, MonthlyPlan, PlanDay, SystemEmailTemplate, User
+from .models import AppSetting, AgileGroup, AuditLog, ChangeRequest, DepartmentPolicy, Holiday, MonthlyPlan, PlanDay, SystemEmailTemplate, User
+from .runtime_settings import get_runtime_setting
 
 admin.site.site_title = 'LAgile.Management'
 admin.site.site_header = 'LAgile.Management'
@@ -262,6 +263,51 @@ class SyncHolidaysAdminForm(forms.Form):
 
 class SendTestEmailForm(forms.Form):
     recipient = forms.EmailField(label='Destinatario test')
+
+
+@admin.register(AppSetting)
+class AppSettingAdmin(CollapseMediaMixin, admin.ModelAdmin):
+    fieldsets = (
+        (
+            'Portale',
+            {
+                'fields': ('date_display_format', 'login_logo_url', 'company_name', 'copyright_year'),
+            },
+        ),
+        (
+            'Email',
+            {
+                'classes': ('collapse',),
+                'fields': ('default_from_email', 'email_from_name'),
+            },
+        ),
+        (
+            'Aggiornamento',
+            {
+                'classes': ('collapse',),
+                'fields': ('updated_at',),
+            },
+        ),
+    )
+    readonly_fields = ('updated_at',)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        if AppSetting.objects.exists():
+            return False
+        return super().has_add_permission(request)
+
+    def changelist_view(self, request, extra_context=None):
+        obj = AppSetting.objects.order_by('id').first()
+        if obj:
+            return redirect('admin:agile_appsetting_change', obj.pk)
+        return redirect('admin:agile_appsetting_add')
+
+    def get_model_perms(self, request):
+        # Accesso dalla sezione Strumenti nella home admin.
+        return {}
 
 
 @admin.register(AgileGroup)
@@ -743,8 +789,8 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
 
     @staticmethod
     def _sender_from_env() -> str | None:
-        from_email = (getattr(settings, 'DEFAULT_FROM_EMAIL', '') or '').strip()
-        from_name = (getattr(settings, 'AGILE_EMAIL_FROM_NAME', '') or '').strip()
+        from_email = (get_runtime_setting('DEFAULT_FROM_EMAIL', '') or '').strip()
+        from_name = (get_runtime_setting('AGILE_EMAIL_FROM_NAME', '') or '').strip()
         if not from_email:
             return None
         if not from_name:

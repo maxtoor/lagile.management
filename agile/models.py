@@ -422,6 +422,63 @@ class SystemEmailTemplate(models.Model):
         return self.get_key_display()
 
 
+class AppSetting(models.Model):
+    class DateFormat(models.TextChoices):
+        IT = 'IT', 'Italiano (gg/mm/aaaa)'
+        ISO = 'ISO', 'ISO (aaaa-mm-gg)'
+
+    date_display_format = models.CharField(
+        max_length=8,
+        choices=DateFormat.choices,
+        blank=True,
+        help_text='Se vuoto usa AGILE_DATE_DISPLAY_FORMAT da .env',
+    )
+    login_logo_url = models.URLField(
+        blank=True,
+        help_text='Se vuoto usa AGILE_LOGIN_LOGO_URL da .env',
+    )
+    company_name = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text='Se vuoto usa AGILE_COMPANY_NAME da .env',
+    )
+    copyright_year = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text='Se vuoto usa AGILE_COPYRIGHT_YEAR da .env',
+    )
+    default_from_email = models.EmailField(
+        blank=True,
+        help_text='Se vuoto usa DEFAULT_FROM_EMAIL da .env',
+    )
+    email_from_name = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text='Se vuoto usa AGILE_EMAIL_FROM_NAME da .env',
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Impostazioni applicazione'
+        verbose_name_plural = 'Impostazioni applicazione'
+
+    def __str__(self) -> str:
+        return 'Impostazioni applicazione'
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from .runtime_settings import clear_runtime_settings_cache
+
+        clear_runtime_settings_cache()
+
+    def delete(self, *args, **kwargs):
+        result = super().delete(*args, **kwargs)
+        from .runtime_settings import clear_runtime_settings_cache
+
+        clear_runtime_settings_cache()
+        return result
+
+
 class AuditLog(models.Model):
     actor = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     action = models.CharField(max_length=60)

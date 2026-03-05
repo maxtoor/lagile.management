@@ -1,10 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.mail import send_mail
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
-from .models import ChangeRequest, MonthlyPlan, PlanDay, User
+from .models import AuditLog, ChangeRequest, MonthlyPlan, PlanDay, User
+from .runtime_settings import get_runtime_setting
 
 
 class LoginSerializer(serializers.Serializer):
@@ -20,16 +23,103 @@ class LoginSerializer(serializers.Serializer):
                 return local_part
         return username
 
+    @staticmethod
+    def _sender_from_runtime() -> str | None:
+        from email.utils import formataddr
+
+        from_email = (get_runtime_setting('DEFAULT_FROM_EMAIL', '') or '').strip()
+        from_name = (get_runtime_setting('AGILE_EMAIL_FROM_NAME', '') or '').strip()
+        if not from_email:
+            return None
+        if not from_name:
+            return from_email
+        return formataddr((from_name, from_email))
+
+    @classmethod
+    def _notify_superusers_for_new_ldap_user(cls, user: User) -> None:
+        recipients = list(
+            User.objects.filter(is_superuser=True, is_active=True)
+            .exclude(email__isnull=True)
+            .exclude(email__exact='')
+            .values_list('email', flat=True)
+        )
+        if not recipients:
+            return
+
+        full_name = f'{(user.first_name or "").strip()} {(user.last_name or "").strip()}'.strip() or user.username
+        now_str = timezone.localtime().strftime('%Y-%m-%d %H:%M:%S')
+        subject = f'Nuovo utente LDAP importato: {user.username}'
+        message = (
+            'E stato importato automaticamente un nuovo utente al primo login LDAP.\n\n'
+            f'Username: {user.username}\n'
+            f'Nome completo: {full_name}\n'
+            f'Email: {user.email or "-"}\n'
+            f'Data import: {now_str}\n\n'
+            'Completare la configurazione nel Django Admin: Attivo, Sede, Referente amministrativo, '
+            'Sottoscrizione AILA e altre impostazioni applicative.'
+        )
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=cls._sender_from_runtime(),
+            recipient_list=recipients,
+            fail_silently=False,
+        )
+
+    @classmethod
+    def _finalize_new_ldap_user(cls, user: User) -> None:
+        user.role = User.Role.EMPLOYEE
+        user.aila_subscribed = False
+        user.auto_approve = False
+        user.department = ''
+        user.manager = None
+        user.is_active = False
+        user.set_unusable_password()
+        user.save(
+            update_fields=[
+                'role',
+                'aila_subscribed',
+                'auto_approve',
+                'department',
+                'manager',
+                'is_active',
+                'password',
+            ]
+        )
+        AuditLog.track(
+            actor=None,
+            action='ldap_jit_user_imported',
+            target_type='User',
+            target_id=user.id,
+            metadata={
+                'username': user.username,
+                'email': user.email or '',
+            },
+        )
+        try:
+            cls._notify_superusers_for_new_ldap_user(user)
+        except Exception:
+            # Non blocca il login flow di provisioning se l'invio email fallisce.
+            pass
+
     def validate(self, attrs):
         normalized_username = self._normalize_login_username(attrs.get('username', ''))
+        user_model = get_user_model()
+        existed_before_login = user_model.objects.filter(username=normalized_username).exists()
         user = authenticate(username=normalized_username, password=attrs['password'])
         if not user:
             if normalized_username:
-                user_model = get_user_model()
                 candidate = user_model.objects.filter(username=normalized_username).only('id', 'is_active').first()
                 if candidate and not candidate.is_active:
                     raise serializers.ValidationError('Utente non attivo, contattare amministratore')
             raise serializers.ValidationError('Credenziali non valide')
+
+        if not existed_before_login:
+            self._finalize_new_ldap_user(user)
+            raise serializers.ValidationError(
+                'Utente LDAP importato correttamente. In attesa di abilitazione da parte di un amministratore.'
+            )
+
         attrs['username'] = normalized_username
         attrs['user'] = user
         return attrs

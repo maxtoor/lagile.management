@@ -157,6 +157,14 @@ python manage.py runserver
 Riferimento rapido configurazione:
 - dettagli di tutte le variabili `.env`: [`docs/variabili_env.md`](docs/variabili_env.md)
 
+Override da interfaccia Django Admin:
+- in `Strumenti` e disponibile `Impostazioni applicazione`
+- i valori salvati in questa pagina hanno priorita su `.env` per:
+  - formato data portale
+  - logo login
+  - nome azienda + anno copyright
+  - mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
+
 ## Deploy con Portainer (Docker Compose)
 
 Questa procedura usa direttamente `docker-compose.yml` e file `.env`, senza modifiche lato host oltre a Docker/Portainer.

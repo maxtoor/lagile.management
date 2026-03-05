@@ -2,12 +2,12 @@ import calendar
 from datetime import date
 from email.utils import formataddr
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
 from django.utils import timezone
 
 from agile.models import AuditLog, MonthlyPlan, SystemEmailTemplate, User
+from agile.runtime_settings import get_runtime_setting
 
 
 class _SafeDict(dict):
@@ -40,8 +40,8 @@ class Command(BaseCommand):
 
     @staticmethod
     def _sender_from_env() -> str | None:
-        from_email = (getattr(settings, 'DEFAULT_FROM_EMAIL', '') or '').strip()
-        from_name = (getattr(settings, 'AGILE_EMAIL_FROM_NAME', '') or '').strip()
+        from_email = (get_runtime_setting('DEFAULT_FROM_EMAIL', '') or '').strip()
+        from_name = (get_runtime_setting('AGILE_EMAIL_FROM_NAME', '') or '').strip()
         if not from_email:
             return None
         if not from_name:

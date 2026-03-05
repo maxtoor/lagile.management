@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 
 from .models import AuditLog, ChangeRequest, MonthlyPlan, SystemEmailTemplate, User
 from .permissions import IsAdminOrSuperAdmin
+from .runtime_settings import get_runtime_setting
 from .serializers import (
     ApprovalSerializer,
     ChangeRequestItemSerializer,
@@ -31,8 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 def sender_from_env() -> str | None:
-    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '') or ''
-    from_name = getattr(settings, 'AGILE_EMAIL_FROM_NAME', '') or ''
+    from_email = get_runtime_setting('DEFAULT_FROM_EMAIL', '') or ''
+    from_name = get_runtime_setting('AGILE_EMAIL_FROM_NAME', '') or ''
     from_email = from_email.strip()
     from_name = from_name.strip()
     if not from_email:
