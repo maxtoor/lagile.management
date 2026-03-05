@@ -1,12 +1,14 @@
 .agile-dismissible-message {
   position: relative;
-  padding-right: 34px !important;
+  padding-right: 40px !important;
+  min-height: 24px;
 }
 
 .agile-message-close {
   position: absolute;
-  top: 6px;
+  top: 50%;
   right: 8px;
+  transform: translateY(-50%);
   width: 20px;
   height: 20px;
   border: 1px solid rgba(0, 0, 0, 0.25);
@@ -15,6 +17,9 @@
   color: #2b3a33;
   font-size: 12px;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   padding: 0;
 }

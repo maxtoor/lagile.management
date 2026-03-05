@@ -304,6 +304,11 @@ class ImportCsvAdminForm(forms.Form):
         required=False,
         initial=False,
     )
+    with_ldap_sync = forms.BooleanField(
+        label='Esegui anche sync LDAP inline (nome, cognome, email)',
+        required=False,
+        initial=False,
+    )
     delimiter = forms.CharField(label='Separatore', required=False, initial=',', max_length=1)
     dry_run = forms.BooleanField(label='Dry run', required=False, initial=True)
 
@@ -587,6 +592,8 @@ def import_tools_view(request):
                         kwargs['fallback_lastname'] = True
                     if csv_form.cleaned_data.get('import_groups'):
                         kwargs['import_groups'] = True
+                    if csv_form.cleaned_data.get('with_ldap_sync'):
+                        kwargs['with_ldap_sync'] = True
                     call_command('update_user_sites_from_csv_icb', tmp_path, stdout=out, stderr=err, **kwargs)
                     output = (out.getvalue() + '\n' + err.getvalue()).strip()
                     logs.append(output or 'Import CSV completato')
@@ -607,6 +614,12 @@ def import_tools_view(request):
                             os.unlink(tmp_path)
                         except OSError:
                             pass
+            else:
+                error_text = '; '.join(
+                    [f'{field}: {", ".join(errors)}' for field, errors in csv_form.errors.items()]
+                ) or 'Dati non validi'
+                logs.append(f'Errore validazione CSV: {error_text}')
+                messages.error(request, f'Errore import CSV ICB: {error_text}')
         elif action == 'release_export':
             release_export_form = ExportReleaseAdminForm(request.POST, prefix='release_export')
             if release_export_form.is_valid():
@@ -678,6 +691,12 @@ def import_tools_view(request):
                             os.unlink(tmp_path)
                         except OSError:
                             pass
+            else:
+                error_text = '; '.join(
+                    [f'{field}: {", ".join(errors)}' for field, errors in release_import_form.errors.items()]
+                ) or 'Dati non validi'
+                logs.append(f'Errore validazione import release: {error_text}')
+                messages.error(request, f'Errore import release: {error_text}')
 
     return TemplateResponse(
         request,

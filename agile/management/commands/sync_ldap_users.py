@@ -126,6 +126,13 @@ class Command(BaseCommand):
             )
 
         ldap_usernames = {row['username'] for row in ldap_rows}
+        ldap_email_counts: dict[str, int] = {}
+        for row in ldap_rows:
+            email = (row.get('email') or '').strip().lower()
+            if not email:
+                continue
+            ldap_email_counts[email] = ldap_email_counts.get(email, 0) + 1
+
         created = 0
         updated = 0
         unchanged = 0
@@ -133,34 +140,53 @@ class Command(BaseCommand):
         skipped_missing_local = 0
         deactivated = 0
         potential_rename_matches = 0
+        matched_by_email = 0
+        ambiguous_email_matches = 0
 
         with transaction.atomic():
             for row in ldap_rows:
                 username = row['username']
                 user = User.objects.filter(username=username).first()
+                email = (row.get('email') or '').strip()
 
                 if user is None:
-                    email = row['email']
-                    if email and User.objects.filter(email__iexact=email).exclude(username=username).exists():
+                    # Fallback su email: utile quando l'username locale non coincide ma l'account LDAP e lo stesso.
+                    if email:
+                        local_email_matches = list(
+                            User.objects.filter(email__iexact=email).exclude(username=username)
+                        )
+                        if len(local_email_matches) == 1 and ldap_email_counts.get(email.lower(), 0) == 1:
+                            candidate = local_email_matches[0]
+                            if candidate.has_usable_password():
+                                skipped_local_password += 1
+                                continue
+                            user = candidate
+                            matched_by_email += 1
+                        elif len(local_email_matches) > 1:
+                            ambiguous_email_matches += 1
+                            continue
+
+                    if user is None and email and User.objects.filter(email__iexact=email).exclude(username=username).exists():
                         potential_rename_matches += 1
 
-                    if not create_missing:
+                    if user is None and not create_missing:
                         skipped_missing_local += 1
                         continue
 
-                    user = User(
-                        username=username,
-                        first_name=row['first_name'],
-                        last_name=row['last_name'],
-                        email=email,
-                        role=User.Role.EMPLOYEE,
-                        is_active=False,
-                    )
-                    user.set_unusable_password()
-                    if not dry_run:
-                        user.save()
-                    created += 1
-                    continue
+                    if user is None:
+                        user = User(
+                            username=username,
+                            first_name=row['first_name'],
+                            last_name=row['last_name'],
+                            email=email,
+                            role=User.Role.EMPLOYEE,
+                            is_active=False,
+                        )
+                        user.set_unusable_password()
+                        if not dry_run:
+                            user.save()
+                        created += 1
+                        continue
 
                 # Se l'utente ha password locale utilizzabile, lo trattiamo come account locale e non lo tocchiamo.
                 if user.has_usable_password():
@@ -203,6 +229,7 @@ class Command(BaseCommand):
                 f'creati={created}, aggiornati={updated}, invariati={unchanged}, '
                 f'saltati_locali={skipped_local_password}, disattivati_assenti={deactivated}, '
                 f'assenze_locali_non_create={skipped_missing_local}, '
+                f'match_email={matched_by_email}, match_email_ambigui={ambiguous_email_matches}, '
                 f'duplicati_username={duplicated_usernames}, senza_username={missing_username}, '
                 f'possibili_rinomine={potential_rename_matches}'
                 f'{suffix}'
