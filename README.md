@@ -112,7 +112,7 @@ Esempio:
 ```bash
 bash scripts/install.sh \
   --install-dir /opt/lagile-management \
-  --repo-url https://github.com/maxtoor/lagile.managemet.git \
+  --repo-url https://github.com/maxtoor/lagile.management.git \
   --branch main \
   --port 8001
 
@@ -129,8 +129,8 @@ Opzioni principali:
 Comandi rapidi da server nuovo:
 
 ```bash
-git clone https://github.com/maxtoor/lagile.managemet.git
-cd lagile.managemet
+git clone https://github.com/maxtoor/lagile.management.git
+cd lagile.management
 
 # Simulazione (consigliata prima esecuzione)
 bash scripts/install.sh --dry-run --install-dir /opt/lagile-management --branch main --port 8001

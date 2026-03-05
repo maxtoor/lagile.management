@@ -5,7 +5,7 @@ set -euo pipefail
 # It can install Docker (apt/dnf), clone/update the app, prepare .env, and start containers.
 
 INSTALL_DIR="${INSTALL_DIR:-/opt/lagile-management}"
-REPO_URL="${REPO_URL:-https://github.com/maxtoor/lagile.managemet.git}"
+REPO_URL="${REPO_URL:-https://github.com/maxtoor/lagile.management.git}"
 BRANCH="${BRANCH:-main}"
 APP_USER="${APP_USER:-${SUDO_USER:-$USER}}"
 APP_PORT="${APP_PORT:-8001}"
