@@ -312,6 +312,39 @@ Regole sync:
 - con `--create-missing` crea in locale gli utenti LDAP assenti nel DB
 - con `--deactivate-missing` vengono disattivati gli account LDAP locali non piu presenti su LDAP (solo account con password non utilizzabile)
 
+## Import/Export release (JSON)
+
+Per trasferire configurazione e anagrafica base tra installazioni (es. bootstrap nuova istanza) sono disponibili:
+
+```bash
+python manage.py export_release_data ./release-export.json
+python manage.py import_release_data ./release-export.json --dry-run
+python manage.py import_release_data ./release-export.json --mode merge
+python manage.py import_release_data ./release-export.json --mode replace
+```
+
+Contenuti esportati:
+- utenti (anagrafica applicativa, ruolo, referente, gruppi, stato AILA/auto-approvazione)
+- gruppi
+- policy sedi (`DepartmentPolicy`)
+- festivita (`Holiday`)
+- template email di sistema
+- impostazioni applicazione (`AppSetting`)
+
+Note operative:
+- formato versionato: `schema_version=1`
+- `--dry-run` valida e simula senza salvare modifiche
+- `--mode merge` (default): upsert senza cancellazioni
+- `--mode replace`: oltre all'upsert, sostituisce dataset di `DepartmentPolicy`, `Holiday`, `SystemEmailTemplate` e `AppSetting` (non cancella utenti)
+- gli utenti nuovi vengono creati con password locale non utilizzabile
+- il campo referente viene assegnato in seconda fase usando `manager_username`
+
+Flusso consigliato installazione ex-novo:
+1. deploy stack + migrate + superuser
+2. `import_release_data` dal file export della sorgente
+3. verifica accesso admin/portale e test SMTP
+4. eventuale import CSV ICB dalla pagina `Strumenti`
+
 ## Migrazione dalla versione precedente
 
 Nota: questa procedura riguarda esclusivamente gli Istituti del CNR che avevano adottato la versione precedente di questo software.

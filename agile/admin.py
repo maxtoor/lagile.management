@@ -12,7 +12,7 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.shortcuts import get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 import io
 import os
 import tempfile
@@ -258,6 +258,31 @@ class ImportCsvAdminForm(forms.Form):
     dry_run = forms.BooleanField(label='Dry run', required=False, initial=True)
 
 
+class ExportReleaseAdminForm(forms.Form):
+    indent = forms.IntegerField(
+        label='Indentazione JSON',
+        required=False,
+        initial=2,
+        min_value=0,
+        max_value=8,
+    )
+
+
+class ImportReleaseAdminForm(forms.Form):
+    json_file = forms.FileField(label='File JSON export')
+    mode = forms.ChoiceField(
+        label='Modalita import',
+        choices=(('merge', 'Merge (upsert)'), ('replace', 'Replace (configurazioni)')),
+        required=True,
+        initial='merge',
+    )
+    dry_run = forms.BooleanField(
+        label='Dry run',
+        required=False,
+        initial=True,
+    )
+
+
 class SyncHolidaysAdminForm(forms.Form):
     year = forms.IntegerField(label='Anno', required=True, initial=date.today().year, min_value=2000, max_value=2100)
     overwrite = forms.BooleanField(
@@ -386,77 +411,21 @@ def import_tools_view(request):
             {
                 **admin.site.each_context(request),
                 'title': 'Strumenti',
-                'ldap_form': ImportLdapAdminForm(),
-                'sync_form': SyncLdapAdminForm(),
                 'csv_form': ImportCsvAdminForm(),
-                'holidays_form': SyncHolidaysAdminForm(),
+                'release_export_form': ExportReleaseAdminForm(),
+                'release_import_form': ImportReleaseAdminForm(),
                 'logs': [],
             },
         )
 
     logs = []
-    ldap_form = ImportLdapAdminForm(prefix='ldap')
-    sync_form = SyncLdapAdminForm(prefix='sync')
     csv_form = ImportCsvAdminForm(prefix='csv')
-    holidays_form = SyncHolidaysAdminForm(prefix='holidays')
+    release_export_form = ExportReleaseAdminForm(prefix='release_export')
+    release_import_form = ImportReleaseAdminForm(prefix='release_import')
 
     if request.method == 'POST':
         action = (request.POST.get('action') or '').strip()
-        if action == 'ldap':
-            ldap_form = ImportLdapAdminForm(request.POST, prefix='ldap')
-            if ldap_form.is_valid():
-                out = io.StringIO()
-                err = io.StringIO()
-                kwargs = {
-                    'dry_run': bool(ldap_form.cleaned_data.get('dry_run')),
-                }
-                ldap_filter = (ldap_form.cleaned_data.get('ldap_filter') or '').strip()
-                base_dn = (ldap_form.cleaned_data.get('base_dn') or '').strip()
-                if ldap_filter:
-                    kwargs['ldap_filter'] = ldap_filter
-                if base_dn:
-                    kwargs['base_dn'] = base_dn
-                try:
-                    call_command('import_ldap_users', stdout=out, stderr=err, **kwargs)
-                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
-                    logs.append(output or 'Import LDAP completato')
-                    messages.success(request, 'Import LDAP eseguito')
-                except Exception as exc:
-                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
-                    if output:
-                        logs.append(output)
-                    logs.append(str(exc))
-                    messages.error(request, f'Errore import LDAP: {exc}')
-        elif action == 'ldap_sync':
-            sync_form = SyncLdapAdminForm(request.POST, prefix='sync')
-            if sync_form.is_valid():
-                out = io.StringIO()
-                err = io.StringIO()
-                kwargs = {
-                    'dry_run': bool(sync_form.cleaned_data.get('dry_run')),
-                }
-                ldap_filter = (sync_form.cleaned_data.get('ldap_filter') or '').strip()
-                base_dn = (sync_form.cleaned_data.get('base_dn') or '').strip()
-                if ldap_filter:
-                    kwargs['ldap_filter'] = ldap_filter
-                if base_dn:
-                    kwargs['base_dn'] = base_dn
-                if sync_form.cleaned_data.get('deactivate_missing'):
-                    kwargs['deactivate_missing'] = True
-                if sync_form.cleaned_data.get('create_missing'):
-                    kwargs['create_missing'] = True
-                try:
-                    call_command('sync_ldap_users', stdout=out, stderr=err, **kwargs)
-                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
-                    logs.append(output or 'Sync LDAP completato')
-                    messages.success(request, 'Sync LDAP eseguito')
-                except Exception as exc:
-                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
-                    if output:
-                        logs.append(output)
-                    logs.append(str(exc))
-                    messages.error(request, f'Errore sync LDAP: {exc}')
-        elif action == 'csv':
+        if action in {'csv', 'csv_preview'}:
             csv_form = ImportCsvAdminForm(request.POST, request.FILES, prefix='csv')
             if csv_form.is_valid():
                 uploaded = csv_form.cleaned_data['csv_file']
@@ -478,14 +447,19 @@ def import_tools_view(request):
                         'delimiter': (csv_form.cleaned_data.get('delimiter') or ',').strip()[:1] or ',',
                         'dry_run': bool(csv_form.cleaned_data.get('dry_run')),
                     }
+                    if action == 'csv_preview':
+                        kwargs['dry_run'] = True
                     if csv_form.cleaned_data.get('fallback_lastname'):
                         kwargs['fallback_lastname'] = True
                     if csv_form.cleaned_data.get('import_groups'):
                         kwargs['import_groups'] = True
-                    call_command('update_user_sites_from_csv', tmp_path, stdout=out, stderr=err, **kwargs)
+                    call_command('update_user_sites_from_csv_icb', tmp_path, stdout=out, stderr=err, **kwargs)
                     output = (out.getvalue() + '\n' + err.getvalue()).strip()
                     logs.append(output or 'Import CSV completato')
-                    messages.success(request, 'Import CSV eseguito')
+                    if action == 'csv_preview':
+                        messages.info(request, 'Anteprima impatti CSV ICB completata (dry-run)')
+                    else:
+                        messages.success(request, 'Import CSV ICB eseguito')
                 except Exception as exc:
                     output = (out.getvalue() + '\n' + err.getvalue()).strip()
                     if output:
@@ -498,27 +472,76 @@ def import_tools_view(request):
                             os.unlink(tmp_path)
                         except OSError:
                             pass
-        elif action == 'holidays_sync':
-            holidays_form = SyncHolidaysAdminForm(request.POST, prefix='holidays')
-            if holidays_form.is_valid():
+        elif action == 'release_export':
+            release_export_form = ExportReleaseAdminForm(request.POST, prefix='release_export')
+            if release_export_form.is_valid():
                 out = io.StringIO()
                 err = io.StringIO()
-                kwargs = {
-                    'year': int(holidays_form.cleaned_data['year']),
-                }
-                if holidays_form.cleaned_data.get('overwrite'):
-                    kwargs['overwrite'] = True
+                tmp_path = None
                 try:
-                    call_command('sync_holidays', stdout=out, stderr=err, **kwargs)
-                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
-                    logs.append(output or 'Aggiornamento festivita completato')
-                    messages.success(request, 'Aggiornamento festivita eseguito')
+                    indent = int(release_export_form.cleaned_data.get('indent') or 2)
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as tmp_file:
+                        tmp_path = tmp_file.name
+                    call_command('export_release_data', tmp_path, indent=indent, stdout=out, stderr=err)
+
+                    payload = Path(tmp_path).read_bytes()
+                    filename = f'release-export-{date.today().isoformat()}.json'
+                    response = HttpResponse(payload, content_type='application/json; charset=utf-8')
+                    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                    return response
                 except Exception as exc:
                     output = (out.getvalue() + '\n' + err.getvalue()).strip()
                     if output:
                         logs.append(output)
                     logs.append(str(exc))
-                    messages.error(request, f'Errore aggiornamento festivita: {exc}')
+                    messages.error(request, f'Errore export release: {exc}')
+                finally:
+                    if tmp_path and os.path.exists(tmp_path):
+                        try:
+                            os.unlink(tmp_path)
+                        except OSError:
+                            pass
+        elif action in {'release_import', 'release_preview'}:
+            release_import_form = ImportReleaseAdminForm(request.POST, request.FILES, prefix='release_import')
+            if release_import_form.is_valid():
+                uploaded = release_import_form.cleaned_data['json_file']
+                out = io.StringIO()
+                err = io.StringIO()
+                tmp_path = None
+                try:
+                    suffix = os.path.splitext(uploaded.name or '')[1] or '.json'
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
+                        for chunk in uploaded.chunks():
+                            tmp_file.write(chunk)
+                        tmp_path = tmp_file.name
+
+                    kwargs = {
+                        'mode': (release_import_form.cleaned_data.get('mode') or 'merge').strip(),
+                        'dry_run': bool(release_import_form.cleaned_data.get('dry_run')),
+                    }
+                    if action == 'release_preview':
+                        kwargs['dry_run'] = True
+                    call_command('import_release_data', tmp_path, stdout=out, stderr=err, **kwargs)
+                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
+                    logs.append(output or 'Import release completato')
+                    if action == 'release_preview':
+                        messages.info(request, 'Anteprima impatti release completata (dry-run)')
+                    elif kwargs['dry_run']:
+                        messages.info(request, 'Dry-run import release completato')
+                    else:
+                        messages.success(request, 'Import release eseguito')
+                except Exception as exc:
+                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
+                    if output:
+                        logs.append(output)
+                    logs.append(str(exc))
+                    messages.error(request, f'Errore import release: {exc}')
+                finally:
+                    if tmp_path and os.path.exists(tmp_path):
+                        try:
+                            os.unlink(tmp_path)
+                        except OSError:
+                            pass
 
     return TemplateResponse(
         request,
@@ -526,10 +549,9 @@ def import_tools_view(request):
         {
             **admin.site.each_context(request),
             'title': 'Strumenti',
-            'ldap_form': ldap_form,
-            'sync_form': sync_form,
             'csv_form': csv_form,
-            'holidays_form': holidays_form,
+            'release_export_form': release_export_form,
+            'release_import_form': release_import_form,
             'logs': logs,
             'is_superuser': request.user.is_superuser,
             'opts': User._meta,

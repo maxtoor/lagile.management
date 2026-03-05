@@ -1,57 +1,92 @@
 {% extends "admin/base_site.html" %}
 
 {% block content %}
+<style>
+  .icb-collapsible-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .icb-collapsible-summary::-webkit-details-marker {
+    display: none;
+  }
+  .icb-collapsible-arrow {
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+  details[open] .icb-collapsible-arrow {
+    transform: rotate(90deg);
+  }
+</style>
 <div style="max-width:980px">
-  <p style="margin-top:0;color:#4b5a54">
-    Flusso consigliato: 1) import LDAP, 2) sync LDAP periodico, 3) import CSV dalla versione precedente.
-  </p>
-
   {% if not is_superuser %}
     <div class="messagelist">
       <div class="errornote">Accesso consentito solo ai superuser.</div>
     </div>
   {% else %}
-    <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+    <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
       <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
-        <h2 style="margin-top:0">1) Import utenti LDAP</h2>
+        <h2 style="margin-top:0">Export release</h2>
         <form method="post" novalidate>
           {% csrf_token %}
-          <input type="hidden" name="action" value="ldap" />
-          {{ ldap_form.as_p }}
-          <button type="submit" class="default">Esegui import LDAP</button>
+          <input type="hidden" name="action" value="release_export" />
+          {{ release_export_form.as_p }}
+          <button type="submit" class="default">Scarica JSON</button>
         </form>
       </section>
 
       <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
-        <h2 style="margin-top:0">2) Sync utenti LDAP</h2>
-        <form method="post" novalidate>
-          {% csrf_token %}
-          <input type="hidden" name="action" value="ldap_sync" />
-          {{ sync_form.as_p }}
-          <button type="submit" class="default">Esegui sync LDAP</button>
-        </form>
-      </section>
-
-      <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
-        <h2 style="margin-top:0">3) Import CSV (versione precedente)</h2>
+        <h2 style="margin-top:0">Import release</h2>
         <form method="post" enctype="multipart/form-data" novalidate>
           {% csrf_token %}
-          <input type="hidden" name="action" value="csv" />
-          {{ csv_form.as_p }}
-          <button type="submit" class="default">Esegui import CSV</button>
+          {{ release_import_form.as_p }}
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="submit" name="action" value="release_preview">Anteprima impatti</button>
+            <button type="submit" name="action" value="release_import" class="default">Esegui import JSON</button>
+          </div>
         </form>
       </section>
 
-      <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
-        <h2 style="margin-top:0">4) Aggiorna festivita</h2>
-        <form method="post" novalidate>
-          {% csrf_token %}
-          <input type="hidden" name="action" value="holidays_sync" />
-          {{ holidays_form.as_p }}
-          <button type="submit" class="default">Aggiorna festivita</button>
-        </form>
-      </section>
     </div>
+
+    <section style="margin-top:16px;border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
+    <h2 style="margin-top:0">Note operative</h2>
+    <ul>
+      <li>Import release: usa prima <code>Dry run</code>, poi esegui import reale se l'output e corretto.</li>
+      <li>Import release <code>replace</code> sostituisce configurazioni (policy, festivita, template, impostazioni app) ma non cancella utenti.</li>
+    </ul>
+  </section>
+
+    <section style="margin-top:14px;border:1px solid #dce4df;border-radius:10px;padding:0;background:#fff;overflow:hidden">
+      <details>
+        <summary class="icb-collapsible-summary" style="cursor:pointer;list-style:none;padding:14px 16px;font-weight:600;background:#f8fbf9;border-bottom:1px solid #e3ebe6">
+          <span class="icb-collapsible-arrow" aria-hidden="true">▸</span>
+          <span>Strumenti ICB (import CSV legacy)</span>
+        </summary>
+        <div style="padding:14px">
+          <p style="margin:0 0 12px 0;padding:10px 12px;border:1px solid #e4dcb1;background:#fffbe7;border-radius:8px">
+            <strong>Nota:</strong> Questa procedura e valida solo per l'import dalla versione 1.0.0 e unicamente per l'Istituto di Chimica Biomolecorare del CNR (ICB).
+          </p>
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {{ csv_form.as_p }}
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="submit" name="action" value="csv_preview">Anteprima impatti</button>
+              <button type="submit" name="action" value="csv" class="default">Esegui import CSV ICB</button>
+            </div>
+          </form>
+
+          <h3 style="margin:14px 0 8px 0">Note ICB</h3>
+          <ul>
+            <li>CSV atteso: <code>email, lastname, name, department</code>.</li>
+            <li>Con modalita <code>last-word</code>, la sede e l'ultima parola del campo <code>department</code>.</li>
+            <li>Con <code>Importa anche i gruppi</code>, la prima parola di <code>department</code> e usata come nome gruppo (creato se mancante).</li>
+            <li>Se <code>department</code> contiene <code>Default</code>, la riga viene ignorata.</li>
+            <li>Se la sede e valida, viene impostata anche <code>Sottoscrizione AILA = Si</code>.</li>
+          </ul>
+        </div>
+      </details>
+    </section>
   {% endif %}
 
   {% if logs %}
@@ -62,16 +97,5 @@
       {% endfor %}
     </section>
   {% endif %}
-
-  <section style="margin-top:16px;border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
-    <h2 style="margin-top:0">Note operative</h2>
-    <ul>
-      <li>CSV atteso: <code>email, lastname, name, department</code>.</li>
-      <li>Con modalita <code>last-word</code>, la sede e l'ultima parola del campo <code>department</code>.</li>
-      <li>Con <code>Importa anche i gruppi</code>, la prima parola di <code>department</code> e usata come nome gruppo (creato se mancante).</li>
-      <li>Se <code>department</code> contiene <code>Default</code>, la riga viene ignorata.</li>
-      <li>Se la sede e valida, viene impostata anche <code>Sottoscrizione AILA = Si</code>.</li>
-    </ul>
-  </section>
 </div>
 {% endblock %}
