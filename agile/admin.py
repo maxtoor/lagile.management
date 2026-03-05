@@ -221,6 +221,11 @@ class SyncLdapAdminForm(forms.Form):
         required=False,
         initial=False,
     )
+    create_missing = forms.BooleanField(
+        label='Crea utenti mancanti in locale',
+        required=False,
+        initial=False,
+    )
     dry_run = forms.BooleanField(
         label='Dry run',
         required=False,
@@ -438,6 +443,8 @@ def import_tools_view(request):
                     kwargs['base_dn'] = base_dn
                 if sync_form.cleaned_data.get('deactivate_missing'):
                     kwargs['deactivate_missing'] = True
+                if sync_form.cleaned_data.get('create_missing'):
+                    kwargs['create_missing'] = True
                 try:
                     call_command('sync_ldap_users', stdout=out, stderr=err, **kwargs)
                     output = (out.getvalue() + '\n' + err.getvalue()).strip()

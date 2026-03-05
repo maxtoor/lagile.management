@@ -31,6 +31,11 @@ class Command(BaseCommand):
             help='Disattiva gli utenti LDAP locali non piu presenti in LDAP (solo account con password non utilizzabile).',
         )
         parser.add_argument(
+            '--create-missing',
+            action='store_true',
+            help='Crea in locale gli utenti presenti in LDAP ma assenti nel DB (default: disattivo).',
+        )
+        parser.add_argument(
             '--dry-run',
             action='store_true',
             help='Mostra il risultato senza salvare modifiche nel DB',
@@ -58,6 +63,7 @@ class Command(BaseCommand):
         base_dn = (options.get('base_dn') or '').strip()
         ldap_filter = (options.get('ldap_filter') or '').strip()
         deactivate_missing = bool(options.get('deactivate_missing'))
+        create_missing = bool(options.get('create_missing'))
         dry_run = bool(options.get('dry_run'))
 
         if not server_uri:
@@ -124,6 +130,7 @@ class Command(BaseCommand):
         updated = 0
         unchanged = 0
         skipped_local_password = 0
+        skipped_missing_local = 0
         deactivated = 0
         potential_rename_matches = 0
 
@@ -136,6 +143,10 @@ class Command(BaseCommand):
                     email = row['email']
                     if email and User.objects.filter(email__iexact=email).exclude(username=username).exists():
                         potential_rename_matches += 1
+
+                    if not create_missing:
+                        skipped_missing_local += 1
+                        continue
 
                     user = User(
                         username=username,
@@ -191,6 +202,7 @@ class Command(BaseCommand):
                 f'ldap_righe={len(ldap_rows)}, '
                 f'creati={created}, aggiornati={updated}, invariati={unchanged}, '
                 f'saltati_locali={skipped_local_password}, disattivati_assenti={deactivated}, '
+                f'assenze_locali_non_create={skipped_missing_local}, '
                 f'duplicati_username={duplicated_usernames}, senza_username={missing_username}, '
                 f'possibili_rinomine={potential_rename_matches}'
                 f'{suffix}'

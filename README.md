@@ -137,6 +137,7 @@ Nota Docker:
 - e presente un servizio `scheduler` che esegue periodicamente:
   - `send_submission_reminders` (promemoria utente ultimo giorno mese)
   - `send_manager_monthly_summary` (riepilogo referente primo giorno mese)
+  - `prepare_next_year_holidays` (il 1 dicembre prepara le festivita dell'anno successivo e invia report ai superuser)
 - intervallo controllo configurabile con `REMINDER_CHECK_INTERVAL_SECONDS` (default `86400`)
 - i comandi inviano realmente email solo nel loro giorno previsto (a meno di `--force`)
 - in Django Admin e disponibile il link `Monitor log` per visualizzare il tail live e selezionare la sorgente (es. `app` / `scheduler`)
@@ -299,6 +300,7 @@ Per allineare gli utenti gia importati quando LDAP cambia:
 python manage.py sync_ldap_users --dry-run
 python manage.py sync_ldap_users
 python manage.py sync_ldap_users --deactivate-missing
+python manage.py sync_ldap_users --create-missing
 ```
 
 Regole sync:
@@ -306,6 +308,8 @@ Regole sync:
 - campi aggiornati dal sync: `first_name`, `last_name`, `email`
 - campi non toccati: `Sede`, `Referente amministrativo`, `Sottoscrizione AILA`, `Ruolo`, `Auto-approvazione`
 - gli account locali con password utilizzabile non vengono modificati
+- per default non crea utenti mancanti (evita import massivo involontario)
+- con `--create-missing` crea in locale gli utenti LDAP assenti nel DB
 - con `--deactivate-missing` vengono disattivati gli account LDAP locali non piu presenti su LDAP (solo account con password non utilizzabile)
 
 ## Migrazione dalla versione precedente
@@ -374,6 +378,8 @@ python manage.py send_submission_reminders --date 2026-03-30 --dry-run
 python manage.py send_manager_monthly_summary --dry-run
 python manage.py send_manager_monthly_summary --force
 python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run
+python manage.py prepare_next_year_holidays --dry-run
+python manage.py prepare_next_year_holidays --force --year 2027
 ```
 
 Esecuzione schedulata consigliata (cron giornaliero, il comando invia solo l'ultimo giorno):
