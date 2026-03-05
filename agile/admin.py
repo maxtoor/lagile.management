@@ -20,6 +20,7 @@ from datetime import date
 from collections import deque
 from pathlib import Path
 from email.utils import formataddr
+import re
 
 from .models import AppSetting, AgileGroup, AuditLog, ChangeRequest, DepartmentPolicy, Holiday, MonthlyPlan, PlanDay, SystemEmailTemplate, User
 from .runtime_settings import get_runtime_setting
@@ -402,6 +403,82 @@ def _resolve_log_source_key(raw_key: str | None) -> tuple[str, str, list[dict]]:
     return selected_key, source_map[selected_key]['path'], sources
 
 
+def _extract_counter_pairs(text: str) -> list[tuple[str, str]]:
+    return [(key.strip(), value.strip()) for key, value in re.findall(r'([a-zA-Z0-9_]+)\s*=\s*([^,]+)', text)]
+
+
+def _prettify_counter_key(key: str) -> str:
+    label = str(key or '').replace('_', ' ').strip()
+    return label[:1].upper() + label[1:] if label else ''
+
+
+def _build_preview_blocks(output_text: str, *, kind: str) -> list[dict]:
+    blocks: list[dict] = []
+    lines = [line.strip() for line in str(output_text or '').splitlines() if line.strip()]
+    if not lines:
+        return blocks
+
+    if kind == 'release':
+        for line in lines:
+            if ':' not in line:
+                continue
+            title, payload = line.split(':', 1)
+            pairs = _extract_counter_pairs(payload)
+            if not pairs:
+                continue
+            blocks.append(
+                {
+                    'title': title.strip(),
+                    'items': [{'label': _prettify_counter_key(key), 'value': value} for key, value in pairs],
+                }
+            )
+        return blocks
+
+    if kind == 'csv':
+        users_updated = ''
+        users_created = ''
+        users_not_found = ''
+        is_dry_run = False
+        for line in lines:
+            if line.startswith('UTENTI_AGGIORNATI:'):
+                users_updated = line.split(':', 1)[1].strip()
+            elif line.startswith('UTENTI_CREATI:'):
+                users_created = line.split(':', 1)[1].strip()
+            elif line.startswith('UTENTI_NON_TROVATI:'):
+                users_not_found = line.split(':', 1)[1].strip()
+
+        for line in reversed(lines):
+            if 'Aggiornamento sedi da CSV completato' not in line:
+                continue
+            payload = line.split(':', 1)[1] if ':' in line else line
+            if '(dry-run' in payload.lower():
+                is_dry_run = True
+                payload = re.sub(r'\s*\(dry-run[^)]*\)\s*$', '', payload, flags=re.IGNORECASE)
+            pairs = _extract_counter_pairs(payload)
+            if not pairs:
+                break
+            blocks.append(
+                {
+                    'title': 'Riepilogo import CSV ICB',
+                    'items': [{'label': _prettify_counter_key(key), 'value': value} for key, value in pairs],
+                }
+            )
+            break
+        if users_updated or users_created or users_not_found:
+            blocks.append(
+                {
+                    'title': 'Dettaglio utenti',
+                    'items': [
+                        {'label': 'Utenti aggiornati', 'value': users_updated or '-'},
+                        {'label': 'Utenti creati', 'value': users_created or '-'},
+                        {'label': 'Utenti non trovati', 'value': users_not_found or '-'},
+                        {'label': 'Modalita', 'value': 'Dry-run' if is_dry_run else 'Import reale'},
+                    ],
+                }
+            )
+    return blocks
+
+
 def import_tools_view(request):
     if not request.user.is_superuser:
         messages.error(request, 'Accesso consentito solo ai superuser')
@@ -419,13 +496,21 @@ def import_tools_view(request):
         )
 
     logs = []
+    preview_blocks = []
     csv_form = ImportCsvAdminForm(prefix='csv')
     release_export_form = ExportReleaseAdminForm(prefix='release_export')
     release_import_form = ImportReleaseAdminForm(prefix='release_import')
 
     if request.method == 'POST':
         action = (request.POST.get('action') or '').strip()
-        if action in {'csv', 'csv_preview'}:
+        if action == 'clear_preview':
+            logs = []
+            preview_blocks = []
+            csv_form = ImportCsvAdminForm(prefix='csv')
+            release_export_form = ExportReleaseAdminForm(prefix='release_export')
+            release_import_form = ImportReleaseAdminForm(prefix='release_import')
+            messages.info(request, 'Anteprima e output azzerati')
+        elif action in {'csv', 'csv_preview'}:
             csv_form = ImportCsvAdminForm(request.POST, request.FILES, prefix='csv')
             if csv_form.is_valid():
                 uploaded = csv_form.cleaned_data['csv_file']
@@ -457,6 +542,7 @@ def import_tools_view(request):
                     output = (out.getvalue() + '\n' + err.getvalue()).strip()
                     logs.append(output or 'Import CSV completato')
                     if action == 'csv_preview':
+                        preview_blocks = _build_preview_blocks(output, kind='csv')
                         messages.info(request, 'Anteprima impatti CSV ICB completata (dry-run)')
                     else:
                         messages.success(request, 'Import CSV ICB eseguito')
@@ -525,6 +611,7 @@ def import_tools_view(request):
                     output = (out.getvalue() + '\n' + err.getvalue()).strip()
                     logs.append(output or 'Import release completato')
                     if action == 'release_preview':
+                        preview_blocks = _build_preview_blocks(output, kind='release')
                         messages.info(request, 'Anteprima impatti release completata (dry-run)')
                     elif kwargs['dry_run']:
                         messages.info(request, 'Dry-run import release completato')
@@ -553,6 +640,7 @@ def import_tools_view(request):
             'release_export_form': release_export_form,
             'release_import_form': release_import_form,
             'logs': logs,
+            'preview_blocks': preview_blocks,
             'is_superuser': request.user.is_superuser,
             'opts': User._meta,
         },

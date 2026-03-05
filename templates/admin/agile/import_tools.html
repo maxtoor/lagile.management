@@ -91,6 +91,32 @@
 
   {% if logs %}
     <section style="margin-top:16px;border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
+      <form method="post" style="margin:0 0 12px 0">
+        {% csrf_token %}
+        <button type="submit" name="action" value="clear_preview">Azzera anteprima</button>
+      </form>
+
+      {% if preview_blocks %}
+        <h2 style="margin-top:0">Anteprima impatti</h2>
+        <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-bottom:12px">
+          {% for block in preview_blocks %}
+            <article style="border:1px solid #e3ebe6;border-radius:8px;padding:10px;background:#f8fbf9">
+              <h3 style="margin:0 0 8px 0;font-size:13px">{{ block.title }}</h3>
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <tbody>
+                  {% for item in block.items %}
+                    <tr>
+                      <td style="padding:4px 0;border-bottom:1px solid #e8efeb">{{ item.label }}</td>
+                      <td style="padding:4px 0;border-bottom:1px solid #e8efeb;text-align:right;font-weight:600;word-break:break-word;white-space:normal">{{ item.value }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </article>
+          {% endfor %}
+        </div>
+      {% endif %}
+
       <h2 style="margin-top:0">Output</h2>
       {% for item in logs %}
         <pre style="white-space:pre-wrap;background:#f7faf8;border:1px solid #e3ebe6;border-radius:8px;padding:10px;margin:0 0 10px 0">{{ item }}</pre>

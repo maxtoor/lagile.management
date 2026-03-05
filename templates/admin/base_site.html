@@ -23,10 +23,12 @@
       } catch (e) {}
     })();
   </script>
+  <script src="{% static 'agile/admin-messages.js' %}" defer></script>
 {% endblock %}
 
 {% block extrastyle %}
   {{ block.super }}
   <link rel="stylesheet" href="{% static 'agile/admin-theme.css' %}">
   <link rel="stylesheet" href="{% static 'agile/admin-user-collapse.css' %}">
+  <link rel="stylesheet" href="{% static 'agile/admin-messages.css' %}">
 {% endblock %}

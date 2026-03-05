@@ -183,6 +183,9 @@ class Command(BaseCommand):
         managers_not_found = 0
         managers_self_skipped = 0
         managers_role_promoted = 0
+        updated_usernames: list[str] = []
+        created_usernames: list[str] = []
+        not_found_refs: list[str] = []
 
         try:
             with open(csv_path, 'r', encoding='utf-8-sig', newline='') as handle:
@@ -382,6 +385,8 @@ class Command(BaseCommand):
                             username = self._build_unique_username(base_username, all_users)
                             if not username:
                                 not_found += 1
+                                ref = raw_email or raw_lastname or f'riga-{row_index}'
+                                not_found_refs.append(ref)
                                 self.stdout.write(
                                     self.style.WARNING(
                                         f'Riga {row_index}: utente non trovato e impossibile crearlo '
@@ -402,6 +407,7 @@ class Command(BaseCommand):
                             if not dry_run:
                                 user.save()
                             users_created += 1
+                            created_usernames.append(user.username)
                             created_this_row = True
                             all_users.append(user)
                             self.stdout.write(
@@ -472,6 +478,7 @@ class Command(BaseCommand):
                             if not dry_run:
                                 user.save(update_fields=['department', 'aila_subscribed', 'is_active', 'auto_approve', 'manager'])
                             updated += 1
+                            updated_usernames.append(user.username)
 
                         if import_groups:
                             if dry_run and created_this_row and not getattr(user, 'pk', None):
@@ -543,3 +550,9 @@ class Command(BaseCommand):
                 f'referenti_self_skipped={managers_self_skipped}, referenti_promossi_ruolo={managers_role_promoted}{suffix}'
             )
         )
+        updated_list = ', '.join(sorted(set(updated_usernames))) or '-'
+        created_list = ', '.join(sorted(set(created_usernames))) or '-'
+        not_found_list = ', '.join(sorted(set(not_found_refs))) or '-'
+        self.stdout.write(f'UTENTI_AGGIORNATI: {updated_list}')
+        self.stdout.write(f'UTENTI_CREATI: {created_list}')
+        self.stdout.write(f'UTENTI_NON_TROVATI: {not_found_list}')
