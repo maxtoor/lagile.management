@@ -16,8 +16,8 @@ class Command(BaseCommand):
     SITE_MANAGER_RULES = {
         'Napoli': {'username': 'direttore', 'auto_approve': True},
         'Catania': {'username': 'nicola.dantona', 'auto_approve': False},
-        'Sassari': {'full_name': 'Pietro Spanu', 'auto_approve': False},
-        'Padova': {'full_name': 'Paolo ruzza', 'auto_approve': False},
+        'Sassari': {'username': 'pietro.spanu', 'full_name': 'Pietro Spanu', 'auto_approve': False},
+        'Padova': {'username': 'paolo.ruzza', 'full_name': 'Paolo ruzza', 'auto_approve': False},
     }
 
     def add_arguments(self, parser):
@@ -143,6 +143,74 @@ class Command(BaseCommand):
                         return candidate
         return None
 
+    @classmethod
+    def _ensure_manager_for_site(cls, site: str, *, dry_run: bool):
+        manager = cls._resolve_manager_for_site(site)
+        if manager:
+            return manager, False
+
+        rule = cls.SITE_MANAGER_RULES.get(site) or {}
+        username = (rule.get('username') or '').strip().lower()
+        full_name = (rule.get('full_name') or '').strip()
+        if not username and full_name:
+            parts = [piece.strip().lower() for piece in full_name.split() if piece.strip()]
+            if len(parts) >= 2:
+                username = f'{parts[0]}.{parts[-1]}'
+            elif parts:
+                username = parts[0]
+        if not username:
+            return None, False
+
+        first_name = ''
+        last_name = ''
+        if full_name:
+            chunks = [piece.strip() for piece in full_name.split() if piece.strip()]
+            if chunks:
+                first_name = chunks[0]
+            if len(chunks) > 1:
+                last_name = ' '.join(chunks[1:])
+
+        manager = User(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            role=User.Role.ADMIN,
+            is_active=True,
+        )
+        manager.set_unusable_password()
+        if not dry_run:
+            manager.save()
+        return manager, True
+
+    @staticmethod
+    def _is_same_user(left: User | None, right: User | None) -> bool:
+        if not left or not right:
+            return False
+        if left.pk and right.pk:
+            return left.pk == right.pk
+        left_username = str(left.username or '').strip().lower()
+        right_username = str(right.username or '').strip().lower()
+        return bool(left_username and right_username and left_username == right_username)
+
+    @staticmethod
+    def _user_manager_username(user: User) -> str:
+        manager_obj = getattr(user, 'manager', None)
+        if manager_obj:
+            return str(manager_obj.username or '').strip().lower()
+        manager_id = getattr(user, 'manager_id', None)
+        if not manager_id:
+            return ''
+        manager = User.objects.filter(pk=manager_id).only('username').first()
+        return str(manager.username or '').strip().lower() if manager else ''
+
+    @classmethod
+    def _has_same_manager(cls, user: User, manager_user: User | None) -> bool:
+        current_manager_username = cls._user_manager_username(user)
+        target_username = str(getattr(manager_user, 'username', '') or '').strip().lower()
+        if not target_username:
+            return not current_manager_username
+        return current_manager_username == target_username
+
     def handle(self, *args, **options):
         csv_path = self._norm(options.get('csv_path'))
         email_column = self._norm(options.get('email_column') or 'email')
@@ -183,6 +251,8 @@ class Command(BaseCommand):
         managers_not_found = 0
         managers_self_skipped = 0
         managers_role_promoted = 0
+        managers_created = 0
+        dry_run_manager_cache: dict[str, User] = {}
         updated_usernames: list[str] = []
         created_usernames: list[str] = []
         not_found_refs: list[str] = []
@@ -420,11 +490,27 @@ class Command(BaseCommand):
                         current_site = (user.department or '')
                         current_aila = bool(user.aila_subscribed)
                         target_auto_approve = bool(self.SITE_MANAGER_RULES.get(normalized_site, {}).get('auto_approve', False))
-                        manager_user = self._resolve_manager_for_site(normalized_site)
+                        manager_user = None
+                        manager_created = False
+                        if dry_run and normalized_site in dry_run_manager_cache:
+                            manager_user = dry_run_manager_cache[normalized_site]
+                        else:
+                            manager_user, manager_created = self._ensure_manager_for_site(normalized_site, dry_run=dry_run)
+                            if dry_run and manager_user:
+                                dry_run_manager_cache[normalized_site] = manager_user
+                        if manager_created:
+                            managers_created += 1
+                            self.stdout.write(
+                                self.style.WARNING(
+                                    f'Riga {row_index}: referente creato automaticamente "{manager_user.username}" per sede "{normalized_site}"'
+                                )
+                            )
+                            if manager_user.pk:
+                                all_users.append(manager_user)
                         manager_changed = False
                         manager_promoted = False
                         if manager_user:
-                            if manager_user.id == user.id:
+                            if self._is_same_user(manager_user, user):
                                 managers_self_skipped += 1
                                 self.stdout.write(
                                     self.style.WARNING(
@@ -432,7 +518,7 @@ class Command(BaseCommand):
                                     )
                                 )
                             else:
-                                if user.manager_id != manager_user.id:
+                                if not self._has_same_manager(user, manager_user):
                                     managers_assigned += 1
                                     manager_changed = True
                                     self.stdout.write(
@@ -440,6 +526,7 @@ class Command(BaseCommand):
                                             f'Riga {row_index}: referente impostato a "{manager_user.username}" per sede "{normalized_site}"'
                                         )
                                     )
+                                user.manager = manager_user
                                 if manager_user.role not in {'ADMIN', 'SUPERADMIN'}:
                                     manager_user.role = 'ADMIN'
                                     if not dry_run:
@@ -473,7 +560,7 @@ class Command(BaseCommand):
                             user.aila_subscribed = True
                             user.is_active = True
                             user.auto_approve = target_auto_approve
-                            if manager_user and manager_user.id != user.id:
+                            if manager_user and not self._is_same_user(manager_user, user):
                                 user.manager = manager_user
                             if not dry_run:
                                 user.save(update_fields=['department', 'aila_subscribed', 'is_active', 'auto_approve', 'manager'])
@@ -547,7 +634,8 @@ class Command(BaseCommand):
                 f'gruppi_creati={groups_created}, gruppi_assegnati={groups_assigned}, '
                 f'gruppi_gia_associati={groups_unchanged}, gruppo_mancante={groups_missing}, '
                 f'referenti_impostati={managers_assigned}, referenti_non_trovati={managers_not_found}, '
-                f'referenti_self_skipped={managers_self_skipped}, referenti_promossi_ruolo={managers_role_promoted}{suffix}'
+                f'referenti_self_skipped={managers_self_skipped}, referenti_promossi_ruolo={managers_role_promoted}, '
+                f'referenti_creati={managers_created}{suffix}'
             )
         )
         updated_list = ', '.join(sorted(set(updated_usernames))) or '-'

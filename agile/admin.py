@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import Group
 from django.contrib import messages
+from django.contrib.admin.utils import unquote
 from django.conf import settings
 from django.core.management import call_command
 from django.core.mail import send_mail
@@ -158,6 +159,54 @@ class CustomUserAdmin(CollapseMediaMixin, UserAdmin):
         'is_active',
     )
     list_filter = ('role', 'aila_subscribed', 'onboarding_pending', 'auto_approve', 'department', 'manager', 'is_active')
+
+    @staticmethod
+    def _local_superusers_queryset():
+        return User.objects.filter(is_superuser=True, is_active=True).exclude(password__startswith='!')
+
+    def _blocked_local_superuser_ids(self, queryset):
+        local_superuser_ids = set(self._local_superusers_queryset().values_list('id', flat=True))
+        selected_ids = set(queryset.values_list('id', flat=True))
+        selected_local_superuser_ids = selected_ids & local_superuser_ids
+        blocked_ids = set()
+        if selected_local_superuser_ids and not (local_superuser_ids - selected_local_superuser_ids):
+            # Mantiene almeno un superuser locale attivo.
+            blocked_ids.add(sorted(selected_local_superuser_ids)[0])
+        return blocked_ids
+
+    def has_delete_permission(self, request, obj=None):
+        return super().has_delete_permission(request, obj=obj)
+
+    def delete_view(self, request, object_id, extra_context=None):
+        obj = self.get_object(request, unquote(object_id))
+        if obj and obj.is_superuser and not self._local_superusers_queryset().exclude(pk=obj.pk).exists():
+            messages.error(request, 'Operazione bloccata: deve restare almeno un superuser locale attivo.')
+            return redirect('admin:agile_user_change', obj.pk)
+        return super().delete_view(request, object_id, extra_context=extra_context)
+
+    def get_deleted_objects(self, objs, request):
+        queryset = objs if hasattr(objs, 'values_list') else User.objects.filter(pk__in=[obj.pk for obj in objs])
+        blocked_ids = self._blocked_local_superuser_ids(queryset)
+        if blocked_ids:
+            messages.warning(
+                request,
+                "Nella selezione e presente l'ultimo superuser locale attivo: non verra incluso nella cancellazione.",
+            )
+            queryset = queryset.exclude(id__in=blocked_ids)
+            objs = queryset
+        return super().get_deleted_objects(objs, request)
+
+    def delete_queryset(self, request, queryset):
+        blocked_ids = self._blocked_local_superuser_ids(queryset)
+        blocked = len(blocked_ids)
+        if blocked:
+            messages.warning(
+                request,
+                f'Cancellazione protetta: {blocked} utente superuser locale non e stato eliminato per mantenere almeno un superuser locale attivo.',
+            )
+        deletable = queryset.exclude(id__in=blocked_ids)
+        if deletable.exists():
+            super().delete_queryset(request, deletable)
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)

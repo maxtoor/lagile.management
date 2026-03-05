@@ -1639,6 +1639,30 @@
         <div id="loginError" class="msg error"></div>
       </div>
     </div>
+    <div id="loginWelcomeModal" class="modal-backdrop hidden" style="z-index:140">
+      <div class="modal-box" style="width:min(640px, 100%)">
+        <div class="modal-head">
+          <h3 class="modal-title">Non hai sbagliiato indirizzo.</h3>
+        </div>
+        <p class="modal-subtitle" style="margin-bottom:8px">Benvenuto nella nuova versione di LAgile.management</p>
+        <p class="modal-subtitle" style="margin-bottom:8px">
+          L'interfaccia e stata aggiornata e alcune sezioni sono state riorganizzate per rendere la compilazione piu veloce.
+        </p>
+        <p class="modal-subtitle" style="margin-bottom:8px">Le funzionalita principali restano disponibili:</p>
+        <ul style="margin:0 0 12px 18px;color:var(--ink)">
+          <li>Programmazione mensile con calendario interattivo</li>
+          <li>Richiesta approvazione o variazione secondo stato del mese</li>
+          <li>Code dedicate per approvazioni e variazioni (referenti)</li>
+        </ul>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;margin-bottom:12px">
+          <input id="hideLoginWelcomeCheckbox" type="checkbox" />
+          <span>Non mostrare piu questo avviso</span>
+        </label>
+        <div class="toolbar-actions modal-actions">
+          <button id="closeLoginWelcomeBtn" class="primary" type="button">Ho capito</button>
+        </div>
+      </div>
+    </div>
     <div id="errorPopup" class="error-popup hidden">
       <span id="errorPopupText"></span>
       <label id="dismissNoAilaNoticeWrap" class="error-popup-dismiss hidden">
@@ -1655,6 +1679,7 @@
       const YM_PREF_PREFIX = "agile_ym_pref_v1";
       const HELP_GUIDE_PREF_PREFIX = "agile_help_guide_hidden_v1";
       const NO_AILA_WARN_PREF_PREFIX = "agile_no_aila_warn_hidden_v1";
+      const LOGIN_WELCOME_PREF_KEY = "agile_login_welcome_hidden_v1";
       const APP_PAGE = document.body.dataset.appPage || "programming";
       const DATE_DISPLAY_FORMAT = (document.body.dataset.dateDisplayFormat || "IT").toUpperCase();
 
@@ -1672,6 +1697,9 @@
       const feedback = document.getElementById("feedback");
       const loginOverlay = document.getElementById("loginOverlay");
       const loginError = document.getElementById("loginError");
+      const loginWelcomeModal = document.getElementById("loginWelcomeModal");
+      const closeLoginWelcomeBtn = document.getElementById("closeLoginWelcomeBtn");
+      const hideLoginWelcomeCheckbox = document.getElementById("hideLoginWelcomeCheckbox");
       const errorPopup = document.getElementById("errorPopup");
       const errorPopupText = document.getElementById("errorPopupText");
       const dismissNoAilaNoticeWrap = document.getElementById("dismissNoAilaNoticeWrap");
@@ -1992,6 +2020,30 @@
           return;
         }
         localStorage.removeItem(key);
+      }
+
+      function isLoginWelcomeSuppressed() {
+        return localStorage.getItem(LOGIN_WELCOME_PREF_KEY) === "1";
+      }
+
+      function openLoginWelcomeModal() {
+        if (!loginWelcomeModal) return;
+        if (hideLoginWelcomeCheckbox) hideLoginWelcomeCheckbox.checked = false;
+        loginWelcomeModal.classList.remove("hidden");
+      }
+
+      function closeLoginWelcomeModal() {
+        if (!loginWelcomeModal) return;
+        if (hideLoginWelcomeCheckbox?.checked) {
+          localStorage.setItem(LOGIN_WELCOME_PREF_KEY, "1");
+        }
+        loginWelcomeModal.classList.add("hidden");
+      }
+
+      function maybeShowLoginWelcomeModal() {
+        if (!loginOverlay || loginOverlay.classList.contains("hidden")) return;
+        if (isLoginWelcomeSuppressed()) return;
+        openLoginWelcomeModal();
       }
 
       function openHelpGuideModal({ force = false } = {}) {
@@ -3620,6 +3672,7 @@
             localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
             renderUserProfile(currentUser);
             loginOverlay.classList.add("hidden");
+            loginWelcomeModal?.classList.add("hidden");
             mainMenu.classList.remove("hidden");
             applyMainPageMode();
             syncMainMenuByRole();
@@ -3634,6 +3687,7 @@
               localStorage.removeItem(USER_KEY);
             }
             loginOverlay.classList.remove("hidden");
+            maybeShowLoginWelcomeModal();
             renderCalendar({});
             return;
           }
@@ -3651,6 +3705,7 @@
           return;
         }
         loginOverlay.classList.remove("hidden");
+        maybeShowLoginWelcomeModal();
         renderCalendar({});
       }
 
@@ -3676,6 +3731,7 @@
           }
           renderUserProfile(currentUser);
           loginOverlay.classList.add("hidden");
+          loginWelcomeModal?.classList.add("hidden");
           mainMenu.classList.remove("hidden");
           applyMainPageMode();
           syncMainMenuByRole();
@@ -4198,6 +4254,10 @@
 
       closeErrorPopupBtn.addEventListener("click", () => {
         hideErrorPopup();
+      });
+
+      closeLoginWelcomeBtn?.addEventListener("click", () => {
+        closeLoginWelcomeModal();
       });
 
       helpGuideLink?.addEventListener("click", (event) => {

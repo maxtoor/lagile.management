@@ -42,6 +42,11 @@ class User(AbstractUser):
     def is_approver(self) -> bool:
         return self.role in {self.Role.ADMIN, self.Role.SUPERADMIN}
 
+    @staticmethod
+    def _is_local_superuser_state(*, is_superuser: bool, is_active: bool, password: str | None) -> bool:
+        raw_password = str(password or '')
+        return bool(is_superuser and is_active and raw_password and not raw_password.startswith('!'))
+
     def _align_role_permissions(self):
         # Allineamento automatico ruolo/permesse:
         # - superuser => SUPERADMIN + staff
@@ -64,11 +69,46 @@ class User(AbstractUser):
         if self.manager_id and self.manager_id == self.id:
             raise ValidationError('Un utente non puo avere se stesso come referente amministrativo')
 
+        if self.pk:
+            previous = User.objects.filter(pk=self.pk).values('is_superuser', 'is_active', 'password').first()
+            was_local_superuser = self._is_local_superuser_state(
+                is_superuser=bool(previous['is_superuser']) if previous else False,
+                is_active=bool(previous['is_active']) if previous else False,
+                password=previous['password'] if previous else '',
+            )
+            is_local_superuser_now = self._is_local_superuser_state(
+                is_superuser=bool(self.is_superuser),
+                is_active=bool(self.is_active),
+                password=self.password,
+            )
+            if was_local_superuser and not is_local_superuser_now:
+                has_other_local_superuser = User.objects.filter(
+                    is_superuser=True,
+                    is_active=True,
+                ).exclude(password__startswith='!').exclude(pk=self.pk).exists()
+                if not has_other_local_superuser:
+                    raise ValidationError('Deve restare almeno un superuser locale attivo')
+
     def save(self, *args, **kwargs):
         self._align_role_permissions()
         if self.aila_subscribed:
             self.onboarding_pending = False
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        is_local_superuser = self._is_local_superuser_state(
+            is_superuser=bool(self.is_superuser),
+            is_active=bool(self.is_active),
+            password=self.password,
+        )
+        if is_local_superuser:
+            has_other_local_superuser = User.objects.filter(
+                is_superuser=True,
+                is_active=True,
+            ).exclude(password__startswith='!').exclude(pk=self.pk).exists()
+            if not has_other_local_superuser:
+                raise ValidationError('Deve restare almeno un superuser locale attivo')
+        return super().delete(*args, **kwargs)
 
 
 class AgileGroup(Group):
