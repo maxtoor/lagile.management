@@ -120,6 +120,22 @@ bash scripts/install.sh \
 bash scripts/install.sh --dry-run
 ```
 
+Esecuzione diretta da GitHub (senza clone manuale):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/maxtoor/lagile.management/main/scripts/install.sh | bash -s -- \
+  --install-dir /opt/lagile-management \
+  --repo-url https://github.com/maxtoor/lagile.management.git
+```
+
+Alternativa con `wget`:
+
+```bash
+wget -qO- https://raw.githubusercontent.com/maxtoor/lagile.management/main/scripts/install.sh | bash -s -- \
+  --install-dir /opt/lagile-management \
+  --repo-url https://github.com/maxtoor/lagile.management.git
+```
+
 Opzioni principali:
 - `--app-user <utente>` proprietario file installazione
 - `--skip-docker-install` se Docker e gia presente
