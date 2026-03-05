@@ -4,8 +4,14 @@
 {% block breadcrumbs %}
 <div class="breadcrumbs">
   <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
-  &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
-  &rsaquo; <a href="{% url opts|admin_urlname:'change' object.pk|admin_urlquote %}">{{ object|truncatewords:"18" }}</a>
+  {% with model_name=opts.verbose_name_plural %}
+    &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ model_name|capfirst }}</a>
+    {% with object_label=object|truncatewords:"18" %}
+      {% if object_label|lower != model_name|lower %}
+        &rsaquo; <a href="{% url opts|admin_urlname:'change' object.pk|admin_urlquote %}">{{ object_label }}</a>
+      {% endif %}
+    {% endwith %}
+  {% endwith %}
   &rsaquo; {% translate "History" %}
 </div>
 {% endblock %}
