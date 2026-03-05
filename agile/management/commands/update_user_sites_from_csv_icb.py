@@ -518,6 +518,121 @@ class Command(BaseCommand):
                                                 f'Riga {row_index}: referente "{manager_user.username}" aggiornato ({", ".join(changed_fields)})'
                                             )
                                         )
+                            # Con valore Default: non impostare afferenza territoriale,
+                            # ma creare/aggiornare comunque l'utente locale.
+                            user = None
+                            if raw_email:
+                                user = User.objects.filter(email__iexact=raw_email).first()
+                                if user:
+                                    self.stdout.write(
+                                        self.style.WARNING(
+                                            f'Riga {row_index}: match per email "{raw_email}" -> utente "{user.username}" (Default)'
+                                        )
+                                    )
+                                if not user:
+                                    username_from_email = self._username_from_email(raw_email)
+                                    if username_from_email:
+                                        user = User.objects.filter(username__iexact=username_from_email).first()
+                                        if user:
+                                            self.stdout.write(
+                                                self.style.WARNING(
+                                                    f'Riga {row_index}: email non trovata, match username "{username_from_email}" '
+                                                    f'-> utente "{user.username}" (Default)'
+                                                )
+                                            )
+                            if not user and fallback_lastname and raw_lastname and not raw_email:
+                                folded_lastname = self._fold(raw_lastname)
+                                folded_firstname = self._fold(raw_firstname)
+                                surname_candidates = [
+                                    candidate
+                                    for candidate in all_users
+                                    if self._fold(candidate.last_name) == folded_lastname
+                                ]
+                                if len(surname_candidates) == 1:
+                                    user = surname_candidates[0]
+                                    self.stdout.write(
+                                        self.style.WARNING(
+                                            f'Riga {row_index}: match cognome esatto "{raw_lastname}" -> utente "{user.username}" (Default)'
+                                        )
+                                    )
+                                elif len(surname_candidates) > 1 and raw_firstname:
+                                    narrowed_candidates = [
+                                        candidate
+                                        for candidate in surname_candidates
+                                        if self._fold(candidate.first_name) == folded_firstname
+                                    ]
+                                    if len(narrowed_candidates) == 1:
+                                        user = narrowed_candidates[0]
+                                        self.stdout.write(
+                                            self.style.WARNING(
+                                                f'Riga {row_index}: cognome ambiguo risolto con nome "{raw_firstname}" -> utente "{user.username}" (Default)'
+                                            )
+                                        )
+                            created_this_row = False
+                            if not user:
+                                base_username = self._username_from_email(raw_email)
+                                username = self._build_unique_username(base_username, all_users)
+                                if not username:
+                                    not_found += 1
+                                    ref = raw_email or raw_lastname or f'riga-{row_index}'
+                                    not_found_refs.append(ref)
+                                    self.stdout.write(
+                                        self.style.WARNING(
+                                            f'Riga {row_index}: valore Default, utente non trovato e impossibile crearlo '
+                                            f'(email="{raw_email}" cognome="{raw_lastname}" nome="{raw_firstname}")'
+                                        )
+                                    )
+                                    self.stdout.write(
+                                        self.style.WARNING(
+                                            f'Riga {row_index}: sede ignorata per valore Default (email="{raw_email}")'
+                                        )
+                                    )
+                                    continue
+                                user = User(
+                                    username=username,
+                                    email=raw_email,
+                                    first_name=raw_firstname,
+                                    last_name=raw_lastname,
+                                    role=User.Role.EMPLOYEE,
+                                    is_active=True,
+                                )
+                                user.set_unusable_password()
+                                if not dry_run:
+                                    user.save()
+                                users_created += 1
+                                created_usernames.append(user.username)
+                                created_this_row = True
+                                all_users.append(user)
+                                self.stdout.write(
+                                    self.style.WARNING(
+                                        f'Riga {row_index}: utente creato automaticamente "{username}" da email "{raw_email}" (Default)'
+                                    )
+                                )
+
+                            current_site = (user.department or '')
+                            current_aila = bool(user.aila_subscribed)
+                            current_active = bool(user.is_active)
+                            current_auto_approve = bool(user.auto_approve)
+                            current_has_manager = bool(user.manager_id)
+                            if (
+                                current_site == ''
+                                and not current_aila
+                                and current_active
+                                and not current_auto_approve
+                                and not current_has_manager
+                            ):
+                                unchanged += 1
+                            else:
+                                user.department = ''
+                                user.aila_subscribed = False
+                                user.is_active = True
+                                user.auto_approve = False
+                                user.manager = None
+                                if not dry_run:
+                                    user.save(update_fields=['department', 'aila_subscribed', 'is_active', 'auto_approve', 'manager'])
+                                updated += 1
+                                updated_usernames.append(user.username)
+
                             self.stdout.write(
                                 self.style.WARNING(
                                     f'Riga {row_index}: sede ignorata per valore Default (email="{raw_email}")'
