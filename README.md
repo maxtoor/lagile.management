@@ -14,7 +14,7 @@ Backend Django per gestione mensile del calendario di lavoro agile con autentica
 - Tracciamento eventi principali in `AuditLog`
 - Pannello amministrativo Django (`/admin/`)
 - Portale web unico con area dipendente e coda approvazioni per `ADMIN`/`SUPERADMIN`
-- Scheda utente nel portale con `Nome e cognome`, `Sede` e `Referente amministrativo`
+- Scheda utente nel portale con `Nome e cognome`, `Afferenza territoriale` e `Referente amministrativo`
 - Gli approvatori possono aprire il dettaglio giornaliero del piano prima di approvare/rifiutare
 - Invio email automatico al dipendente quando il piano viene approvato o rifiutato
 - I dipendenti possono modificare il piano del mese corrente e del mese successivo; il mese corrente non e inviabile in approvazione ma solo in richiesta variazione
@@ -49,6 +49,7 @@ cp .env.example .env
 ```env
 DJANGO_SECRET_KEY=una-chiave-forte
 DEBUG=1
+AGILE_SITES=Sede principale
 AGILE_DATE_DISPLAY_FORMAT=IT
 AGILE_LOGIN_LOGO_URL=https://example.org/static/logo-istituto.png
 POSTGRES_DB=agile_work
@@ -71,9 +72,9 @@ Formato data nel portale:
 
 Sedi ammesse (opzionale):
 - `AGILE_SITES=Sede principale` (default)
-- serve per definire l'elenco sedi disponibili nell'app e nei processi di import LDAP/CSV
+- serve per definire l'elenco afferenze territoriali disponibili nell'app e nei processi di import LDAP/CSV
 - non e obbligatoria in `.env`: se assente viene usato il default
-- per piu sedi, usa un CSV: `AGILE_SITES=Napoli,Catania,Sassari,Padova`
+- per piu afferenze territoriali, usa un CSV: `AGILE_SITES=Napoli,Catania,Sassari,Padova`
 
 Logo nella schermata login (opzionale):
 - `AGILE_LOGIN_LOGO_URL=` URL assoluto dell'immagine (es. `https://.../logo.png`)
@@ -321,7 +322,7 @@ python manage.py import_ldap_users --base-dn "ou=people,dc=example,dc=org" --fil
 Note:
 - gli utenti importati (nuovi o aggiornati) vengono impostati `is_active=False`
 - agli utenti importati viene impostata password locale non utilizzabile
-- il campo `Sede` viene valorizzato solo se il valore LDAP e tra quelli ammessi da `AGILE_SITES`, altrimenti resta vuoto
+- il campo `Afferenza territoriale` viene valorizzato solo se il valore LDAP e tra quelli ammessi da `AGILE_SITES`, altrimenti resta vuoto
 
 ### Sync periodico utenti LDAP (allineamento)
 
@@ -337,7 +338,7 @@ python manage.py sync_ldap_users --create-missing
 Regole sync:
 - chiave di allineamento: `username`
 - campi aggiornati dal sync: `first_name`, `last_name`, `email`
-- campi non toccati: `Sede`, `Referente amministrativo`, `Sottoscrizione AILA`, `Ruolo`, `Auto-approvazione`
+- campi non toccati: `Afferenza territoriale`, `Referente amministrativo`, `Sottoscrizione AILA`, `Ruolo`, `Auto-approvazione`
 - gli account locali con password utilizzabile non vengono modificati
 - per default non crea utenti mancanti (evita import massivo involontario)
 - con `--create-missing` crea in locale gli utenti LDAP assenti nel DB
@@ -357,7 +358,7 @@ python manage.py import_release_data ./release-export.json --mode replace
 Contenuti esportati:
 - utenti (anagrafica applicativa, ruolo, referente, gruppi, stato AILA/auto-approvazione)
 - gruppi
-- policy sedi (`DepartmentPolicy`)
+- policy afferenze territoriali (`DepartmentPolicy`)
 - festivita (`Holiday`)
 - template email di sistema
 - impostazioni applicazione (`AppSetting`)
@@ -479,7 +480,7 @@ Da Django Admin puoi configurare:
 ## Anagrafica utente e referente
 
 In Django Admin, nella scheda utente (`Users`), sono disponibili:
-- `Sede` (campo tecnico: `department`)
+- `Afferenza territoriale` (campo tecnico: `department`)
 - `Ruolo` (`EMPLOYEE`, `ADMIN`, `SUPERADMIN`)
 - `Referente amministrativo` (campo tecnico: `manager`)
 - `Sottoscrizione AILA` (`aila_subscribed`), scelta `No`/`Si` (default `No`)

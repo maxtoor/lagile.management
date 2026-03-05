@@ -10,7 +10,7 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 | `DEBUG` | No | `0` | `1` abilita debug Django (solo sviluppo). |
 | `ALLOWED_HOSTS` | Si | `localhost,127.0.0.1` | Hostname/domini ammessi (separati da virgola). |
 | `TIME_ZONE` | No | `Europe/Rome` | Fuso orario applicazione. |
-| `AGILE_SITES` | No | `Sede principale` | Elenco sedi ammesse (CSV). Esempio multi-sede: `Napoli,Catania,Sassari,Padova`. |
+| `AGILE_SITES` | No | `Sede principale` | Elenco afferenze territoriali ammesse (CSV). Esempio multi-sede: `Napoli,Catania,Sassari,Padova`. |
 | `AGILE_DATE_DISPLAY_FORMAT` | No | `IT` | Formato data nel portale (`IT` o `ISO`). |
 | `AGILE_LOGIN_LOGO_URL` | No | vuoto | URL assoluto logo schermata login. |
 | `AGILE_COMPANY_NAME` | No | `LAgile.Management` | Nome compagnia mostrato nel footer. |
@@ -40,7 +40,7 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 | `LDAP_ATTR_FIRST_NAME` | No | `givenName` | Attributo nome LDAP. |
 | `LDAP_ATTR_LAST_NAME` | No | `sn` | Attributo cognome LDAP. |
 | `LDAP_ATTR_EMAIL` | No | `mail` | Attributo email LDAP. |
-| `LDAP_ATTR_DEPARTMENT` | No | `ou` | Attributo sede/reparto LDAP (import). |
+| `LDAP_ATTR_DEPARTMENT` | No | `ou` | Attributo afferenza territoriale/reparto LDAP (import). |
 | `LDAP_IMPORT_FILTER` | No | `(objectClass=person)` | Filtro default comandi `import_ldap_users` e `sync_ldap_users`. |
 
 ## Email/SMTP

@@ -14,7 +14,7 @@ def _site_choices() -> tuple[tuple[str, str], ...]:
 
 SITE_CHOICES = _site_choices()
 
-HOLIDAY_SITE_CHOICES = (('', 'Tutte le sedi'),) + SITE_CHOICES
+HOLIDAY_SITE_CHOICES = (('', 'Tutte le afferenze territoriali'),) + SITE_CHOICES
 
 
 class User(AbstractUser):
@@ -27,7 +27,13 @@ class User(AbstractUser):
     aila_subscribed = models.BooleanField('Sottoscrizione AILA', default=False)
     onboarding_pending = models.BooleanField('Onboarding in attesa', default=False)
     auto_approve = models.BooleanField('Approvazione automatica', default=False)
-    department = models.CharField('Sede', max_length=120, blank=True, choices=SITE_CHOICES)
+    department = models.CharField(
+        'Afferenza territoriale',
+        max_length=120,
+        blank=True,
+        choices=SITE_CHOICES,
+        help_text='Es. Napoli, Catania, Sassari, Padova, ecc.',
+    )
     manager = models.ForeignKey(
         'self',
         null=True,
@@ -380,7 +386,13 @@ class PlanDay(models.Model):
 
 
 class DepartmentPolicy(models.Model):
-    department = models.CharField('Sede', max_length=120, unique=True, choices=SITE_CHOICES)
+    department = models.CharField(
+        'Afferenza territoriale',
+        max_length=120,
+        unique=True,
+        choices=SITE_CHOICES,
+        help_text='Es. Napoli, Catania, Sassari, Padova, ecc.',
+    )
     max_remote_days = models.PositiveSmallIntegerField(null=True, blank=True)
     february_max_remote_days = models.PositiveSmallIntegerField(null=True, blank=True)
     require_on_site_prevalence = models.BooleanField(default=True)
@@ -396,11 +408,11 @@ class Holiday(models.Model):
     day = models.DateField()
     name = models.CharField(max_length=120)
     department = models.CharField(
-        'Sede',
+        'Afferenza territoriale',
         max_length=120,
         blank=True,
         choices=HOLIDAY_SITE_CHOICES,
-        help_text='Vuoto = festivita valida per tutte le sedi',
+        help_text='Vuoto = festivita valida per tutte le afferenze territoriali',
     )
 
     class Meta:

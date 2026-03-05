@@ -288,9 +288,9 @@ class ImportCsvAdminForm(forms.Form):
     csv_file = forms.FileField(label='File CSV')
     email_column = forms.CharField(label='Colonna email', required=False, initial='email')
     lastname_column = forms.CharField(label='Colonna cognome', required=False, initial='lastname')
-    site_column = forms.CharField(label='Colonna sede', required=False, initial='department')
+    site_column = forms.CharField(label='Colonna afferenza territoriale', required=False, initial='department')
     site_mode = forms.ChoiceField(
-        label='Modalita sede',
+        label='Modalita afferenza territoriale',
         choices=(('exact', 'Valore completo'), ('last-word', 'Ultima parola')),
         required=False,
         initial='last-word',
