@@ -610,6 +610,13 @@
         border-radius: 8px;
       }
 
+      .error-popup-dismiss {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+      }
+
       .error-popup.kind-error {
         background: #fff4f5;
         color: var(--danger);
@@ -1634,6 +1641,10 @@
     </div>
     <div id="errorPopup" class="error-popup hidden">
       <span id="errorPopupText"></span>
+      <label id="dismissNoAilaNoticeWrap" class="error-popup-dismiss hidden">
+        <input id="dismissNoAilaNoticeCheckbox" type="checkbox" />
+        <span>Non mostrare piu questo avviso</span>
+      </label>
       <button id="closeErrorPopupBtn" type="button">Chiudi</button>
     </div>
 
@@ -1643,6 +1654,7 @@
       const USER_KEY = "agile_user";
       const YM_PREF_PREFIX = "agile_ym_pref_v1";
       const HELP_GUIDE_PREF_PREFIX = "agile_help_guide_hidden_v1";
+      const NO_AILA_WARN_PREF_PREFIX = "agile_no_aila_warn_hidden_v1";
       const APP_PAGE = document.body.dataset.appPage || "programming";
       const DATE_DISPLAY_FORMAT = (document.body.dataset.dateDisplayFormat || "IT").toUpperCase();
 
@@ -1662,6 +1674,8 @@
       const loginError = document.getElementById("loginError");
       const errorPopup = document.getElementById("errorPopup");
       const errorPopupText = document.getElementById("errorPopupText");
+      const dismissNoAilaNoticeWrap = document.getElementById("dismissNoAilaNoticeWrap");
+      const dismissNoAilaNoticeCheckbox = document.getElementById("dismissNoAilaNoticeCheckbox");
       const closeErrorPopupBtn = document.getElementById("closeErrorPopupBtn");
       const helpGuideLink = document.getElementById("helpGuideLink");
       const helpGuideModal = document.getElementById("helpGuideModal");
@@ -1796,6 +1810,7 @@
       let baselineDaySignature = "";
       let baselineDayMap = {};
       let popupAutoCloseTimer = null;
+      let popupIsNoAilaDismissable = false;
       let weekendHiddenMode = false;
       const WEEKENDS_HIDE_BREAKPOINT = 1085;
       let currentDisplayStatus = "DRAFT";
@@ -1941,6 +1956,28 @@
         return `${HELP_GUIDE_PREF_PREFIX}:${userId}`;
       }
 
+      function noAilaWarnPrefKey() {
+        const userId = currentUser?.id;
+        if (!userId) return null;
+        return `${NO_AILA_WARN_PREF_PREFIX}:${userId}`;
+      }
+
+      function isNoAilaWarningSuppressed() {
+        const key = noAilaWarnPrefKey();
+        if (!key) return false;
+        return localStorage.getItem(key) === "1";
+      }
+
+      function setNoAilaWarningSuppressed(value) {
+        const key = noAilaWarnPrefKey();
+        if (!key) return;
+        if (value) {
+          localStorage.setItem(key, "1");
+          return;
+        }
+        localStorage.removeItem(key);
+      }
+
       function isHelpGuideSuppressed() {
         const key = helpGuidePrefKey();
         if (!key) return false;
@@ -2019,8 +2056,8 @@
         return false;
       }
 
-      function setFeedback(message, kind = "ok") {
-        showTopPopup(message, kind);
+      function setFeedback(message, kind = "ok", options = {}) {
+        showTopPopup(message, kind, options);
         feedback.style.display = "none";
       }
 
@@ -2180,8 +2217,8 @@
         }
       }
 
-      function setReviewFeedback(message, kind = "ok") {
-        showTopPopup(message, kind);
+      function setReviewFeedback(message, kind = "ok", options = {}) {
+        showTopPopup(message, kind, options);
         reviewFeedback.style.display = "none";
       }
 
@@ -2189,21 +2226,31 @@
         reviewFeedback.style.display = "none";
       }
 
-      function showTopPopup(message, kind = "ok") {
+      function showTopPopup(message, kind = "ok", options = {}) {
         const popupKind = kind === "error" ? "error" : kind === "warn" ? "warn" : "ok";
+        const persist = Boolean(options && options.persist);
+        popupIsNoAilaDismissable = Boolean(options && options.dismissNoAila);
         if (popupAutoCloseTimer) {
           clearTimeout(popupAutoCloseTimer);
           popupAutoCloseTimer = null;
+        }
+        if (dismissNoAilaNoticeWrap) {
+          dismissNoAilaNoticeWrap.classList.toggle("hidden", !popupIsNoAilaDismissable);
+        }
+        if (dismissNoAilaNoticeCheckbox) {
+          dismissNoAilaNoticeCheckbox.checked = false;
         }
         errorPopup.classList.remove("kind-error", "kind-warn", "kind-ok");
         errorPopup.classList.add(`kind-${popupKind}`);
         const prefix = popupKind === "error" ? "ERRORE" : popupKind === "warn" ? "ATTENZIONE" : "INFO";
         errorPopupText.textContent = `${prefix}: ${message || "-"}`;
         errorPopup.classList.remove("hidden");
-        const timeoutMs = popupKind === "error" ? 7000 : 5000;
-        popupAutoCloseTimer = setTimeout(() => {
-          hideErrorPopup();
-        }, timeoutMs);
+        if (!persist) {
+          const timeoutMs = popupKind === "error" ? 7000 : 5000;
+          popupAutoCloseTimer = setTimeout(() => {
+            hideErrorPopup();
+          }, timeoutMs);
+        }
       }
 
       function hideErrorPopup() {
@@ -2211,8 +2258,15 @@
           clearTimeout(popupAutoCloseTimer);
           popupAutoCloseTimer = null;
         }
+        if (popupIsNoAilaDismissable && dismissNoAilaNoticeCheckbox?.checked) {
+          setNoAilaWarningSuppressed(true);
+        }
         errorPopup.classList.add("hidden");
         errorPopupText.textContent = "";
+        popupIsNoAilaDismissable = false;
+        if (dismissNoAilaNoticeWrap) {
+          dismissNoAilaNoticeWrap.classList.add("hidden");
+        }
       }
 
       function isApprover() {
@@ -2226,6 +2280,22 @@
 
       function hasAilaSubscription() {
         return Boolean(currentUser?.aila_subscribed);
+      }
+
+      function noAilaProgrammingMessage() {
+        if (currentUser?.onboarding_pending) {
+          return "Programmazione non disponibile: il tuo account e in fase di configurazione (Sottoscrizione AILA su No). L'amministratore e gia stato avvisato: riprova piu tardi.";
+        }
+        const isApproverUser = Boolean(
+          currentUser &&
+          (currentUser.role === "ADMIN" ||
+            currentUser.role === "SUPERADMIN" ||
+            currentUser.is_superuser)
+        );
+        if (isApproverUser) {
+          return "Programmazione non disponibile: Sottoscrizione AILA impostata su No. Come referente puoi comunque utilizzare le sezioni di approvazione e controllo.";
+        }
+        return "Programmazione non disponibile: Sottoscrizione AILA impostata su No. Contatta il tuo referente amministrativo.";
       }
 
       function renderUserProfile(user) {
@@ -2806,7 +2876,14 @@
         bulkSetOnSiteBtn.disabled = readonly;
         bulkSetRemoteBtn.disabled = readonly;
         if (readonlyByAilaSubscription && APP_PAGE === "programming") {
-          setFeedback("Programmazione non disponibile: Sottoscrizione AILA impostata su No", "warn");
+          const isApproverUser = isApprover();
+          const suppressedForApprover = isApproverUser && isNoAilaWarningSuppressed();
+          if (!suppressedForApprover) {
+            setFeedback(noAilaProgrammingMessage(), "warn", {
+              persist: true,
+              dismissNoAila: isApproverUser,
+            });
+          }
         }
         refreshPlanningActions();
       }
@@ -3348,7 +3425,7 @@
 
       async function saveDraft({ silent = false, reloadAfterSave = true } = {}) {
         if (!hasAilaSubscription()) {
-          throw new Error("Programmazione non disponibile: Sottoscrizione AILA impostata su No");
+          throw new Error(noAilaProgrammingMessage());
         }
         const payload = {
           year: Number(yearInput.value),
@@ -3543,7 +3620,6 @@
             localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
             renderUserProfile(currentUser);
             loginOverlay.classList.add("hidden");
-            openHelpGuideModal();
             mainMenu.classList.remove("hidden");
             applyMainPageMode();
             syncMainMenuByRole();
@@ -3564,6 +3640,9 @@
 
           try {
             await loadMonth();
+            if (APP_PAGE === "programming" && !calendarReadonly) {
+              openHelpGuideModal();
+            }
             await loadApproverQueue();
             startApproverAutoRefresh();
           } catch (err) {
@@ -3597,7 +3676,6 @@
           }
           renderUserProfile(currentUser);
           loginOverlay.classList.add("hidden");
-          openHelpGuideModal();
           mainMenu.classList.remove("hidden");
           applyMainPageMode();
           syncMainMenuByRole();
@@ -3608,6 +3686,9 @@
           }
           try {
             await loadMonth();
+            if (APP_PAGE === "programming" && !calendarReadonly) {
+              openHelpGuideModal();
+            }
             await loadApproverQueue();
             startApproverAutoRefresh();
           } catch (err) {

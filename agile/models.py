@@ -25,6 +25,7 @@ class User(AbstractUser):
 
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.EMPLOYEE)
     aila_subscribed = models.BooleanField('Sottoscrizione AILA', default=False)
+    onboarding_pending = models.BooleanField('Onboarding in attesa', default=False)
     auto_approve = models.BooleanField('Approvazione automatica', default=False)
     department = models.CharField('Sede', max_length=120, blank=True, choices=SITE_CHOICES)
     manager = models.ForeignKey(
@@ -65,6 +66,8 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         self._align_role_permissions()
+        if self.aila_subscribed:
+            self.onboarding_pending = False
         super().save(*args, **kwargs)
 
 

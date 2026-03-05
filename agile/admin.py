@@ -110,7 +110,7 @@ class CustomUserAdmin(CollapseMediaMixin, UserAdmin):
             'Impostazioni applicazione',
             {
                 'classes': ('collapse',),
-                'fields': ('department', 'role', 'aila_subscribed', 'auto_approve', 'manager'),
+                'fields': ('department', 'role', 'aila_subscribed', 'onboarding_pending', 'auto_approve', 'manager'),
             },
         ),
         (
@@ -151,11 +151,12 @@ class CustomUserAdmin(CollapseMediaMixin, UserAdmin):
         'department',
         'role',
         'aila_subscribed',
+        'onboarding_pending',
         'auto_approve',
         'manager',
         'is_active',
     )
-    list_filter = ('role', 'aila_subscribed', 'auto_approve', 'department', 'manager', 'is_active')
+    list_filter = ('role', 'aila_subscribed', 'onboarding_pending', 'auto_approve', 'department', 'manager', 'is_active')
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)

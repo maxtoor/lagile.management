@@ -53,6 +53,16 @@ python manage.py update_user_sites_from_csv /percorso/file.csv --site-column dep
 python manage.py update_user_sites_from_csv /percorso/file.csv --dry-run
 ```
 
+### Variante ICB (creazione utenti mancanti)
+
+Per l'Istituto di Chimica Biomolecolare (ICB) e disponibile una variante dedicata che, a parita di logica CSV,
+crea automaticamente l'utente locale se non viene trovato.
+
+```bash
+python manage.py update_user_sites_from_csv_icb /percorso/file.csv --site-column department --site-mode last-word
+python manage.py update_user_sites_from_csv_icb /percorso/file.csv --dry-run
+```
+
 Note:
 - logica match import CSV:
   1) `email CSV == email DB` -> importa

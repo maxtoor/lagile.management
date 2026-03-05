@@ -55,7 +55,7 @@ class LoginSerializer(serializers.Serializer):
             f'Nome completo: {full_name}\n'
             f'Email: {user.email or "-"}\n'
             f'Data import: {now_str}\n\n'
-            'Completare la configurazione nel Django Admin: Attivo, Sede, Referente amministrativo, '
+            'Completare la configurazione nel pannello amministrativo: Attivo, Sede, Referente amministrativo, '
             'Sottoscrizione AILA e altre impostazioni applicative.'
         )
         send_mail(
@@ -70,15 +70,17 @@ class LoginSerializer(serializers.Serializer):
     def _finalize_new_ldap_user(cls, user: User) -> None:
         user.role = User.Role.EMPLOYEE
         user.aila_subscribed = False
+        user.onboarding_pending = True
         user.auto_approve = False
         user.department = ''
         user.manager = None
-        user.is_active = False
+        user.is_active = True
         user.set_unusable_password()
         user.save(
             update_fields=[
                 'role',
                 'aila_subscribed',
+                'onboarding_pending',
                 'auto_approve',
                 'department',
                 'manager',
@@ -116,9 +118,6 @@ class LoginSerializer(serializers.Serializer):
 
         if not existed_before_login:
             self._finalize_new_ldap_user(user)
-            raise serializers.ValidationError(
-                'Utente LDAP importato correttamente. In attesa di abilitazione da parte di un amministratore.'
-            )
 
         attrs['username'] = normalized_username
         attrs['user'] = user
@@ -149,6 +148,7 @@ class UserSerializer(serializers.ModelSerializer):
             'manager_name',
             'role',
             'aila_subscribed',
+            'onboarding_pending',
             'auto_approve',
             'is_staff',
             'is_superuser',
