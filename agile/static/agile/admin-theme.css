@@ -6,6 +6,8 @@
   --agile-accent: #0e6b55;
   --agile-accent-soft: #dceee8;
   --agile-line: #dce4df;
+  --agile-admin-header-height: 48px;
+  --agile-admin-breadcrumbs-height: 36px;
 }
 
 html,
@@ -15,7 +17,19 @@ body {
   font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
 }
 
+body {
+  padding-bottom: 44px;
+}
+
+body:not(.login) {
+  padding-top: calc(var(--agile-admin-header-height) + var(--agile-admin-breadcrumbs-height));
+}
+
 #header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   background: var(--agile-panel);
   color: var(--agile-ink);
   border: 0;
@@ -23,6 +37,9 @@ body {
   border-radius: 0;
   margin: 0;
   box-shadow: none;
+  z-index: 80;
+  min-height: var(--agile-admin-header-height);
+  box-sizing: border-box;
 }
 
 #header a,
@@ -101,9 +118,16 @@ body {
 }
 
 div.breadcrumbs {
+  position: fixed;
+  top: var(--agile-admin-header-height);
+  left: 0;
+  right: 0;
   background: #f3f8f5;
   color: var(--agile-muted);
   border-bottom: 1px solid var(--agile-line);
+  z-index: 70;
+  min-height: var(--agile-admin-breadcrumbs-height);
+  box-sizing: border-box;
 }
 
 div.breadcrumbs a {
@@ -112,6 +136,93 @@ div.breadcrumbs a {
 
 #content {
   padding-top: 18px;
+}
+
+.admin-page-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  margin: 0;
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: var(--agile-muted);
+  background: rgba(255, 253, 248, 0.96);
+  border-top: 1px solid var(--agile-line);
+  box-shadow: 0 -8px 20px rgba(16, 36, 29, 0.08);
+  z-index: 40;
+  box-sizing: border-box;
+}
+
+.admin-page-footer-link {
+  color: var(--agile-accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--agile-accent);
+}
+
+.admin-page-footer-link:hover {
+  opacity: 0.85;
+}
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 36, 29, 0.48);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 120;
+}
+
+.admin-modal-box {
+  width: min(900px, 100%);
+  max-height: 80vh;
+  overflow: auto;
+  background: var(--agile-panel);
+  border: 1px solid var(--agile-line);
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 0.92rem;
+}
+
+.admin-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+.admin-modal-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 600;
+}
+
+.admin-modal-ghost {
+  background: #fff;
+  border: 1px solid var(--agile-line);
+  color: var(--agile-ink);
+  padding: 10px 12px;
+}
+
+.admin-modal-content {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--agile-ink);
+}
+
+.admin-modal-content a {
+  color: var(--agile-accent);
+}
+
+.hidden {
+  display: none !important;
 }
 
 .module,

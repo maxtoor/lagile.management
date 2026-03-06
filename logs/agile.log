@@ -4997,3 +4997,62 @@ FileNotFoundError: [Errno 2] No such file or directory: 'git'
 2026-03-06 14:06:48,907 INFO [django.server] "GET / HTTP/1.1" 200 162275
 2026-03-06 14:06:49,083 WARNING [django.request] Not Found: /favicon.ico
 2026-03-06 14:06:49,084 WARNING [django.server] "GET /favicon.ico HTTP/1.1" 404 3083
+2026-03-06 14:11:23,962 INFO [django.server] "GET /admin HTTP/1.1" 301 0
+2026-03-06 14:11:23,978 INFO [django.server] "GET /admin/ HTTP/1.1" 302 0
+2026-03-06 14:11:24,004 INFO [django.server] "GET /admin/login/?next=/admin/ HTTP/1.1" 200 5462
+2026-03-06 14:11:24,069 INFO [django.server] "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+2026-03-06 14:11:24,071 INFO [django.server] "GET /static/admin/css/login.css HTTP/1.1" 200 951
+2026-03-06 14:11:24,071 INFO [django.server] "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+2026-03-06 14:11:24,072 INFO [django.server] "GET /static/agile/admin-theme.css HTTP/1.1" 200 6445
+2026-03-06 14:11:24,073 INFO [django.server] "GET /static/admin/css/base.css HTTP/1.1" 200 22092
+2026-03-06 14:11:24,074 INFO [django.server] "GET /static/agile/admin-user-collapse.css HTTP/1.1" 200 1201
+2026-03-06 14:11:24,075 INFO [django.server] "GET /static/agile/admin-messages.css HTTP/1.1" 200 584
+2026-03-06 14:11:24,076 INFO [django.server] "GET /static/admin/css/responsive.css HTTP/1.1" 200 17972
+2026-03-06 14:11:24,077 INFO [django.server] "GET /static/agile/admin-messages.js HTTP/1.1" 200 1036
+2026-03-06 14:11:24,201 WARNING [django.request] Not Found: /favicon.ico
+2026-03-06 14:11:24,202 WARNING [django.server] "GET /favicon.ico HTTP/1.1" 404 3083
+2026-03-06 14:11:40,732 INFO [django.server] "GET / HTTP/1.1" 200 162275
+2026-03-06 14:11:40,896 WARNING [django.request] Not Found: /favicon.ico
+2026-03-06 14:11:40,897 WARNING [django.server] "GET /favicon.ico HTTP/1.1" 404 3083
+2026-03-06 14:14:32,560 INFO [django.utils.autoreload] /app/agile/admin.py changed, reloading.
+2026-03-06 14:14:33,724 INFO [django.utils.autoreload] Watching for file changes with StatReloader
+2026-03-06 14:15:01,102 INFO [django.server] "GET /admin/login/?next=/admin/ HTTP/1.1" 200 5555
+2026-03-06 14:15:01,121 INFO [django.server] "GET /static/agile/admin-theme.css HTTP/1.1" 200 6920
+2026-03-06 14:16:30,322 INFO [django.server] "GET /admin/login/?next=/admin/ HTTP/1.1" 200 7808
+2026-03-06 14:16:30,343 INFO [django.server] "GET /static/agile/admin-theme.css HTTP/1.1" 200 8034
+2026-03-06 14:16:31,798 INFO [django.server] "GET /admin/login/?next=/admin/ HTTP/1.1" 200 7808
+2026-03-06 14:16:31,820 INFO [django.server] "GET /static/agile/admin-theme.css HTTP/1.1" 304 0
+2026-03-06 14:17:06,680 INFO [django.server] "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+2026-03-06 14:17:06,701 INFO [django.server] "GET /admin/ HTTP/1.1" 200 9141
+2026-03-06 14:17:06,718 INFO [django.server] "GET /static/agile/admin-theme.css HTTP/1.1" 304 0
+2026-03-06 14:19:26,353 INFO [django.server] "GET /admin/ HTTP/1.1" 200 9141
+2026-03-06 14:19:26,372 INFO [django.server] "GET /static/agile/admin-theme.css HTTP/1.1" 200 8548
+2026-03-06 14:19:38,168 INFO [django.server] "GET /admin/agile/user/ HTTP/1.1" 200 53068
+2026-03-06 14:19:38,187 INFO [django.server] "GET /static/agile/admin-theme.css HTTP/1.1" 304 0
+2026-03-06 14:19:38,202 INFO [django.server] "GET /admin/jsi18n/ HTTP/1.1" 200 8182
+2026-03-06 14:19:54,444 INFO [django.server] "POST /admin/logout/ HTTP/1.1" 200 6151
+2026-03-06 14:19:54,463 INFO [django.server] "GET /static/agile/admin-theme.css HTTP/1.1" 304 0
+2026-03-06 14:19:56,914 INFO [django.server] "GET /admin/ HTTP/1.1" 302 0
+2026-03-06 14:19:56,926 INFO [django.server] "GET /admin/login/?next=/admin/ HTTP/1.1" 200 7808
+2026-03-06 14:44:10,396 INFO [django.server] "GET /admin/login/?next=/admin/ HTTP/1.1" 200 7808
+2026-03-06 14:44:10,424 INFO [django.server] "GET /static/agile/admin-theme.css HTTP/1.1" 304 0
+2026-03-06 14:44:34,152 INFO [django.server] "GET /admin/login/?next=/admin/ HTTP/1.1" 200 7808
+2026-03-06 14:45:38,051 INFO [django.server] "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+2026-03-06 14:45:38,070 INFO [django.server] "GET /admin/ HTTP/1.1" 200 9141
+2026-03-06 14:45:46,258 INFO [django.server] "POST /admin/logout/ HTTP/1.1" 200 6151
+2026-03-06 14:45:47,738 INFO [django.server] "GET /admin/ HTTP/1.1" 302 0
+2026-03-06 14:45:47,749 INFO [django.server] "GET /admin/login/?next=/admin/ HTTP/1.1" 200 7808
+2026-03-06 14:45:52,323 WARNING [django.request] Not Found: /.well-known/appspecific/com.chrome.devtools.json
+2026-03-06 14:45:52,323 WARNING [django.server] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3194
+2026-03-06 14:46:35,653 INFO [django.server] "GET /admin/login/?next=/admin/ HTTP/1.1" 200 7808
+2026-03-06 14:46:35,710 WARNING [django.request] Not Found: /.well-known/appspecific/com.chrome.devtools.json
+2026-03-06 14:46:35,715 WARNING [django.server] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3194
+2026-03-06 14:46:35,718 INFO [django.server] "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+2026-03-06 14:46:35,719 INFO [django.server] "GET /static/admin/css/login.css HTTP/1.1" 200 951
+2026-03-06 14:46:35,719 INFO [django.server] "GET /static/agile/admin-messages.css HTTP/1.1" 200 584
+2026-03-06 14:46:35,724 INFO [django.server] "GET /static/agile/admin-theme.css HTTP/1.1" 200 8548
+2026-03-06 14:46:35,725 INFO [django.server] "GET /static/admin/css/responsive.css HTTP/1.1" 200 17972
+2026-03-06 14:46:35,727 INFO [django.server] "GET /static/agile/admin-user-collapse.css HTTP/1.1" 200 1201
+2026-03-06 14:46:35,729 INFO [django.server] "GET /static/admin/css/base.css HTTP/1.1" 200 22092
+2026-03-06 14:46:35,776 INFO [django.server] "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+2026-03-06 14:46:35,780 INFO [django.server] "GET /static/agile/admin-messages.js HTTP/1.1" 200 1036

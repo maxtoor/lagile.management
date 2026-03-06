@@ -60,6 +60,29 @@
     })();
   </script>
   <script src="{% static 'agile/admin-messages.js' %}" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var softwareInfoLink = document.getElementById("adminSoftwareInfoLink");
+      var softwareInfoModal = document.getElementById("adminSoftwareInfoModal");
+      var closeSoftwareInfoBtn = document.getElementById("closeAdminSoftwareInfoBtn");
+      if (!softwareInfoLink || !softwareInfoModal || !closeSoftwareInfoBtn) return;
+
+      softwareInfoLink.addEventListener("click", function (event) {
+        event.preventDefault();
+        softwareInfoModal.classList.remove("hidden");
+      });
+
+      closeSoftwareInfoBtn.addEventListener("click", function () {
+        softwareInfoModal.classList.add("hidden");
+      });
+
+      softwareInfoModal.addEventListener("click", function (event) {
+        if (event.target === softwareInfoModal) {
+          softwareInfoModal.classList.add("hidden");
+        }
+      });
+    });
+  </script>
 {% endblock %}
 
 {% block extrastyle %}
@@ -67,4 +90,34 @@
   <link rel="stylesheet" href="{% static 'agile/admin-theme.css' %}">
   <link rel="stylesheet" href="{% static 'agile/admin-user-collapse.css' %}">
   <link rel="stylesheet" href="{% static 'agile/admin-messages.css' %}">
+{% endblock %}
+
+{% block footer %}
+  <footer class="admin-page-footer">
+    <span>{{ copyright_year }} © {{ company_name }}</span>
+    <a href="#" id="adminSoftwareInfoLink" class="admin-page-footer-link">Informazioni software</a>
+  </footer>
+  <div id="adminSoftwareInfoModal" class="admin-modal-backdrop hidden">
+    <div class="admin-modal-box" style="width:min(620px, 100%)">
+      <div class="admin-modal-head">
+        <h3 class="admin-modal-title">Informazioni software</h3>
+        <button id="closeAdminSoftwareInfoBtn" class="admin-modal-ghost" type="button">Chiudi</button>
+      </div>
+      <div class="admin-modal-content">
+        <div><strong>Software:</strong> LAgile.management</div>
+        <div><strong>Versione:</strong> 2.0.0</div>
+        <div><strong>Licenza:</strong> GNU GPLv3</div>
+        <div><strong>Autori:</strong> Emilio Paolo Castelluccio</div>
+        <div>
+          <strong>GitHub:</strong>
+          <a href="https://github.com/maxtoor/lagile.management" target="_blank" rel="noopener noreferrer">github.com/maxtoor/lagile.management</a>
+        </div>
+        <div>
+          <strong>Baltig (CNR):</strong>
+          <a href="https://baltig.cnr.it/emiliopaolo.castelluccio/lagile.management" target="_blank" rel="noopener noreferrer">baltig.cnr.it/emiliopaolo.castelluccio/lagile.management</a>
+        </div>
+        <div><strong>Nota:</strong> Parti del codice sono state sviluppate con supporto Codex.</div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

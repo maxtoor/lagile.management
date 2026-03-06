@@ -960,6 +960,8 @@ def _extend_admin_each_context(each_context):
     def wrapped_each_context(request):
         context = each_context(request)
         context['login_logo_url'] = (get_runtime_setting('AGILE_LOGIN_LOGO_URL', '') or '').strip()
+        context['company_name'] = get_runtime_setting('AGILE_COMPANY_NAME', 'LAgile.Management')
+        context['copyright_year'] = get_runtime_setting('AGILE_COPYRIGHT_YEAR', 2026)
         return context
 
     return wrapped_each_context
