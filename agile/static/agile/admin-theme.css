@@ -291,6 +291,7 @@ textarea:focus {
 body.login {
   background: linear-gradient(160deg, #eef7f2 0%, #f9f2e6 45%, #f6f8f4 100%);
   font-size: 1em;
+  padding-bottom: 0;
 }
 
 body.login #container {
@@ -319,8 +320,11 @@ body.login #content {
 
 body.login #content::before {
   content: "";
-  position: absolute;
-  inset: 0;
+  position: fixed;
+  top: var(--agile-admin-header-height);
+  right: 0;
+  left: 0;
+  bottom: 0;
   background: rgba(16, 36, 29, 0.48);
   z-index: 0;
   pointer-events: none;
