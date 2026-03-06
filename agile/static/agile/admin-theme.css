@@ -116,6 +116,10 @@ body:not(.login) {
   color: #0b5a47;
 }
 
+#user-tools .theme-toggle {
+  display: none !important;
+}
+
 .admin-shortcut {
   font-size: 0.84rem;
   font-weight: 600;
