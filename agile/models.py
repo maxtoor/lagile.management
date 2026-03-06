@@ -32,7 +32,7 @@ class User(AbstractUser):
         max_length=120,
         blank=True,
         choices=SITE_CHOICES,
-        help_text='Es. Napoli, Catania, Sassari, Padova, ecc.',
+        help_text='Impostare la sede di servizio',
     )
     manager = models.ForeignKey(
         'self',
@@ -72,8 +72,18 @@ class User(AbstractUser):
     def clean(self):
         self._align_role_permissions()
         super().clean()
-        if self.manager_id and self.manager_id == self.id:
-            raise ValidationError('Un utente non puo avere se stesso come referente amministrativo')
+        if self.manager_id:
+            manager_is_valid = self.manager.is_approver or self.manager.is_superuser
+            if not manager_is_valid:
+                raise ValidationError('Il referente amministrativo deve avere ruolo ADMIN/SUPERADMIN o essere superuser')
+
+        # Regola referente:
+        # - per utenti EMPLOYEE: referente libero tra gli approvatori
+        # - per utenti ADMIN/SUPERADMIN/superuser: puo essere solo se stesso (oppure vuoto)
+        if self.manager_id and (self.is_approver or self.is_superuser) and self.manager_id != self.id:
+            raise ValidationError(
+                'Per utenti referenti/superuser il referente amministrativo puo essere solo se stesso'
+            )
 
         if self.pk:
             previous = User.objects.filter(pk=self.pk).values('is_superuser', 'is_active', 'password').first()
@@ -97,8 +107,6 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         self._align_role_permissions()
-        if self.aila_subscribed:
-            self.onboarding_pending = False
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):

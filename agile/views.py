@@ -344,6 +344,7 @@ class AdminOverviewView(APIView):
                         'first_name': user.first_name or '',
                         'last_name': user.last_name or '',
                         'department': user.department or '',
+                        'auto_approve': bool(getattr(user, 'auto_approve', False)),
                         'plan_id': None,
                         'status': 'MISSING',
                         'remote_days': 0,
@@ -365,6 +366,7 @@ class AdminOverviewView(APIView):
                     'first_name': user.first_name or '',
                     'last_name': user.last_name or '',
                     'department': user.department or '',
+                    'auto_approve': bool(getattr(user, 'auto_approve', False)),
                     'plan_id': plan.id,
                     'status': plan.status,
                     'remote_days': remote_days,
@@ -387,6 +389,80 @@ class AdminOverviewView(APIView):
                     'approved': status_totals.get('APPROVED', 0),
                     'rejected': status_totals.get('REJECTED', 0),
                 },
+            }
+        )
+
+
+class AdminUserAutoApproveView(APIView):
+    permission_classes = [IsAdminOrSuperAdmin]
+
+    @staticmethod
+    def _is_superadmin_user(user) -> bool:
+        return bool(user.is_superuser or user.role == 'SUPERADMIN')
+
+    @staticmethod
+    def _as_bool(value):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return bool(value)
+        text = str(value or '').strip().lower()
+        if text in {'1', 'true', 'yes', 'si', 'on'}:
+            return True
+        if text in {'0', 'false', 'no', 'off'}:
+            return False
+        raise ValidationError('Valore auto_approve non valido')
+
+    def post(self, request, user_id: int):
+        target = User.objects.filter(id=user_id, is_active=True).first()
+        if not target:
+            return Response({'detail': 'Utente non trovato'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not self._is_superadmin_user(request.user):
+            if target.id != request.user.id and target.manager_id != request.user.id:
+                return Response({'detail': 'Puoi modificare solo te stesso o utenti assegnati'}, status=status.HTTP_403_FORBIDDEN)
+
+        if (
+            target.role in {User.Role.ADMIN, User.Role.SUPERADMIN}
+            and not self._is_superadmin_user(request.user)
+            and target.id != request.user.id
+        ):
+            return Response({'detail': 'Non puoi modificare auto-approvazione di altri referenti'}, status=status.HTTP_403_FORBIDDEN)
+
+        if 'auto_approve' not in request.data:
+            return Response({'detail': 'Campo auto_approve obbligatorio'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            new_value = self._as_bool(request.data.get('auto_approve'))
+        except ValidationError as exc:
+            return Response({'detail': str(exc.detail if hasattr(exc, 'detail') else exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        old_value = bool(target.auto_approve)
+        if old_value == new_value:
+            return Response(
+                {
+                    'detail': 'Nessuna modifica',
+                    'user_id': target.id,
+                    'username': target.username,
+                    'auto_approve': old_value,
+                }
+            )
+
+        target.auto_approve = new_value
+        target.save(update_fields=['auto_approve'])
+        AuditLog.track(
+            actor=request.user,
+            action='user_auto_approve_changed',
+            target_type='User',
+            target_id=target.id,
+            metadata={'old': old_value, 'new': new_value},
+        )
+        return Response(
+            {
+                'detail': 'Auto-approvazione aggiornata',
+                'user_id': target.id,
+                'username': target.username,
+                'auto_approve': new_value,
             }
         )
 

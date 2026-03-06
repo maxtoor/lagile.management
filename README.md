@@ -504,7 +504,7 @@ Nella Pagina di Amministrazione, nella scheda utente (`Users`), sono disponibili
 
 Note:
 - il referente puo essere assegnato solo a utenti con ruolo `ADMIN`/`SUPERADMIN` (o superuser)
-- un utente non puo essere referente di se stesso
+- per utenti `ADMIN`/`SUPERADMIN` (o superuser), il referente puo essere solo se stesso (oppure vuoto)
 - se `Sottoscrizione AILA=No`, l'utente non puo creare/modificare/inviare piani o richieste variazione
 - se `Sottoscrizione AILA=No` ma l'utente e `ADMIN`/`SUPERADMIN`, puo comunque accedere e operare nelle code approvazioni/variazioni
 - se `Approvazione automatica=Si`, invio piano e richieste variazione vengono approvati direttamente senza passare dalle code

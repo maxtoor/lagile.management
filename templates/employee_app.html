@@ -25,6 +25,7 @@
       }
 
       html {
+        overflow-x: auto;
         overflow-y: scroll;
         scrollbar-gutter: stable;
       }
@@ -35,7 +36,12 @@
         color: var(--ink);
         background: linear-gradient(160deg, #eef7f2 0%, #f9f2e6 45%, #f6f8f4 100%);
         min-height: 100vh;
+        min-width: var(--title-min-width);
         overflow-x: auto;
+      }
+
+      body.weekdays-compact {
+        min-width: 760px;
       }
 
       .wrap {
@@ -484,6 +490,28 @@
       th {
         color: var(--muted);
         font-weight: 600;
+      }
+
+      .overview-table col.overview-col-onsite {
+        width: 76px;
+      }
+
+      .overview-table col.overview-col-remote {
+        width: 82px;
+      }
+
+      .overview-table col.overview-col-auto {
+        width: 110px;
+      }
+
+      .overview-table col.overview-col-actions {
+        width: 92px;
+      }
+
+      .overview-table th.overview-short-head,
+      .overview-table td.overview-short-cell {
+        text-align: center;
+        white-space: nowrap;
       }
 
       .status {
@@ -936,6 +964,18 @@
         background: #fde8ea;
         border-color: #e6aab2;
         color: #7d1e28;
+      }
+
+      .btn-auto-on {
+        background: #e4f5e9;
+        border-color: #9ed2ae;
+        color: #14552d;
+      }
+
+      .btn-auto-off {
+        background: #eef1f4;
+        border-color: #cfd6de;
+        color: #2c3a45;
       }
 
       .modal-backdrop {
@@ -1393,19 +1433,27 @@
                   </div>
                 </div>
               </div>
-              <button id="overviewReloadBtn" type="button" class="btn-small">Aggiorna</button>
               <div id="overviewSummary" class="review-batch-info" style="margin-left:auto">Utenti: 0</div>
             </div>
-            <table>
+            <table class="overview-table">
+              <colgroup>
+                <col />
+                <col />
+                <col />
+                <col class="overview-col-onsite" />
+                <col class="overview-col-remote" />
+                <col class="overview-col-auto" />
+                <col class="overview-col-actions" />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Utente</th>
                   <th>Afferenza territoriale</th>
-                  <th>Mese</th>
                   <th>Stato</th>
-                  <th>In sede</th>
-                  <th>Lavoro agile</th>
-                  <th>Azioni</th>
+                  <th class="overview-short-head" title="Giorni in sede">In sede</th>
+                  <th class="overview-short-head" title="Giorni in lavoro agile">Agile</th>
+                  <th class="overview-short-head" title="Approvazione automatica">Auto appr.</th>
+                  <th class="overview-short-head">Azioni</th>
                 </tr>
               </thead>
               <tbody id="overviewBody"></tbody>
@@ -1768,7 +1816,6 @@
       const overviewSiteToggle = document.getElementById("overviewSiteToggle");
       const overviewSiteLabel = document.getElementById("overviewSiteLabel");
       const overviewSitePanel = document.getElementById("overviewSitePanel");
-      const overviewReloadBtn = document.getElementById("overviewReloadBtn");
       const overviewSummary = document.getElementById("overviewSummary");
       const overviewBody = document.getElementById("overviewBody");
       const detailsModal = document.getElementById("detailsModal");
@@ -3271,22 +3318,32 @@
           return;
         }
 
-        const ym = overviewYearMonth();
         filtered.forEach((row) => {
           const tr = document.createElement("tr");
           const userLabel = queueUserLabel(row);
-          const monthLabel = `${String(ym.month).padStart(2, "0")}/${ym.year}`;
           const detailAction = row.plan_id
             ? `<button class="btn-small" data-overview-plan-id="${row.plan_id}">Dettaglio</button>`
-            : "-";
+            : "";
+          const autoEnabled = Boolean(row.auto_approve);
+          const autoCell = `
+            <label style="display:inline-flex;align-items:center;justify-content:center;width:100%">
+              <input
+                type="checkbox"
+                data-overview-auto-checkbox="${row.user_id}"
+                data-overview-auto-value="${autoEnabled ? "1" : "0"}"
+                ${autoEnabled ? "checked" : ""}
+              />
+            </label>
+          `;
+          const actionsCell = detailAction ? `<div class="review-actions">${detailAction}</div>` : "-";
           tr.innerHTML = `
             <td>${userLabel}</td>
             <td>${row.department || "-"}</td>
-            <td>${monthLabel}</td>
             <td><span class="status ${statusClassForOverview(row.status)}">${labelOverviewStatus(row.status)}</span></td>
-            <td>${row.on_site_days ?? 0}</td>
-            <td>${row.remote_days ?? 0}</td>
-            <td>${detailAction}</td>
+            <td class="overview-short-cell">${row.on_site_days ?? 0}</td>
+            <td class="overview-short-cell">${row.remote_days ?? 0}</td>
+            <td class="overview-short-cell">${autoCell}</td>
+            <td class="overview-short-cell">${actionsCell}</td>
           `;
           overviewBody.appendChild(tr);
         });
@@ -3998,14 +4055,6 @@
         }
       });
 
-      overviewReloadBtn?.addEventListener("click", async () => {
-        try {
-          await loadOverviewDashboard();
-        } catch (err) {
-          setReviewFeedback(err.message, "error");
-        }
-      });
-
       overviewYearInput?.addEventListener("change", async () => {
         try {
           await loadOverviewDashboard();
@@ -4058,6 +4107,46 @@
       });
 
       overviewBody?.addEventListener("click", async (event) => {
+        const autoCheckbox = event.target.closest("input[data-overview-auto-checkbox]");
+        if (autoCheckbox) {
+          const userId = autoCheckbox.dataset.overviewAutoCheckbox;
+          if (!userId) return;
+          const current = autoCheckbox.dataset.overviewAutoValue === "1";
+          const nextValue = Boolean(autoCheckbox.checked);
+          const userRow = overviewRows.find((row) => String(row.user_id) === String(userId));
+          const userLabel = userRow ? queueUserLabel(userRow) : "utente";
+          const result = await askActionDialog({
+            title: "Conferma aggiornamento",
+            message: `Impostare auto-approvazione a ${nextValue ? "Si" : "No"} per ${userLabel}?`,
+            confirmLabel: "Conferma",
+          });
+          if (!result.confirmed) {
+            autoCheckbox.checked = current;
+            return;
+          }
+          try {
+            const payload = await api(`/admin/users/${userId}/auto-approve/`, {
+              method: "POST",
+              body: JSON.stringify({ auto_approve: nextValue }),
+            });
+            const updatedValue = Boolean(payload?.auto_approve);
+            if (userRow) {
+              userRow.auto_approve = updatedValue;
+            }
+            autoCheckbox.dataset.overviewAutoValue = updatedValue ? "1" : "0";
+            autoCheckbox.checked = updatedValue;
+            renderOverviewRows();
+            setFeedback(
+              `Auto-approvazione aggiornata (${updatedValue ? "Si" : "No"}) per ${userLabel}.`,
+              "ok"
+            );
+          } catch (err) {
+            autoCheckbox.checked = current;
+            setFeedback(err.message, "error");
+          }
+          return;
+        }
+
         const button = event.target.closest("button[data-overview-plan-id]");
         if (!button) return;
         const planId = button.dataset.overviewPlanId;

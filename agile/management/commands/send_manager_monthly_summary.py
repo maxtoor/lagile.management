@@ -18,7 +18,7 @@ class _SafeDict(dict):
 class Command(BaseCommand):
     help = (
         'Primo giorno del mese: invia ai referenti un riepilogo con piani in attesa '
-        'e utenti assegnati senza piano del mese corrente.'
+        'e utenti assegnati senza piano del mese corrente, includendo anche approvati e auto-approvazione.'
     )
 
     def add_arguments(self, parser):
@@ -92,7 +92,6 @@ class Command(BaseCommand):
             manager__isnull=False,
             is_active=True,
             aila_subscribed=True,
-            auto_approve=False,
         ).select_related('manager')
 
         manager_to_users: dict[int, list[User]] = {}
@@ -132,9 +131,11 @@ class Command(BaseCommand):
             plan_by_user = {p.user_id: p for p in plans}
 
             pending = [p for p in plans if p.status == MonthlyPlan.Status.SUBMITTED]
+            approved = [p for p in plans if p.status == MonthlyPlan.Status.APPROVED]
             missing = [u for u in users if u.id not in plan_by_user]
+            auto_approve_users = [u for u in users if bool(u.auto_approve)]
 
-            if not pending and not missing:
+            if not pending and not missing and not approved and not auto_approve_users:
                 skipped += 1
                 continue
 
@@ -152,6 +153,20 @@ class Command(BaseCommand):
                     for u in missing
                 ]
             ) or '- Nessuno'
+            approved_lines = '\n'.join(
+                [
+                    f"- {((p.user.first_name or '').strip() + ' ' + (p.user.last_name or '').strip()).strip() or p.user.username} "
+                    f"({p.user.username})"
+                    for p in approved
+                ]
+            ) or '- Nessuno'
+            auto_approve_lines = '\n'.join(
+                [
+                    f"- {((u.first_name or '').strip() + ' ' + (u.last_name or '').strip()).strip() or u.username} "
+                    f"({u.username})"
+                    for u in auto_approve_users
+                ]
+            ) or '- Nessuno'
 
             manager_name = f'{(manager.first_name or "").strip()} {(manager.last_name or "").strip()}'.strip() or manager.username
             default_subject = f'Riepilogo richieste e piani - {month_name_year}'
@@ -160,8 +175,12 @@ class Command(BaseCommand):
                 'Riepilogo per {month_name_year}.\n\n'
                 'Piani in attesa di approvazione ({pending_count}):\n'
                 '{pending_lines}\n\n'
+                'Piani approvati ({approved_count}):\n'
+                '{approved_lines}\n\n'
                 'Utenti senza piano del mese ({missing_count}):\n'
                 '{missing_lines}\n\n'
+                'Utenti in auto-approvazione ({auto_approve_count}):\n'
+                '{auto_approve_lines}\n\n'
                 'Puoi accedere al portale per gestire le richieste.'
             )
             subject, body = self._render_from_template(
@@ -173,9 +192,13 @@ class Command(BaseCommand):
                     'month_label': month_label,
                     'month_name_year': month_name_year,
                     'pending_count': len(pending),
+                    'approved_count': len(approved),
                     'missing_count': len(missing),
+                    'auto_approve_count': len(auto_approve_users),
                     'pending_lines': pending_lines,
+                    'approved_lines': approved_lines,
                     'missing_lines': missing_lines,
+                    'auto_approve_lines': auto_approve_lines,
                 },
             )
 
@@ -202,7 +225,9 @@ class Command(BaseCommand):
                         'month': target_month,
                         'email': manager_email,
                         'pending_count': len(pending),
+                        'approved_count': len(approved),
                         'missing_count': len(missing),
+                        'auto_approve_count': len(auto_approve_users),
                     },
                 )
                 sent += 1

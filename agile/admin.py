@@ -46,6 +46,13 @@ class ManagerChoiceField(forms.ModelChoiceField):
 
 
 class CustomUserAdminForm(UserChangeForm):
+    user_approved = forms.ChoiceField(
+        label='Utente approvato',
+        choices=(('1', 'Sì'), ('0', 'No')),
+        widget=forms.Select,
+        initial='1',
+        required=True,
+    )
     aila_subscribed = forms.ChoiceField(
         label='Sottoscrizione AILA',
         choices=(('0', 'No'), ('1', 'Sì')),
@@ -73,6 +80,11 @@ class CustomUserAdminForm(UserChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.is_bound and getattr(self.instance, 'pk', None):
+            if 'user_approved' in self.fields:
+                current = not bool(getattr(self.instance, 'onboarding_pending', False))
+                value = '1' if current else '0'
+                self.fields['user_approved'].initial = value
+                self.initial['user_approved'] = value
             if 'aila_subscribed' in self.fields:
                 current = bool(getattr(self.instance, 'aila_subscribed', False))
                 value = '1' if current else '0'
@@ -96,6 +108,16 @@ class CustomUserAdminForm(UserChangeForm):
         value = str(self.cleaned_data.get('auto_approve', '0')).strip()
         return value == '1'
 
+    def clean_user_approved(self):
+        value = str(self.cleaned_data.get('user_approved', '1')).strip()
+        return value == '1'
+
+    def clean(self):
+        cleaned = super().clean()
+        if 'user_approved' in cleaned:
+            cleaned['onboarding_pending'] = not bool(cleaned['user_approved'])
+        return cleaned
+
 
 @admin.register(User)
 class CustomUserAdmin(CollapseMediaMixin, UserAdmin):
@@ -113,7 +135,7 @@ class CustomUserAdmin(CollapseMediaMixin, UserAdmin):
             'Impostazioni applicazione',
             {
                 'classes': ('collapse',),
-                'fields': ('department', 'role', 'aila_subscribed', 'onboarding_pending', 'auto_approve', 'manager'),
+                'fields': ('user_approved', 'department', 'role', 'aila_subscribed', 'auto_approve', 'manager'),
             },
         ),
         (
