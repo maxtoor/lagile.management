@@ -1226,6 +1226,17 @@
         padding: 16px;
       }
 
+      .login-focus-sentinel {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: 0;
+        border: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+
       .login-box {
         width: min(420px, 100%);
         background: var(--panel);
@@ -1756,6 +1767,7 @@
     </div>
 
     <div id="loginOverlay" class="login-overlay hidden">
+      <div id="loginFocusSentinel" class="login-focus-sentinel" tabindex="-1" aria-hidden="true"></div>
       <div class="login-box" id="loginBox" tabindex="-1">
         {% if login_logo_url %}
         <div class="login-brand">
@@ -1813,6 +1825,7 @@
       const NO_AILA_WARN_PREF_PREFIX = "agile_no_aila_warn_hidden_v1";
       const LOGIN_WELCOME_PREF_KEY = "agile_login_welcome_hidden_v1";
       const LOGIN_WELCOME_SESSION_KEY = "agile_login_welcome_seen_session_v1";
+      const HELP_GUIDE_SESSION_PREFIX = "agile_help_guide_seen_session_v1";
       const APP_PAGE = document.body.dataset.appPage || "programming";
       const DATE_DISPLAY_FORMAT = (document.body.dataset.dateDisplayFormat || "IT").toUpperCase();
 
@@ -1894,6 +1907,7 @@
       const approverBody = document.getElementById("approverBody");
       const changeReqBody = document.getElementById("changeReqBody");
       const reviewFeedback = document.getElementById("reviewFeedback");
+      const loginFocusSentinel = document.getElementById("loginFocusSentinel");
       const overviewYearInput = document.getElementById("overviewYearInput");
       const overviewMonthDropdown = document.getElementById("overviewMonthDropdown");
       const overviewMonthToggle = document.getElementById("overviewMonthToggle");
@@ -2124,6 +2138,12 @@
         return `${HELP_GUIDE_PREF_PREFIX}:${userId}`;
       }
 
+      function helpGuideSessionKey() {
+        const userId = currentUser?.id;
+        if (!userId) return null;
+        return `${HELP_GUIDE_SESSION_PREFIX}:${userId}`;
+      }
+
       function noAilaWarnPrefKey() {
         const userId = currentUser?.id;
         if (!userId) return null;
@@ -2162,6 +2182,12 @@
         localStorage.removeItem(key);
       }
 
+      function hasHelpGuideBeenShownThisSession() {
+        const key = helpGuideSessionKey();
+        if (!key) return false;
+        return sessionStorage.getItem(key) === "1";
+      }
+
       function isLoginWelcomeSuppressed() {
         return localStorage.getItem(LOGIN_WELCOME_PREF_KEY) === "1";
       }
@@ -2174,6 +2200,8 @@
         setHelpGuideSuppressed(false);
         setNoAilaWarningSuppressed(false);
         localStorage.removeItem(LOGIN_WELCOME_PREF_KEY);
+        const helpGuideSession = helpGuideSessionKey();
+        if (helpGuideSession) sessionStorage.removeItem(helpGuideSession);
         sessionStorage.removeItem(LOGIN_WELCOME_SESSION_KEY);
       }
 
@@ -2203,7 +2231,7 @@
         const usernameInput = document.getElementById("username");
         const passwordInput = document.getElementById("password");
         const loginForm = document.getElementById("loginForm");
-        if (!usernameInput || !loginBox) return;
+        if (!usernameInput) return;
         usernameInput.readOnly = true;
         if (passwordInput) passwordInput.readOnly = true;
         if (loginForm) loginForm.reset();
@@ -2212,7 +2240,12 @@
             usernameInput.setSelectionRange(usernameInput.value.length, usernameInput.value.length);
           } catch (e) {}
         }
-        loginBox.focus({ preventScroll: true });
+        if (document.activeElement && typeof document.activeElement.blur === "function") {
+          document.activeElement.blur();
+        }
+        if (loginFocusSentinel) {
+          loginFocusSentinel.focus({ preventScroll: true });
+        }
         setTimeout(() => {
           usernameInput.readOnly = false;
           if (passwordInput) passwordInput.readOnly = false;
@@ -2229,7 +2262,10 @@
         if (!helpGuideModal) return;
         if (!force && APP_PAGE !== "programming") return;
         if (!force && isHelpGuideSuppressed()) return;
+        if (!force && hasHelpGuideBeenShownThisSession()) return;
         dontShowHelpGuideCheckbox.checked = isHelpGuideSuppressed();
+        const key = helpGuideSessionKey();
+        if (key) sessionStorage.setItem(key, "1");
         helpGuideModal.classList.remove("hidden");
       }
 
