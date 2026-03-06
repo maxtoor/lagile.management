@@ -1,0 +1,120 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}<link rel="stylesheet" href="{% static "admin/css/login.css" %}">
+{{ block.super }}
+{{ form.media }}
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  body.login #login-form {
+    display: grid;
+    gap: 10px;
+  }
+
+  body.login #login-form .form-row {
+    padding: 0;
+  }
+
+  body.login #login-form .form-row input[type="text"],
+  body.login #login-form .form-row input[type="password"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px !important;
+    min-height: 40px;
+    border-radius: 10px;
+  }
+
+  body.login #login-form .submit-row {
+    padding: 0;
+    margin: 0;
+    text-align: left;
+  }
+
+  body.login #login-form .submit-row input[type="submit"] {
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+
+{% block usertools %}{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block nav-breadcrumbs %}{% endblock %}
+
+{% block content %}
+{% if form.errors and not form.non_field_errors %}
+<p class="errornote">
+{% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+</p>
+{% endif %}
+
+{% if form.non_field_errors %}
+{% for error in form.non_field_errors %}
+<p class="errornote">
+    {{ error }}
+</p>
+{% endfor %}
+{% endif %}
+
+<div id="content-main">
+
+{% if user.is_authenticated %}
+<p class="errornote">
+{% blocktranslate trimmed %}
+    You are authenticated as {{ username }}, but are not authorized to
+    access this page. Would you like to login to a different account?
+{% endblocktranslate %}
+</p>
+{% endif %}
+
+{% if login_logo_url %}
+<div class="admin-login-logo">
+  <img src="{{ login_logo_url }}" alt="Logo istituto">
+</div>
+{% endif %}
+<h2 class="admin-login-title">Login Amministratore</h2>
+<form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+  <div class="form-row">
+    {{ form.username.errors }}
+    {{ form.username }}
+  </div>
+  <div class="form-row">
+    {{ form.password.errors }}
+    {{ form.password }}
+    <input type="hidden" name="next" value="{{ next }}">
+  </div>
+  {% url 'admin_password_reset' as password_reset_url %}
+  {% if password_reset_url %}
+  <div class="password-reset-link">
+    <a href="{{ password_reset_url }}">{% translate 'Forgotten your password or username?' %}</a>
+  </div>
+  {% endif %}
+  <div class="submit-row">
+    <input type="submit" value="{% translate 'Log in' %}">
+  </div>
+</form>
+
+</div>
+<script>
+  (function () {
+    var usernameInput = document.getElementById("id_username");
+    var passwordInput = document.getElementById("id_password");
+    if (usernameInput) usernameInput.setAttribute("placeholder", "Nome utente");
+    if (passwordInput) passwordInput.setAttribute("placeholder", "Password");
+  })();
+</script>
+{% endblock %}

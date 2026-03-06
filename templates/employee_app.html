@@ -1675,16 +1675,16 @@
     </div>
 
     <div id="loginOverlay" class="login-overlay hidden">
-      <div class="login-box">
+      <div class="login-box" id="loginBox" tabindex="-1">
         {% if login_logo_url %}
         <div class="login-brand">
           <img src="{{ login_logo_url }}" alt="Logo istituto" />
         </div>
         {% endif %}
         <h2>Login</h2>
-        <form id="loginForm">
-          <input id="username" type="text" placeholder="Username" required />
-          <input id="password" type="password" placeholder="Password" required />
+        <form id="loginForm" autocomplete="off">
+          <input id="username" type="text" placeholder="Nome utente" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" required />
+          <input id="password" type="password" placeholder="Password" autocomplete="off" required />
           <button class="primary" type="submit">Accedi</button>
         </form>
         <div id="loginError" class="msg error"></div>
@@ -1747,6 +1747,7 @@
       const statusSecondaryChip = document.getElementById("statusSecondaryChip");
       const feedback = document.getElementById("feedback");
       const loginOverlay = document.getElementById("loginOverlay");
+      const loginBox = document.getElementById("loginBox");
       const loginError = document.getElementById("loginError");
       const loginWelcomeModal = document.getElementById("loginWelcomeModal");
       const closeLoginWelcomeBtn = document.getElementById("closeLoginWelcomeBtn");
@@ -2094,6 +2095,32 @@
         if (isLoginWelcomeSuppressed()) return;
         openLoginWelcomeModal();
       }
+
+      function defocusLoginUsername() {
+        const usernameInput = document.getElementById("username");
+        const passwordInput = document.getElementById("password");
+        const loginForm = document.getElementById("loginForm");
+        if (!usernameInput || !loginBox) return;
+        usernameInput.readOnly = true;
+        if (passwordInput) passwordInput.readOnly = true;
+        if (loginForm) loginForm.reset();
+        if (document.activeElement === usernameInput) {
+          try {
+            usernameInput.setSelectionRange(usernameInput.value.length, usernameInput.value.length);
+          } catch (e) {}
+        }
+        loginBox.focus({ preventScroll: true });
+        setTimeout(() => {
+          usernameInput.readOnly = false;
+          if (passwordInput) passwordInput.readOnly = false;
+        }, 150);
+      }
+
+      window.addEventListener("pageshow", () => {
+        requestAnimationFrame(defocusLoginUsername);
+        setTimeout(defocusLoginUsername, 0);
+        setTimeout(defocusLoginUsername, 120);
+      });
 
       function openHelpGuideModal({ force = false } = {}) {
         if (!helpGuideModal) return;
@@ -3171,8 +3198,9 @@
         const days = [...(plan.days || [])].sort((a, b) => a.day.localeCompare(b.day));
         const remote = days.filter((d) => d.work_type === "REMOTE").length;
         const onSite = days.filter((d) => d.work_type === "ON_SITE").length;
+        const planUserLabel = `${plan.user?.first_name || ""} ${plan.user?.last_name || ""}`.trim() || plan.user?.username || "-";
 
-        detailsTitle.textContent = `Dettaglio ${plan.user?.username || "-"} - ${String(plan.month).padStart(2, "0")}/${plan.year}`;
+        detailsTitle.textContent = `Dettaglio ${planUserLabel} - ${String(plan.month).padStart(2, "0")}/${plan.year}`;
         detailsSummary.textContent = `In sede: ${onSite} | In lavoro agile: ${remote}`;
         const monthDate = new Date(Number(plan.year), Number(plan.month) - 1, 1);
         const monthLabel = monthDate.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
@@ -3746,6 +3774,7 @@
               localStorage.removeItem(USER_KEY);
             }
             loginOverlay.classList.remove("hidden");
+            defocusLoginUsername();
             maybeShowLoginWelcomeModal();
             renderCalendar({});
             return;
@@ -3764,6 +3793,7 @@
           return;
         }
         loginOverlay.classList.remove("hidden");
+        defocusLoginUsername();
         maybeShowLoginWelcomeModal();
         renderCalendar({});
       }

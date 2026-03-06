@@ -956,6 +956,15 @@ def _extend_admin_urls(get_urls):
     return wrapped_urls
 
 
+def _extend_admin_each_context(each_context):
+    def wrapped_each_context(request):
+        context = each_context(request)
+        context['login_logo_url'] = (get_runtime_setting('AGILE_LOGIN_LOGO_URL', '') or '').strip()
+        return context
+
+    return wrapped_each_context
+
+
 if not getattr(admin.site, '_agile_import_tools_patched', False):
     try:
         admin.site.unregister(Group)
@@ -963,6 +972,10 @@ if not getattr(admin.site, '_agile_import_tools_patched', False):
         pass
     admin.site.get_urls = _extend_admin_urls(admin.site.get_urls)
     admin.site._agile_import_tools_patched = True
+
+if not getattr(admin.site, '_agile_each_context_patched', False):
+    admin.site.each_context = _extend_admin_each_context(admin.site.each_context)
+    admin.site._agile_each_context_patched = True
 
 
 class PlanDayInline(admin.TabularInline):

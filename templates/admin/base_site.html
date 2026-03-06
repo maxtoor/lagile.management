@@ -7,7 +7,10 @@
 
 {% block branding %}
 <div id="site-name">
-  <a class="site-title" href="{% url 'admin:index' %}">{{ site_header|default:_("Pagina di Amministrazione") }}</a>
+  <a class="site-title" href="{% url 'admin:index' %}">
+    <span class="site-title-main">Portale Lavoro Agile</span>
+    <span class="site-title-small">(LAgile.management)</span>
+  </a>
 </div>
 {% endblock %}
 
@@ -34,6 +37,18 @@
 
 {% block extrahead %}
   {{ block.super }}
+  <style>
+    body.login #header {
+      justify-content: flex-start !important;
+    }
+
+    body.login #header h1,
+    body.login #header #site-name,
+    body.login #header #site-name a {
+      text-align: left !important;
+      justify-content: flex-start !important;
+    }
+  </style>
   <script>
     (function () {
       try {
