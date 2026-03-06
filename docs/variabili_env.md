@@ -57,6 +57,7 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 | `EMAIL_USE_SSL` | No | `0` | `1` abilita SSL SMTP. |
 | `DEFAULT_FROM_EMAIL` | No | `noreply@istituto.local` | Mittente email. |
 | `AGILE_EMAIL_FROM_NAME` | No | vuoto | Nome mittente (formato `Nome <email>`). |
+| `AGILE_EMAIL_REDIRECT_TO` | No | vuoto | Se valorizzata, tutte le email in uscita vengono reindirizzate a questa casella (o lista CSV) invece che ai destinatari reali. Utile in sviluppo/test. |
 
 ## Logging e monitor admin
 

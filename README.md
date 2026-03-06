@@ -414,10 +414,12 @@ EMAIL_USE_TLS=1
 EMAIL_USE_SSL=0
 DEFAULT_FROM_EMAIL=noreply@example.org
 AGILE_EMAIL_FROM_NAME=Lagile.management
+AGILE_EMAIL_REDIRECT_TO=dev-mailbox@example.org
 ```
 
 Nota: in assenza di configurazione SMTP resta il backend console (`EMAIL_BACKEND` di default), utile in sviluppo.
 Se `AGILE_EMAIL_FROM_NAME` e valorizzato, il mittente viene inviato nel formato `Nome <indirizzo>`.
+Se `AGILE_EMAIL_REDIRECT_TO` e valorizzato, tutte le email in uscita vengono inviate solo a quella casella invece che ai destinatari reali: utile per sviluppo e collaudo.
 
 Template email modificabili dalla Pagina di Amministrazione:
 - sezione: `Template email di sistema`

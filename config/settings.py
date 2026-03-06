@@ -115,6 +115,10 @@ REST_FRAMEWORK = {
 }
 
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+AGILE_EMAIL_REDIRECT_TO = csv_env('AGILE_EMAIL_REDIRECT_TO', '')
+AGILE_EMAIL_REAL_BACKEND = EMAIL_BACKEND
+if AGILE_EMAIL_REDIRECT_TO:
+    EMAIL_BACKEND = 'agile.email_backend.RedirectEmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '25'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
