@@ -25,6 +25,7 @@ from .serializers import (
     ChangeRequestReviewSerializer,
     ChangeRequestSerializer,
     LoginSerializer,
+    MeEmailSerializer,
     MonthlyPlanSerializer,
     UserSerializer,
 )
@@ -241,6 +242,23 @@ class LoginView(APIView):
 
 class MeView(APIView):
     def get(self, request):
+        return Response(UserSerializer(request.user).data)
+
+    def patch(self, request):
+        previous_email = (request.user.email or '').strip()
+        serializer = MeEmailSerializer(instance=request.user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        AuditLog.track(
+            actor=request.user,
+            action='user_email_updated',
+            target_type='User',
+            target_id=request.user.id,
+            metadata={
+                'previous_email': previous_email,
+                'email': request.user.email,
+            },
+        )
         return Response(UserSerializer(request.user).data)
 
 

@@ -155,6 +155,22 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
+class MeEmailSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True, allow_blank=False)
+
+    class Meta:
+        model = User
+        fields = ('email',)
+
+    def validate_email(self, value):
+        email = (value or '').strip().lower()
+        if not email:
+            raise serializers.ValidationError('Inserire un indirizzo email valido')
+        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise serializers.ValidationError('Email gia in uso')
+        return email
+
+
 class PlanDaySerializer(serializers.ModelSerializer):
     class Meta:
         model = PlanDay

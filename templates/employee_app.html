@@ -58,6 +58,10 @@
         padding-top: calc(12px + var(--top-strip-height));
       }
 
+      body[data-app-page="profile"] .wrap {
+        padding-top: calc(12px + var(--top-strip-height));
+      }
+
       .subtitle {
         margin: 4px 0 0;
         color: var(--muted);
@@ -948,6 +952,52 @@
         font-weight: 600;
       }
 
+      .profile-page-card {
+        width: 100%;
+      }
+
+      .profile-page-header {
+        margin-bottom: 16px;
+      }
+
+      .profile-page-header h3 {
+        margin: 0 0 4px 0;
+      }
+
+      .profile-page-form {
+        display: grid;
+        gap: 14px;
+      }
+
+      .profile-page-row {
+        display: grid;
+        gap: 6px;
+      }
+
+      .profile-page-row label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--muted);
+      }
+
+      .profile-page-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .profile-page-tools {
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
       .btn-small {
         padding: 6px 10px;
         border-radius: 8px;
@@ -1239,6 +1289,7 @@
         </button>
         <div id="mainMenuPanel" class="main-menu-panel hidden">
           <button id="menuProgramming" type="button" class="main-menu-item" data-target="/">Programmazione</button>
+          <button id="menuProfile" type="button" class="main-menu-item" data-target="/profilo/">Profilo</button>
           <button id="menuOverview" type="button" class="main-menu-item" data-target="/admin/overview/">Quadro generale</button>
           <button id="menuApprovals" type="button" class="main-menu-item" data-target="/admin/approvals/">Richieste approvazione</button>
           <button id="menuChanges" type="button" class="main-menu-item" data-target="/admin/change-requests/">Richieste variazioni</button>
@@ -1264,6 +1315,39 @@
         </div>
       </section>
       <div class="grid">
+        <section id="profilePageCard" class="card profile-page-card hidden">
+          <div class="profile-page-header">
+            <h3>Profilo</h3>
+            <p class="subtitle" style="margin:0">Puoi aggiornare solo l'indirizzo email.</p>
+          </div>
+          <form id="profileEmailForm" class="profile-page-form">
+            <div class="profile-page-row">
+              <label for="profileFirstNameInput">Nome</label>
+              <input id="profileFirstNameInput" type="text" readonly disabled />
+            </div>
+            <div class="profile-page-row">
+              <label for="profileLastNameInput">Cognome</label>
+              <input id="profileLastNameInput" type="text" readonly disabled />
+            </div>
+            <div class="profile-page-row">
+              <label for="profileEmailInput">Indirizzo email</label>
+              <input
+                id="profileEmailInput"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                placeholder="nome.cognome@dominio.it"
+              />
+            </div>
+            <div class="profile-page-actions">
+              <button id="saveProfileEmailBtn" type="submit" class="btn-small">Salva email</button>
+            </div>
+            <div class="profile-page-tools">
+              <button id="resetProfileWarningsBtn" type="button" class="btn-small">Ripristina tutti gli avvisi</button>
+              <span class="subtitle">Riattiva gli avvisi di sistema che erano stati disattivati.</span>
+            </div>
+          </form>
+        </section>
         <section id="calendarCard" class="card">
           <section id="planningControls" class="fixed-month-bar hidden">
             <div class="toolbar profile-planning-toolbar">
@@ -1715,6 +1799,7 @@
       const HELP_GUIDE_PREF_PREFIX = "agile_help_guide_hidden_v1";
       const NO_AILA_WARN_PREF_PREFIX = "agile_no_aila_warn_hidden_v1";
       const LOGIN_WELCOME_PREF_KEY = "agile_login_welcome_hidden_v1";
+      const LOGIN_WELCOME_SESSION_KEY = "agile_login_welcome_seen_session_v1";
       const APP_PAGE = document.body.dataset.appPage || "programming";
       const DATE_DISPLAY_FORMAT = (document.body.dataset.dateDisplayFormat || "IT").toUpperCase();
 
@@ -1752,6 +1837,7 @@
       const mainMenuToggle = document.getElementById("mainMenuToggle");
       const mainMenuPanel = document.getElementById("mainMenuPanel");
       const mainMenuLabel = document.getElementById("mainMenuLabel");
+      const menuProfile = document.getElementById("menuProfile");
       const menuProgramming = document.getElementById("menuProgramming");
       const menuOverview = document.getElementById("menuOverview");
       const menuApprovals = document.getElementById("menuApprovals");
@@ -1761,6 +1847,13 @@
       const profileName = document.getElementById("profileName");
       const profileSite = document.getElementById("profileSite");
       const profileManager = document.getElementById("profileManager");
+      const profileEmailForm = document.getElementById("profileEmailForm");
+      const profilePageCard = document.getElementById("profilePageCard");
+      const profileFirstNameInput = document.getElementById("profileFirstNameInput");
+      const profileLastNameInput = document.getElementById("profileLastNameInput");
+      const profileEmailInput = document.getElementById("profileEmailInput");
+      const saveProfileEmailBtn = document.getElementById("saveProfileEmailBtn");
+      const resetProfileWarningsBtn = document.getElementById("resetProfileWarningsBtn");
       const planningControls = document.getElementById("planningControls");
       const toggleLegendBtn = document.getElementById("toggleLegendBtn");
       const calendarLegend = document.getElementById("calendarLegend");
@@ -2060,9 +2153,21 @@
         return localStorage.getItem(LOGIN_WELCOME_PREF_KEY) === "1";
       }
 
+      function hasLoginWelcomeBeenShownThisSession() {
+        return sessionStorage.getItem(LOGIN_WELCOME_SESSION_KEY) === "1";
+      }
+
+      function resetSuppressedNotices() {
+        setHelpGuideSuppressed(false);
+        setNoAilaWarningSuppressed(false);
+        localStorage.removeItem(LOGIN_WELCOME_PREF_KEY);
+        sessionStorage.removeItem(LOGIN_WELCOME_SESSION_KEY);
+      }
+
       function openLoginWelcomeModal() {
         if (!loginWelcomeModal) return;
         if (hideLoginWelcomeCheckbox) hideLoginWelcomeCheckbox.checked = false;
+        sessionStorage.setItem(LOGIN_WELCOME_SESSION_KEY, "1");
         loginWelcomeModal.classList.remove("hidden");
       }
 
@@ -2077,6 +2182,7 @@
       function maybeShowLoginWelcomeModal() {
         if (!loginOverlay || loginOverlay.classList.contains("hidden")) return;
         if (isLoginWelcomeSuppressed()) return;
+        if (hasLoginWelcomeBeenShownThisSession()) return;
         openLoginWelcomeModal();
       }
 
@@ -2420,6 +2526,9 @@
           profileName.textContent = "-";
           profileSite.textContent = "-";
           profileManager.textContent = "-";
+          if (profileFirstNameInput) profileFirstNameInput.value = "";
+          if (profileLastNameInput) profileLastNameInput.value = "";
+          if (profileEmailInput) profileEmailInput.value = "";
           return;
         }
         const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "-";
@@ -2428,27 +2537,47 @@
         profileName.textContent = fullName;
         profileSite.textContent = site;
         profileManager.textContent = managerName;
-        document.body.classList.add("has-fixed-profile");
-        userProfileCard.classList.remove("hidden");
+        if (profileFirstNameInput) {
+          profileFirstNameInput.value = (user.first_name || "").trim();
+        }
+        if (profileLastNameInput) {
+          profileLastNameInput.value = (user.last_name || "").trim();
+        }
+        if (profileEmailInput) {
+          profileEmailInput.value = (user.email || "").trim();
+        }
+        const showStickyProfile = APP_PAGE !== "profile";
+        document.body.classList.toggle("has-fixed-profile", showStickyProfile);
+        userProfileCard.classList.toggle("hidden", !showStickyProfile);
       }
 
       function applyMainPageMode() {
+        const isProfilePage = APP_PAGE === "profile";
         const isProgramming = APP_PAGE === "programming";
         const isOverviewPage = APP_PAGE === "overview";
         const isApprovalsPage = APP_PAGE === "approvals";
         const isChangesPage = APP_PAGE === "changes";
         if (mainMenuLabel) {
-          mainMenuLabel.textContent = isOverviewPage
-            ? "Quadro generale"
-            : isApprovalsPage
-              ? "Richieste approvazione"
-              : isChangesPage
-                ? "Richieste variazioni"
-                : "Programmazione";
+          mainMenuLabel.textContent = isProfilePage
+            ? "Profilo"
+            : isOverviewPage
+              ? "Quadro generale"
+              : isApprovalsPage
+                ? "Richieste approvazione"
+                : isChangesPage
+                  ? "Richieste variazioni"
+                  : "Programmazione";
+        }
+
+        if (currentUser) {
+          const showStickyProfile = !isProfilePage;
+          document.body.classList.toggle("has-fixed-profile", showStickyProfile);
+          userProfileCard.classList.toggle("hidden", !showStickyProfile);
         }
 
         planningControls.classList.toggle("hidden", !isProgramming);
         mainGrid.classList.toggle("programming-grid", isProgramming);
+        profilePageCard.classList.toggle("hidden", !isProfilePage);
         calendarCard.classList.toggle("hidden", !isProgramming);
         actionsCard.classList.toggle("hidden", !isProgramming);
         overviewPanel.classList.toggle("hidden", !isOverviewPage);
@@ -2487,7 +2616,7 @@
         currentDisplayStatus = "EDITING";
         updateSendButtonsLabel();
         renderUserProfile(null);
-        window.location.reload();
+        window.location.href = "/";
       }
 
       function dayLabel(dateIso) {
@@ -2899,7 +3028,12 @@
           data = await res.json();
         } catch (_) {}
         if (!res.ok) {
-          const message = data?.detail || data?.non_field_errors?.[0] || JSON.stringify(data) || "Errore API";
+          const firstFieldError =
+            data && typeof data === "object"
+              ? Object.values(data).find((value) => Array.isArray(value) && value.length)?.[0]
+              : "";
+          const message =
+            data?.detail || data?.non_field_errors?.[0] || firstFieldError || JSON.stringify(data) || "Errore API";
           const error = new Error(message);
           error.status = res.status;
           throw error;
@@ -3408,7 +3542,7 @@
           selectedChangeRequestIds.clear();
           return;
         }
-        if (APP_PAGE === "programming") {
+        if (APP_PAGE === "programming" || APP_PAGE === "profile") {
           approverCard.classList.add("hidden");
           selectedApproverPlanIds.clear();
           selectedChangeRequestIds.clear();
@@ -3828,6 +3962,39 @@
           loginError.textContent = err.message;
           loginError.style.display = "none";
         }
+      });
+
+      profileEmailForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!currentUser || !profileEmailInput || !saveProfileEmailBtn) return;
+        const email = (profileEmailInput.value || "").trim();
+        if (!email) {
+          showTopPopup("Inserire un indirizzo email valido", "error");
+          profileEmailInput.focus();
+          return;
+        }
+        const previousLabel = saveProfileEmailBtn.textContent;
+        saveProfileEmailBtn.disabled = true;
+        saveProfileEmailBtn.textContent = "Salvataggio...";
+        try {
+          currentUser = await api("/auth/me/", {
+            method: "PATCH",
+            body: JSON.stringify({ email }),
+          });
+          localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+          renderUserProfile(currentUser);
+          showTopPopup("Email aggiornata", "ok");
+        } catch (err) {
+          showTopPopup(err.message || "Errore nel salvataggio email", "error");
+        } finally {
+          saveProfileEmailBtn.disabled = false;
+          saveProfileEmailBtn.textContent = previousLabel;
+        }
+      });
+
+      resetProfileWarningsBtn?.addEventListener("click", () => {
+        resetSuppressedNotices();
+        showTopPopup("Avvisi ripristinati", "ok");
       });
 
       monthToggle.addEventListener("click", () => {
@@ -4470,7 +4637,7 @@
         toggleLegendBtn.setAttribute("aria-expanded", showLegend ? "true" : "false");
       });
 
-      [menuProgramming, menuOverview, menuApprovals, menuChanges, menuLogout].forEach((item) => {
+      [menuProfile, menuProgramming, menuOverview, menuApprovals, menuChanges, menuLogout].forEach((item) => {
         if (!item) return;
         item.addEventListener("click", () => {
           navigateFromMenu(item.dataset.target || "");

@@ -19,6 +19,10 @@ class EmployeeAppView(BasePortalView):
     app_page = 'programming'
 
 
+class ProfilePageView(BasePortalView):
+    app_page = 'profile'
+
+
 class AdminApprovalsView(BasePortalView):
     app_page = 'approvals'
 
