@@ -669,8 +669,16 @@
 
       .review-actions {
         display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+      }
+
+      .review-actions .btn-small {
+        width: 96px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .review-batch-bar {
@@ -1068,33 +1076,38 @@
         color: var(--ink);
       }
 
+      .details-modal-box {
+        width: min(1026px, 100%);
+        max-height: calc(100vh - 32px);
+      }
+
       .details-calendar {
         display: grid;
-        grid-template-columns: repeat(7, minmax(82px, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: clamp(4px, 0.6vw, 8px);
       }
 
       .details-weekday {
-        padding: 5px 6px;
+        padding: 4px 5px;
         border: 1px solid var(--line);
         border-radius: 8px;
         background: #eef4f1;
         color: var(--muted);
-        font-size: 0.72rem;
+        font-size: clamp(0.64rem, 0.8vw, 0.72rem);
         font-weight: 600;
         text-align: center;
         text-transform: uppercase;
       }
 
       .details-day {
-        min-height: 74px;
+        min-height: clamp(58px, 8.2vh, 74px);
         border: 1px solid var(--line);
         border-radius: 10px;
         background: #fff;
-        padding: 6px;
+        padding: clamp(4px, 0.7vw, 6px);
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: clamp(2px, 0.45vw, 4px);
       }
 
       .details-day.outside {
@@ -1125,22 +1138,22 @@
 
       .details-day-number {
         font-weight: 700;
-        font-size: 0.86rem;
+        font-size: clamp(0.74rem, 0.95vw, 0.86rem);
       }
 
       .details-day-meta {
-        font-size: 0.68rem;
+        font-size: clamp(0.6rem, 0.72vw, 0.68rem);
         color: var(--muted);
         text-transform: capitalize;
       }
 
       .details-day-mode {
-        font-size: 0.72rem;
+        font-size: clamp(0.64rem, 0.82vw, 0.72rem);
         font-weight: 600;
       }
 
       .details-day-status {
-        font-size: 0.7rem;
+        font-size: clamp(0.62rem, 0.78vw, 0.7rem);
         color: var(--muted);
       }
 
@@ -1173,12 +1186,12 @@
         align-items: center;
         justify-content: center;
         align-self: flex-start;
-        padding: 2px 7px;
+        padding: 2px 6px;
         border-radius: 999px;
         border: 1px solid var(--line);
         background: #f6faf8;
         color: var(--ink);
-        font-size: 0.68rem;
+        font-size: clamp(0.58rem, 0.7vw, 0.68rem);
         font-weight: 600;
       }
 
@@ -1587,8 +1600,8 @@
 
     {% include "includes/software_info_modal.html" with modal_id="softwareInfoModal" backdrop_class="modal-backdrop" box_class="modal-box" head_class="modal-head" title_class="modal-title" close_button_id="closeSoftwareInfoBtn" close_button_class="ghost" content_class="software-info-modal-content" %}
 
-    <div id="detailsModal" class="modal-backdrop hidden">
-      <div class="modal-box">
+      <div id="detailsModal" class="modal-backdrop hidden">
+      <div class="modal-box details-modal-box">
         <div class="modal-head">
           <h3 id="detailsTitle" class="modal-title">Dettaglio piano</h3>
           <button id="closeDetailsBtn" class="ghost">Chiudi</button>
@@ -3016,6 +3029,31 @@
           }));
       }
 
+      function remoteDaysMissingActivities() {
+        return Object.keys(dayValues)
+          .sort()
+          .filter((day) => {
+            const value = dayValues[day];
+            if (!value || value.work_type !== "REMOTE") return false;
+            return !String(value.notes || "").trim();
+          });
+      }
+
+      function validateRemoteActivitiesForSend() {
+        const missingDays = remoteDaysMissingActivities();
+        if (!missingDays.length) return true;
+        const preview = missingDays
+          .slice(0, 3)
+          .map((day) => formatIsoDate(day))
+          .join(", ");
+        const suffix = missingDays.length > 3 ? " ..." : "";
+        setFeedback(
+          `Completa la descrizione delle attivita per i giorni in lavoro agile: ${preview}${suffix}`,
+          "error"
+        );
+        return false;
+      }
+
       async function api(path, options = {}) {
         const headers = {
           "Content-Type": "application/json",
@@ -3317,8 +3355,13 @@
         const remote = days.filter((d) => d.work_type === "REMOTE").length;
         const onSite = days.filter((d) => d.work_type === "ON_SITE").length;
         const planUserLabel = `${plan.user?.first_name || ""} ${plan.user?.last_name || ""}`.trim() || plan.user?.username || "-";
+        const titlePrefix = changeRequest
+          ? "Richiesta variazione"
+          : APP_PAGE === "approvals"
+            ? "Richiesta approvazione"
+            : "Dettaglio";
 
-        detailsTitle.textContent = `Dettaglio ${planUserLabel} - ${String(plan.month).padStart(2, "0")}/${plan.year}`;
+        detailsTitle.textContent = `${titlePrefix} ${planUserLabel} - ${String(plan.month).padStart(2, "0")}/${plan.year}`;
         detailsSummary.textContent = `In sede: ${onSite} | In lavoro agile: ${remote}`;
         const monthDate = new Date(Number(plan.year), Number(plan.month) - 1, 1);
         const monthLabel = monthDate.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
@@ -3726,6 +3769,9 @@
         if (!validateRemoteLimitForSend()) {
           return;
         }
+        if (!validateRemoteActivitiesForSend()) {
+          return;
+        }
         const confirmed = await askSubmitConfirmation();
         if (!confirmed) {
           return;
@@ -3811,6 +3857,9 @@
 
       async function requestMonthChange(reasonTextValue) {
         if (!validateRemoteLimitForSend()) {
+          return;
+        }
+        if (!validateRemoteActivitiesForSend()) {
           return;
         }
         const reason = (reasonTextValue || "").trim();
