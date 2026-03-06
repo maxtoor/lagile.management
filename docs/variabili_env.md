@@ -15,6 +15,7 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 | `AGILE_LOGIN_LOGO_URL` | No | vuoto | URL assoluto logo schermata login. |
 | `AGILE_COMPANY_NAME` | No | `LAgile.Management` | Nome compagnia mostrato nel footer. |
 | `AGILE_COPYRIGHT_YEAR` | No | `2026` | Anno mostrato nel footer. |
+| `ICB_LEGACY` | No | `0` | `1` mostra negli Strumenti admin la sezione legacy CSV ICB; `0` la nasconde e blocca le azioni CSV ICB. |
 
 ## Database PostgreSQL
 

@@ -27,6 +27,7 @@ AGILE_LOG_MONITOR_SOURCES = os.getenv(
     f'app:{AGILE_LOG_MONITOR_FILE};scheduler:{BASE_DIR / "logs" / "scheduler.log"}',
 ).strip()
 AGILE_LOG_MONITOR_REFRESH_SECONDS = int(os.getenv('AGILE_LOG_MONITOR_REFRESH_SECONDS', '8'))
+ICB_LEGACY = os.getenv('ICB_LEGACY', '0') == '1'
 
 try:
     Path(AGILE_LOG_FILE).parent.mkdir(parents=True, exist_ok=True)

@@ -632,6 +632,8 @@ def _build_preview_blocks(output_text: str, *, kind: str) -> list[dict]:
 
 
 def import_tools_view(request):
+    icb_legacy_enabled = bool(getattr(settings, 'ICB_LEGACY', False))
+
     if not request.user.is_superuser:
         messages.error(request, 'Accesso consentito solo ai superuser')
         return TemplateResponse(
@@ -644,6 +646,7 @@ def import_tools_view(request):
                 'release_export_form': ExportReleaseAdminForm(),
                 'release_import_form': ImportReleaseAdminForm(),
                 'update_check_form': UpdateCheckAdminForm(),
+                'icb_legacy_enabled': icb_legacy_enabled,
                 'logs': [],
             },
         )
@@ -665,61 +668,66 @@ def import_tools_view(request):
             release_import_form = ImportReleaseAdminForm(prefix='release_import')
             messages.info(request, 'Anteprima e output azzerati')
         elif action in {'csv', 'csv_preview'}:
-            csv_form = ImportCsvAdminForm(request.POST, request.FILES, prefix='csv')
-            if csv_form.is_valid():
-                uploaded = csv_form.cleaned_data['csv_file']
-                out = io.StringIO()
-                err = io.StringIO()
-                tmp_path = None
-                try:
-                    suffix = os.path.splitext(uploaded.name or '')[1] or '.csv'
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
-                        for chunk in uploaded.chunks():
-                            tmp_file.write(chunk)
-                        tmp_path = tmp_file.name
-
-                    kwargs = {
-                        'email_column': (csv_form.cleaned_data.get('email_column') or 'email').strip(),
-                        'lastname_column': (csv_form.cleaned_data.get('lastname_column') or 'lastname').strip(),
-                        'site_column': (csv_form.cleaned_data.get('site_column') or 'department').strip(),
-                        'site_mode': (csv_form.cleaned_data.get('site_mode') or 'last-word').strip(),
-                        'delimiter': (csv_form.cleaned_data.get('delimiter') or ',').strip()[:1] or ',',
-                        'dry_run': bool(csv_form.cleaned_data.get('dry_run')),
-                    }
-                    if action == 'csv_preview':
-                        kwargs['dry_run'] = True
-                    if csv_form.cleaned_data.get('fallback_lastname'):
-                        kwargs['fallback_lastname'] = True
-                    if csv_form.cleaned_data.get('import_groups'):
-                        kwargs['import_groups'] = True
-                    if csv_form.cleaned_data.get('with_ldap_sync'):
-                        kwargs['with_ldap_sync'] = True
-                    call_command('update_user_sites_from_csv_icb', tmp_path, stdout=out, stderr=err, **kwargs)
-                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
-                    logs.append(output or 'Import CSV completato')
-                    if action == 'csv_preview':
-                        preview_blocks = _build_preview_blocks(output, kind='csv')
-                        messages.info(request, 'Anteprima impatti CSV ICB completata (dry-run)')
-                    else:
-                        messages.success(request, 'Import CSV ICB eseguito')
-                except Exception as exc:
-                    output = (out.getvalue() + '\n' + err.getvalue()).strip()
-                    if output:
-                        logs.append(output)
-                    logs.append(str(exc))
-                    messages.error(request, f'Errore import CSV: {exc}')
-                finally:
-                    if tmp_path and os.path.exists(tmp_path):
-                        try:
-                            os.unlink(tmp_path)
-                        except OSError:
-                            pass
+            if not icb_legacy_enabled:
+                messages.error(request, 'Sezione ICB legacy disabilitata. Impostare ICB_LEGACY=1 per abilitarla.')
+                logs.append('Azione bloccata: ICB legacy disabilitata (ICB_LEGACY=0).')
+                csv_form = ImportCsvAdminForm(prefix='csv')
             else:
-                error_text = '; '.join(
-                    [f'{field}: {", ".join(errors)}' for field, errors in csv_form.errors.items()]
-                ) or 'Dati non validi'
-                logs.append(f'Errore validazione CSV: {error_text}')
-                messages.error(request, f'Errore import CSV ICB: {error_text}')
+                csv_form = ImportCsvAdminForm(request.POST, request.FILES, prefix='csv')
+                if csv_form.is_valid():
+                    uploaded = csv_form.cleaned_data['csv_file']
+                    out = io.StringIO()
+                    err = io.StringIO()
+                    tmp_path = None
+                    try:
+                        suffix = os.path.splitext(uploaded.name or '')[1] or '.csv'
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
+                            for chunk in uploaded.chunks():
+                                tmp_file.write(chunk)
+                            tmp_path = tmp_file.name
+
+                        kwargs = {
+                            'email_column': (csv_form.cleaned_data.get('email_column') or 'email').strip(),
+                            'lastname_column': (csv_form.cleaned_data.get('lastname_column') or 'lastname').strip(),
+                            'site_column': (csv_form.cleaned_data.get('site_column') or 'department').strip(),
+                            'site_mode': (csv_form.cleaned_data.get('site_mode') or 'last-word').strip(),
+                            'delimiter': (csv_form.cleaned_data.get('delimiter') or ',').strip()[:1] or ',',
+                            'dry_run': bool(csv_form.cleaned_data.get('dry_run')),
+                        }
+                        if action == 'csv_preview':
+                            kwargs['dry_run'] = True
+                        if csv_form.cleaned_data.get('fallback_lastname'):
+                            kwargs['fallback_lastname'] = True
+                        if csv_form.cleaned_data.get('import_groups'):
+                            kwargs['import_groups'] = True
+                        if csv_form.cleaned_data.get('with_ldap_sync'):
+                            kwargs['with_ldap_sync'] = True
+                        call_command('update_user_sites_from_csv_icb', tmp_path, stdout=out, stderr=err, **kwargs)
+                        output = (out.getvalue() + '\n' + err.getvalue()).strip()
+                        logs.append(output or 'Import CSV completato')
+                        if action == 'csv_preview':
+                            preview_blocks = _build_preview_blocks(output, kind='csv')
+                            messages.info(request, 'Anteprima impatti CSV ICB completata (dry-run)')
+                        else:
+                            messages.success(request, 'Import CSV ICB eseguito')
+                    except Exception as exc:
+                        output = (out.getvalue() + '\n' + err.getvalue()).strip()
+                        if output:
+                            logs.append(output)
+                        logs.append(str(exc))
+                        messages.error(request, f'Errore import CSV: {exc}')
+                    finally:
+                        if tmp_path and os.path.exists(tmp_path):
+                            try:
+                                os.unlink(tmp_path)
+                            except OSError:
+                                pass
+                else:
+                    error_text = '; '.join(
+                        [f'{field}: {", ".join(errors)}' for field, errors in csv_form.errors.items()]
+                    ) or 'Dati non validi'
+                    logs.append(f'Errore validazione CSV: {error_text}')
+                    messages.error(request, f'Errore import CSV ICB: {error_text}')
         elif action == 'release_export':
             release_export_form = ExportReleaseAdminForm(request.POST, prefix='release_export')
             if release_export_form.is_valid():
@@ -848,6 +856,7 @@ def import_tools_view(request):
             'logs': logs,
             'preview_blocks': preview_blocks,
             'is_superuser': request.user.is_superuser,
+            'icb_legacy_enabled': icb_legacy_enabled,
             'opts': User._meta,
         },
     )
