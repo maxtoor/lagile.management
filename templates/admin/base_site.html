@@ -97,27 +97,5 @@
     <span>{{ copyright_year }} © {{ company_name }}</span>
     <a href="#" id="adminSoftwareInfoLink" class="admin-page-footer-link">Informazioni software</a>
   </footer>
-  <div id="adminSoftwareInfoModal" class="admin-modal-backdrop hidden">
-    <div class="admin-modal-box" style="width:min(620px, 100%)">
-      <div class="admin-modal-head">
-        <h3 class="admin-modal-title">Informazioni software</h3>
-        <button id="closeAdminSoftwareInfoBtn" class="admin-modal-ghost" type="button">Chiudi</button>
-      </div>
-      <div class="admin-modal-content">
-        <div><strong>Software:</strong> LAgile.management</div>
-        <div><strong>Versione:</strong> 2.0.0</div>
-        <div><strong>Licenza:</strong> GNU GPLv3</div>
-        <div><strong>Autori:</strong> Emilio Paolo Castelluccio</div>
-        <div>
-          <strong>GitHub:</strong>
-          <a href="https://github.com/maxtoor/lagile.management" target="_blank" rel="noopener noreferrer">github.com/maxtoor/lagile.management</a>
-        </div>
-        <div>
-          <strong>Baltig (CNR):</strong>
-          <a href="https://baltig.cnr.it/emiliopaolo.castelluccio/lagile.management" target="_blank" rel="noopener noreferrer">baltig.cnr.it/emiliopaolo.castelluccio/lagile.management</a>
-        </div>
-        <div><strong>Nota:</strong> Parti del codice sono state sviluppate con supporto Codex.</div>
-      </div>
-    </div>
-  </div>
+  {% include "includes/software_info_modal.html" with modal_id="adminSoftwareInfoModal" backdrop_class="admin-modal-backdrop" box_class="admin-modal-box" head_class="admin-modal-head" title_class="admin-modal-title" close_button_id="closeAdminSoftwareInfoBtn" close_button_class="admin-modal-ghost" content_class="admin-modal-content" %}
 {% endblock %}

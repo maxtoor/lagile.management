@@ -25,7 +25,7 @@ from email.utils import formataddr
 import re
 
 from .models import AppSetting, AgileGroup, AuditLog, ChangeRequest, DepartmentPolicy, Holiday, MonthlyPlan, PlanDay, SystemEmailTemplate, User
-from .runtime_settings import get_runtime_setting
+from .runtime_settings import build_runtime_ui_context, get_runtime_setting
 
 admin.site.site_title = 'LAgile.Management'
 admin.site.site_header = 'LAgile.Management'
@@ -959,9 +959,7 @@ def _extend_admin_urls(get_urls):
 def _extend_admin_each_context(each_context):
     def wrapped_each_context(request):
         context = each_context(request)
-        context['login_logo_url'] = (get_runtime_setting('AGILE_LOGIN_LOGO_URL', '') or '').strip()
-        context['company_name'] = get_runtime_setting('AGILE_COMPANY_NAME', 'LAgile.Management')
-        context['copyright_year'] = get_runtime_setting('AGILE_COPYRIGHT_YEAR', 2026)
+        context.update(build_runtime_ui_context())
         return context
 
     return wrapped_each_context

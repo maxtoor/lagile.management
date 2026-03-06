@@ -42,3 +42,10 @@ def get_runtime_setting(name: str, fallback=None):
         return value
     return getattr(settings, name, fallback)
 
+
+def build_runtime_ui_context() -> dict:
+    return {
+        'login_logo_url': (get_runtime_setting('AGILE_LOGIN_LOGO_URL', '') or '').strip(),
+        'company_name': get_runtime_setting('AGILE_COMPANY_NAME', 'LAgile.Management'),
+        'copyright_year': get_runtime_setting('AGILE_COPYRIGHT_YEAR', 2026),
+    }

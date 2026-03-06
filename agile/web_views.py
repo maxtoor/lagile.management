@@ -1,6 +1,6 @@
 from django.views.generic import TemplateView
 
-from .runtime_settings import get_runtime_setting
+from .runtime_settings import build_runtime_ui_context, get_runtime_setting
 
 
 class BasePortalView(TemplateView):
@@ -9,12 +9,9 @@ class BasePortalView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        login_logo_url = (get_runtime_setting('AGILE_LOGIN_LOGO_URL', '') or '').strip()
         context['app_page'] = self.app_page
         context['date_display_format'] = get_runtime_setting('AGILE_DATE_DISPLAY_FORMAT', 'IT')
-        context['login_logo_url'] = login_logo_url
-        context['company_name'] = get_runtime_setting('AGILE_COMPANY_NAME', 'LAgile.Management')
-        context['copyright_year'] = get_runtime_setting('AGILE_COPYRIGHT_YEAR', 2026)
+        context.update(build_runtime_ui_context())
         return context
 
 
