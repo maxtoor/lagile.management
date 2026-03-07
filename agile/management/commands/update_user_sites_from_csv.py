@@ -390,7 +390,7 @@ class Command(BaseCommand):
                                     manager_promoted = True
                                     self.stdout.write(
                                         self.style.WARNING(
-                                            f'Riga {row_index}: utente referente "{manager_user.username}" promosso a Referente Amministrativo'
+                                            f'Riga {row_index}: utente referente "{manager_user.username}" promosso a Responsabile approvazione'
                                         )
                                     )
                         else:

@@ -70,7 +70,7 @@ class CustomUserAdminForm(UserChangeForm):
     manager = ManagerChoiceField(
         queryset=User.objects.none(),
         required=False,
-        label='Referente amministrativo',
+        label='Responsabile approvazione',
     )
 
     class Meta:

@@ -518,6 +518,22 @@
         white-space: nowrap;
       }
 
+      #approvalsPanel input[type="checkbox"],
+      #changesPanel input[type="checkbox"],
+      #overviewPanel input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        accent-color: #8aa89e;
+        opacity: 0.85;
+        cursor: pointer;
+      }
+
+      #approvalsPanel input[type="checkbox"]:hover,
+      #changesPanel input[type="checkbox"]:hover,
+      #overviewPanel input[type="checkbox"]:hover {
+        opacity: 1;
+      }
+
       .status {
         display: inline-block;
         padding: 4px 10px;
@@ -679,6 +695,59 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+      }
+
+      .review-actions-inline {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .review-actions-inline .btn-small {
+        width: 32px;
+        min-width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 8px;
+      }
+
+      .btn-detail {
+        background: #fff8d8;
+        border-color: #ead58d;
+        color: #775f12;
+      }
+
+      .btn-detail:hover {
+        background: #fff2bf;
+        border-color: #dfc56f;
+        color: #5f4b0f;
+      }
+
+      .review-action-icon {
+        font-size: 0.95rem;
+        line-height: 1;
+      }
+
+      .review-action-icon-svg {
+        width: 16px;
+        height: 16px;
+        display: block;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #approvalsPanel th:last-child,
+      #changesPanel th:last-child {
+        text-align: center;
+      }
+
+      #approvalsPanel td:last-child,
+      #changesPanel td:last-child {
+        text-align: center;
       }
 
       .review-batch-bar {
@@ -1169,7 +1238,7 @@
         min-width: 0;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 24px;
         flex-wrap: wrap;
       }
 
@@ -1179,6 +1248,13 @@
         font-size: 0.88rem;
         color: var(--ink);
         font-weight: 600;
+      }
+
+      .details-summary-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
       }
 
       .details-day-note-flag {
@@ -1298,6 +1374,7 @@
           font-size: 0.74rem;
         }
       }
+
     </style>
   </head>
   <body
@@ -1333,7 +1410,7 @@
             <div id="profileSite" class="user-profile-value">-</div>
           </div>
           <div class="user-profile-item">
-            <div class="user-profile-label">Referente amministrativo</div>
+            <div class="user-profile-label">Responsabile approvazione</div>
             <div id="profileManager" class="user-profile-value">-</div>
           </div>
         </div>
@@ -1450,7 +1527,7 @@
           <div id="reviewFeedback" class="msg"></div>
           <div id="approvalsPanel">
             <h3 style="margin-top:0">Coda approvazioni</h3>
-            <p class="subtitle" style="margin-top:0">Piani mensili in stato SUBMITTED</p>
+            <p class="subtitle" style="margin-top:0">Piani mensili in attesa di approvazione</p>
             <div id="approvalsBatchBar" class="review-batch-bar hidden">
               <div id="approvalsBatchInfo" class="review-batch-info">Selezionati: 0</div>
               <div class="review-batch-actions">
@@ -1476,7 +1553,7 @@
           </div>
           <div id="changesPanel">
             <h3 style="margin-top:0">Coda Richieste Variazioni</h3>
-            <p class="subtitle" style="margin-top:0">Richieste del mese corrente in stato PENDING</p>
+            <p class="subtitle" style="margin-top:0">Richieste del mese corrente in attesa di approvazione</p>
             <div id="changesBatchBar" class="review-batch-bar hidden">
               <div id="changesBatchInfo" class="review-batch-info">Selezionati: 0</div>
               <div class="review-batch-actions">
@@ -1732,7 +1809,7 @@
           <button id="closeChangeRequestModalBtn" class="ghost">Chiudi</button>
         </div>
         <p class="modal-subtitle">
-          Inserisci una descrizione della variazione. La richiesta sara inviata all'amministratore referente.
+          Inserisci una descrizione della variazione. La richiesta sara inviata al responsabile approvazione.
         </p>
         <div style="margin:0 0 10px 0;padding:8px 10px;border:1px solid #efc8cc;border-radius:8px;background:#fff4f5;color:var(--danger);font-size:0.9rem">
           Attenzione: dopo l'invio non potrai inviare una nuova richiesta finche questa resta in attesa.
@@ -1786,9 +1863,8 @@
     <div id="loginWelcomeModal" class="modal-backdrop hidden" style="z-index:140">
       <div class="modal-box" style="width:min(640px, 100%)">
         <div class="modal-head">
-          <h3 class="modal-title">Non hai sbagliiato indirizzo.</h3>
+          <h3 class="modal-title">Benvenuti nella nuova versione di LAgile.management</h3>
         </div>
-        <p class="modal-subtitle" style="margin-bottom:8px">Benvenuto nella nuova versione di LAgile.management</p>
         <p class="modal-subtitle" style="margin-bottom:8px">
           L'interfaccia e stata aggiornata e alcune sezioni sono state riorganizzate per rendere la compilazione piu veloce.
         </p>
@@ -1796,7 +1872,7 @@
         <ul style="margin:0 0 12px 18px;color:var(--ink)">
           <li>Programmazione mensile con calendario interattivo</li>
           <li>Richiesta approvazione o variazione secondo stato del mese</li>
-          <li>Code dedicate per approvazioni e variazioni (referenti)</li>
+          <li>Approvazioni e variazioni con liste dedicate (Responsabili)</li>
         </ul>
         <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;margin-bottom:12px">
           <input id="hideLoginWelcomeCheckbox" type="checkbox" />
@@ -2562,7 +2638,7 @@
         if (isApproverUser) {
           return "Programmazione non disponibile: Sottoscrizione AILA impostata su No. Come referente puoi comunque utilizzare le sezioni di approvazione e controllo.";
         }
-        return "Programmazione non disponibile: Sottoscrizione AILA impostata su No. Contatta il tuo referente amministrativo.";
+        return "Programmazione non disponibile: Sottoscrizione AILA impostata su No. Contatta il tuo responsabile approvazione.";
       }
 
       function renderUserProfile(user) {
@@ -2595,7 +2671,7 @@
         if (profileEmailInput) {
           profileEmailInput.value = (user.email || "").trim();
         }
-        const showStickyProfile = APP_PAGE !== "profile";
+        const showStickyProfile = APP_PAGE === "programming";
         document.body.classList.toggle("has-fixed-profile", showStickyProfile);
         userProfileCard.classList.toggle("hidden", !showStickyProfile);
       }
@@ -2619,7 +2695,7 @@
         }
 
         if (currentUser) {
-          const showStickyProfile = !isProfilePage;
+          const showStickyProfile = isProgramming;
           document.body.classList.toggle("has-fixed-profile", showStickyProfile);
           userProfileCard.classList.toggle("hidden", !showStickyProfile);
         }
@@ -3256,10 +3332,19 @@
             <td>${String(plan.month).padStart(2, "0")}/${plan.year}</td>
             <td><span class="status ${plan.status}">${labelStatus(plan.status)}</span></td>
             <td>
-              <div class="review-actions">
-                <button class="btn-small btn-approve" data-action="approve" data-id="${plan.id}">Approva</button>
-                <button class="btn-small btn-reject" data-action="reject" data-id="${plan.id}">Rifiuta</button>
-                <button class="btn-small" data-action="details" data-id="${plan.id}">Dettaglio</button>
+              <div class="review-actions review-actions-inline">
+                <button class="btn-small btn-approve" data-action="approve" data-id="${plan.id}" title="Approva" aria-label="Approva">
+                  <span class="review-action-icon" aria-hidden="true">✓</span>
+                </button>
+                <button class="btn-small btn-reject" data-action="reject" data-id="${plan.id}" title="Rifiuta" aria-label="Rifiuta">
+                  <span class="review-action-icon" aria-hidden="true">✕</span>
+                </button>
+                <button class="btn-small btn-detail" data-action="details" data-id="${plan.id}" title="Dettaglio" aria-label="Dettaglio">
+                  <svg class="review-action-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"></path>
+                    <circle cx="12" cy="12" r="2.8"></circle>
+                  </svg>
+                </button>
               </div>
             </td>
           `;
@@ -3318,10 +3403,19 @@
             <td>${String(item.plan_month).padStart(2, "0")}/${item.plan_year}</td>
             <td><span class="status ${item.status}">${labelChangeRequestStatus(item.status)}</span></td>
             <td>
-              <div class="review-actions">
-                <button class="btn-small btn-approve" data-change-action="approve" data-id="${item.id}">Approva</button>
-                <button class="btn-small btn-reject" data-change-action="reject" data-id="${item.id}">Rifiuta</button>
-                <button class="btn-small" data-change-action="details" data-id="${item.id}">Dettaglio</button>
+              <div class="review-actions review-actions-inline">
+                <button class="btn-small btn-approve" data-change-action="approve" data-id="${item.id}" title="Approva" aria-label="Approva">
+                  <span class="review-action-icon" aria-hidden="true">✓</span>
+                </button>
+                <button class="btn-small btn-reject" data-change-action="reject" data-id="${item.id}" title="Rifiuta" aria-label="Rifiuta">
+                  <span class="review-action-icon" aria-hidden="true">✕</span>
+                </button>
+                <button class="btn-small btn-detail" data-change-action="details" data-id="${item.id}" title="Dettaglio" aria-label="Dettaglio">
+                  <svg class="review-action-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"></path>
+                    <circle cx="12" cy="12" r="2.8"></circle>
+                  </svg>
+                </button>
               </div>
             </td>
           `;
@@ -3395,13 +3489,17 @@
           ? "Richiesta variazione"
           : APP_PAGE === "approvals"
             ? "Richiesta approvazione"
-            : "Dettaglio";
+            : "Pianificazione";
+        const statusSuffix =
+          !changeRequest && APP_PAGE === "overview"
+            ? `<span>Stato: ${labelOverviewStatus(plan.status)}</span>`
+            : "";
 
-        detailsTitle.textContent = `${titlePrefix} ${planUserLabel} - ${String(plan.month).padStart(2, "0")}/${plan.year}`;
-        detailsSummary.textContent = `In sede: ${onSite} | In lavoro agile: ${remote}`;
+        detailsTitle.textContent = `${titlePrefix} ${planUserLabel}`;
+        detailsSummary.innerHTML = `<span>In sede: ${onSite}</span><span>In lavoro agile: ${remote}</span>${statusSuffix}`;
         const monthDate = new Date(Number(plan.year), Number(plan.month) - 1, 1);
         const monthLabel = monthDate.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
-        detailsCalendarPeriod.textContent = `Mese/Anno: ${monthLabel.charAt(0).toUpperCase()}${monthLabel.slice(1)}`;
+        detailsCalendarPeriod.textContent = `${monthLabel.charAt(0).toUpperCase()}${monthLabel.slice(1)}`;
         if (changeRequest) {
           detailsChangeRequestReason = (changeRequest.reason || "").trim() || "Nessuna motivazione";
           detailsRequestReasonBtn.classList.remove("hidden");
@@ -3547,7 +3645,7 @@
           const tr = document.createElement("tr");
           const userLabel = queueUserLabel(row);
           const detailAction = row.plan_id
-            ? `<button class="btn-small" data-overview-plan-id="${row.plan_id}">Dettaglio</button>`
+            ? `<button class="btn-small btn-detail" data-overview-plan-id="${row.plan_id}">Dettaglio</button>`
             : "";
           const autoEnabled = Boolean(row.auto_approve);
           const autoCell = `
@@ -4503,6 +4601,7 @@
       calendarBody.addEventListener("click", (event) => {
         const dayCell = event.target.closest(".calendar-day.working[data-day]");
         if (!dayCell) return;
+        if (currentDisplayStatus === "NO_AILA" || !hasAilaSubscription()) return;
         if (ignoreNextCalendarClick || event.detail > 1) {
           ignoreNextCalendarClick = false;
           return;
@@ -4526,6 +4625,7 @@
       calendarBody.addEventListener("dblclick", (event) => {
         const dayCell = event.target.closest(".calendar-day.working[data-day]");
         if (!dayCell) return;
+        if (currentDisplayStatus === "NO_AILA" || !hasAilaSubscription()) return;
         const mode = dayModalMode();
         if (mode === "view") {
           ignoreNextCalendarClick = false;

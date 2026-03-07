@@ -89,5 +89,5 @@ Note:
   - `Sede B (oscurata)` -> referente assegnato (oscurato), `auto_approve=No`
   - `Sede C (oscurata)` -> referente assegnato (oscurato), `auto_approve=No`
   - `Sede D (oscurata)` -> referente assegnato (oscurato), `auto_approve=No`
-- se un utente viene usato come referente da queste regole e non e gia `ADMIN`/`SUPERADMIN`, viene impostato a ruolo `Referente Amministrativo` (`ADMIN`)
+- se un utente viene usato come referente da queste regole e non e gia `ADMIN`/`SUPERADMIN`, viene impostato a ruolo `Responsabile approvazione` (`ADMIN`)
 - il comando stampa un report finale con aggiornati/invariati/non trovati/afferenze territoriali non valide

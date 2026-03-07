@@ -55,7 +55,7 @@ class LoginSerializer(serializers.Serializer):
             f'Nome completo: {full_name}\n'
             f'Email: {user.email or "-"}\n'
             f'Data import: {now_str}\n\n'
-            'Completare la configurazione nel pannello amministrativo: Attivo, Afferenza territoriale, Referente amministrativo, '
+            'Completare la configurazione nel pannello amministrativo: Attivo, Afferenza territoriale, Responsabile approvazione, '
             'Sottoscrizione AILA e altre impostazioni applicative.'
         )
         send_mail(

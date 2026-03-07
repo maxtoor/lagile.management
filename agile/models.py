@@ -20,7 +20,7 @@ HOLIDAY_SITE_CHOICES = (('', 'Tutte le afferenze territoriali'),) + SITE_CHOICES
 class User(AbstractUser):
     class Role(models.TextChoices):
         EMPLOYEE = 'EMPLOYEE', 'Dipendente'
-        ADMIN = 'ADMIN', 'Referente Amministrativo'
+        ADMIN = 'ADMIN', 'Responsabile approvazione'
         SUPERADMIN = 'SUPERADMIN', 'Super Admin'
 
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.EMPLOYEE)
@@ -40,7 +40,7 @@ class User(AbstractUser):
         blank=True,
         on_delete=models.SET_NULL,
         related_name='employees',
-        verbose_name='Referente amministrativo',
+        verbose_name='Responsabile approvazione',
         limit_choices_to=Q(role__in=['ADMIN', 'SUPERADMIN']) | Q(is_superuser=True),
     )
 
@@ -75,14 +75,14 @@ class User(AbstractUser):
         if self.manager_id:
             manager_is_valid = self.manager.is_approver or self.manager.is_superuser
             if not manager_is_valid:
-                raise ValidationError('Il referente amministrativo deve avere ruolo ADMIN/SUPERADMIN o essere superuser')
+                raise ValidationError('Il responsabile approvazione deve avere ruolo ADMIN/SUPERADMIN o essere superuser')
 
         # Regola referente:
         # - per utenti EMPLOYEE: referente libero tra gli approvatori
         # - per utenti ADMIN/SUPERADMIN/superuser: puo essere solo se stesso (oppure vuoto)
         if self.manager_id and (self.is_approver or self.is_superuser) and self.manager_id != self.id:
             raise ValidationError(
-                'Per utenti referenti/superuser il referente amministrativo puo essere solo se stesso'
+                'Per utenti referenti/superuser il responsabile approvazione puo essere solo se stesso'
             )
 
         if self.pk:

@@ -14,7 +14,7 @@ Backend Django per gestione mensile del calendario di lavoro agile con autentica
 - Tracciamento eventi principali in `AuditLog`
 - Pannello amministrativo Django (`/admin/`)
 - Portale web unico con area dipendente e coda approvazioni per `ADMIN`/`SUPERADMIN`
-- Scheda utente nel portale con `Nome e cognome`, `Afferenza territoriale` e `Referente amministrativo`
+- Scheda utente nel portale con `Nome e cognome`, `Afferenza territoriale` e `Responsabile approvazione`
 - Gli approvatori possono aprire il dettaglio giornaliero del piano prima di approvare/rifiutare
 - Invio email automatico al dipendente quando il piano viene approvato o rifiutato
 - I dipendenti possono modificare il piano del mese corrente e del mese successivo; il mese corrente non e inviabile in approvazione ma solo in richiesta variazione
@@ -354,7 +354,7 @@ python manage.py sync_ldap_users --create-missing
 Regole sync:
 - chiave di allineamento: `username`
 - campi aggiornati dal sync: `first_name`, `last_name`, `email`
-- campi non toccati: `Afferenza territoriale`, `Referente amministrativo`, `Sottoscrizione AILA`, `Ruolo`, `Auto-approvazione`
+- campi non toccati: `Afferenza territoriale`, `Responsabile approvazione`, `Sottoscrizione AILA`, `Ruolo`, `Auto-approvazione`
 - gli account locali con password utilizzabile non vengono modificati
 - per default non crea utenti mancanti (evita import massivo involontario)
 - con `--create-missing` crea in locale gli utenti LDAP assenti nel DB
@@ -500,7 +500,7 @@ Dalla Pagina di Amministrazione puoi configurare:
 Nella Pagina di Amministrazione, nella scheda utente (`Users`), sono disponibili:
 - `Afferenza territoriale` (campo tecnico: `department`)
 - `Ruolo` (`EMPLOYEE`, `ADMIN`, `SUPERADMIN`)
-- `Referente amministrativo` (campo tecnico: `manager`)
+- `Responsabile approvazione` (campo tecnico: `manager`)
 - `Sottoscrizione AILA` (`aila_subscribed`), scelta `No`/`Si` (default `No`)
 - `Approvazione automatica` (`auto_approve`), scelta `No`/`Si` (default `No`)
 
@@ -517,7 +517,7 @@ Per evitare ambiguita, i livelli sono due:
 
 1. Ruolo applicativo (`role`):
    - `EMPLOYEE`: utente standard
-   - `ADMIN` (Referente amministrativo): gestisce code approvazione/variazione per utenti assegnati
+   - `ADMIN` (Responsabile approvazione): gestisce code approvazione/variazione per utenti assegnati
    - `SUPERADMIN`: visione/operativita globale nell'applicazione
 
 2. Permessi Django (`is_staff`, `is_superuser`):
