@@ -69,7 +69,7 @@ Riepilogo rapido variabili ambiente:
 Note rapide:
 - `ALLOWED_HOSTS`: in sviluppo tipico `localhost,127.0.0.1`; in produzione inserire domini/IP reali esposti
 - `AGILE_DATE_DISPLAY_FORMAT`: `IT` per `gg/mm/aaaa`, `ISO` per `aaaa-mm-gg`
-- `AGILE_SITES`: CSV delle afferenze territoriali disponibili, ad esempio `Napoli,Catania,Sassari,Padova`
+- `AGILE_SITES`: elenco separato da virgole delle afferenze territoriali disponibili (eventuali sedi secondarie)
 - `AGILE_LOGIN_LOGO_URL` e `AGILE_FAVICON_URL`: URL assoluti opzionali per logo login e favicon
 - `AGILE_EMAIL_REDIRECT_TO`: utile in sviluppo/test per reindirizzare tutte le email a una casella di sicurezza
 
