@@ -17,6 +17,7 @@
         --ok: #1f8b4c;
         --app-min-width: 860px;
         --top-strip-height: 46px;
+        --page-footer-height: 36px;
         --section-gap: 8px;
       }
 
@@ -185,21 +186,21 @@
 
       .calendar-month {
         display: grid;
-        grid-template-columns: repeat(7, minmax(96px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(7, minmax(88px, 1fr));
+        gap: clamp(6px, 0.8vw, 10px);
       }
 
       .calendar-month.weekdays-only {
-        grid-template-columns: repeat(5, minmax(96px, 1fr));
+        grid-template-columns: repeat(5, minmax(88px, 1fr));
       }
 
       .calendar-weekday {
-        padding: 5px 7px;
+        padding: clamp(4px, 0.5vw, 5px) clamp(5px, 0.7vw, 7px);
         border: 1px solid var(--line);
         border-radius: 10px;
         background: #eef4f1;
         color: var(--muted);
-        font-size: 0.74rem;
+        font-size: clamp(0.68rem, 0.75vw, 0.74rem);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.03em;
@@ -210,11 +211,11 @@
       .calendar-legend {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px 12px;
+        gap: clamp(6px, 0.8vw, 8px) clamp(8px, 1vw, 12px);
         align-items: center;
         justify-content: center;
-        margin: 0 0 10px 0;
-        font-size: 0.78rem;
+        margin: 0 0 clamp(6px, 0.9vw, 10px) 0;
+        font-size: clamp(0.72rem, 0.82vw, 0.78rem);
         color: var(--muted);
       }
 
@@ -263,14 +264,14 @@
       }
 
       .calendar-day {
-        min-height: 78px;
+        min-height: clamp(64px, calc((100dvh - 356px - var(--page-footer-height)) / 6), 78px);
         border: 1px solid var(--line);
         border-radius: 12px;
         background: #fff;
-        padding: 5px;
+        padding: clamp(4px, 0.55vw, 5px);
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: clamp(2px, 0.4vw, 4px);
         user-select: none;
         -webkit-user-select: none;
       }
@@ -327,29 +328,29 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
+        gap: clamp(4px, 0.7vw, 8px);
       }
 
       .calendar-day-number {
         font-weight: 700;
-        font-size: 0.88rem;
+        font-size: clamp(0.8rem, 0.95vw, 0.88rem);
       }
 
       .calendar-day-meta {
-        font-size: 0.7rem;
+        font-size: clamp(0.64rem, 0.75vw, 0.7rem);
         color: var(--muted);
         text-transform: capitalize;
       }
 
       .calendar-day-status {
-        font-size: 0.7rem;
+        font-size: clamp(0.62rem, 0.72vw, 0.7rem);
         color: var(--muted);
       }
 
       .calendar-day-card {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: clamp(2px, 0.4vw, 4px);
         flex: 1;
       }
 
@@ -361,9 +362,9 @@
       .calendar-day-mode-label {
         display: inline-flex;
         align-self: center;
-        padding: 3px 9px;
+        padding: 2px clamp(6px, 0.9vw, 9px);
         border-radius: 999px;
-        font-size: 0.74rem;
+        font-size: clamp(0.68rem, 0.78vw, 0.74rem);
         font-weight: 600;
         border: 1px solid transparent;
       }
@@ -793,8 +794,9 @@
         position: fixed;
         left: 0;
         top: 0;
+        box-sizing: border-box;
         height: var(--top-strip-height);
-        width: max(100vw, var(--app-min-width));
+        width: max(100%, var(--app-min-width));
         min-width: var(--app-min-width);
         margin: 0;
         padding: 0 24px;
@@ -923,13 +925,13 @@
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: flex-end;
-        gap: 10px;
+        gap: clamp(6px, 0.9vw, 10px);
       }
 
       .fixed-month-bar {
         width: 100%;
         margin: 0 0 6px 0;
-        padding: 2px 14px 10px;
+        padding: 2px clamp(10px, 1.6vw, 14px) clamp(6px, 1vw, 10px);
       }
 
       .fixed-month-bar .toolbar {
@@ -939,12 +941,12 @@
       .month-nav-inline {
         display: flex;
         align-items: flex-end;
-        gap: 6px;
+        gap: clamp(4px, 0.6vw, 6px);
         justify-self: center;
       }
 
       .month-nav-inline .toolbar-field {
-        width: 120px;
+        width: clamp(96px, 10vw, 120px);
       }
 
       .month-nav-inline .toolbar-field input {
@@ -958,9 +960,9 @@
 
       #prevMonthBtn,
       #nextMonthBtn {
-        width: 34px;
-        height: 34px;
-        min-width: 34px;
+        width: clamp(30px, 3vw, 34px);
+        height: clamp(30px, 3vw, 34px);
+        min-width: clamp(30px, 3vw, 34px);
         padding: 0;
         display: inline-flex;
         align-items: center;
@@ -975,11 +977,11 @@
         align-items: center;
         justify-content: center;
         gap: 6px;
-        font-size: 0.8rem;
+        font-size: clamp(0.74rem, 0.82vw, 0.8rem);
         padding: 6px 10px;
         line-height: 1;
         white-space: nowrap;
-        min-width: 96px;
+        min-width: clamp(82px, 9vw, 96px);
       }
 
       #prevMonthBtn::before,
@@ -1006,8 +1008,8 @@
       .profile-planning-toolbar input,
       .profile-planning-toolbar select,
       .profile-planning-toolbar button {
-        font-size: 0.84rem;
-        padding: 7px 9px;
+        font-size: clamp(0.78rem, 0.86vw, 0.84rem);
+        padding: clamp(6px, 0.8vw, 7px) clamp(7px, 0.9vw, 9px);
       }
 
       .profile-planning-toolbar .toolbar-status-label {
@@ -1358,7 +1360,7 @@
         display: none !important;
       }
 
-      @media (max-width: 860px) {
+      @media (max-width: 760px) {
         .user-profile-grid {
           grid-template-columns: repeat(3, minmax(220px, 1fr));
         }
@@ -1369,15 +1371,15 @@
         }
 
         .calendar-month {
-          grid-template-columns: repeat(7, minmax(96px, 1fr));
+          grid-template-columns: repeat(7, minmax(88px, 1fr));
         }
 
         .calendar-day {
-          min-height: 78px;
+          min-height: clamp(64px, calc((100dvh - 356px - var(--page-footer-height)) / 6), 78px);
         }
 
         .calendar-weekday {
-          font-size: 0.74rem;
+          font-size: clamp(0.68rem, 0.75vw, 0.74rem);
         }
       }
 
