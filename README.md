@@ -28,7 +28,7 @@ Backend Django per gestione mensile del calendario di lavoro agile con autentica
 
 ## Perché Django
 
-Django offre un livello di sicurezza superiore out-of-the-box, grazie a protezioni integrate contro SQL injection, XSS e CSRF. Questo lo rende particolarmente adatto a un'applicazione gestionale con autenticazione, ruoli, workflow approvativi e interfaccia amministrativa. La precedente base Node.js era piu flessibile, ma richiedeva maggiore attenzione su configurazioni di sicurezza, dipendenze e codice custom nelle aree piu sensibili.
+Django offre un livello di sicurezza superiore out-of-the-box, grazie a protezioni integrate contro SQL injection, XSS e CSRF. Questo lo rende particolarmente adatto a un'applicazione gestionale con autenticazione, ruoli, workflow approvativi e interfaccia amministrativa. La precedente versione sviluppata con Node.js era piu flessibile, ma richiedeva maggiore attenzione su configurazioni di sicurezza, dipendenze e codice custom nelle aree piu sensibili.
 
 ## Avvio rapido (Docker)
 
