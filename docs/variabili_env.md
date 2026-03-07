@@ -49,7 +49,7 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 
 | Variabile | Obbligatoria | Default | Descrizione |
 |---|---|---|---|
-| `EMAIL_BACKEND` | No | `django.core.mail.backends.console.EmailBackend` | Backend email Django. |
+| `EMAIL_BACKEND` | No | `django.core.mail.backends.console.EmailBackend` | Backend email Django. Nota: il fallback reale del codice e `console`, mentre `.env.example` propone `django.core.mail.backends.smtp.EmailBackend` come configurazione SMTP tipica. |
 | `EMAIL_HOST` | Si per SMTP reale | `localhost` | Host SMTP. |
 | `EMAIL_PORT` | No | `25` | Porta SMTP. |
 | `EMAIL_HOST_USER` | No | vuoto | Utente SMTP. |
