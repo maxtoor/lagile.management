@@ -466,22 +466,22 @@ Esecuzione schedulata consigliata (cron giornaliero, il comando invia solo l'ult
 - Prevalenza presenza: se sono presenti giorni `REMOTE`, i giorni `ON_SITE` devono essere strettamente maggiori
 - Sono ammessi solo giorni lavorativi (lun-ven): weekend non consentiti nel piano
 - Le festivita nazionali italiane sono riconosciute automaticamente e non possono essere usate nel piano
-- Le festivita configurate manualmente (globali o per reparto) non possono essere usate nel piano
+- Le festivita configurate manualmente (globali o per afferenza territoriale) non possono essere usate nel piano
 - Nel portale i giorni festivi del mese sono esclusi dal calendario compilabile
 - Modifica calendario: mese corrente e mese successivo
 - Mese corrente: solo richiesta variazione con motivazione (non invio in approvazione)
 
 I vincoli sono validati sia in fase di creazione/modifica del piano, sia al momento dell'invio (`submit`).
 
-## Configurazione per reparto
+## Configurazione per afferenza territoriale
 
 Dalla Pagina di Amministrazione puoi configurare:
 
-- `DepartmentPolicy`: override dei limiti per singolo reparto
+- `DepartmentPolicy`: override dei limiti per singola afferenza territoriale
   - `max_remote_days`
   - `february_max_remote_days`
   - `require_on_site_prevalence`
-- `Holiday`: festivita globali (campo reparto vuoto) o specifiche per reparto
+- `Holiday`: festivita globali (campo afferenza territoriale vuoto) o specifiche per afferenza territoriale
 
 ## Anagrafica utente e referente
 
