@@ -54,6 +54,20 @@ POSTGRES_PORT=5432
 LDAP_ENABLED=0
 ```
 
+Riepilogo rapido variabili ambiente:
+- obbligatorie minime: `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`
+- quasi sempre da impostare: `ALLOWED_HOSTS`, `DEBUG`, `TIME_ZONE`
+- identita applicazione: `AGILE_COMPANY_NAME`, `AGILE_COPYRIGHT_YEAR`, `AGILE_LOGIN_LOGO_URL`, `AGILE_FAVICON_URL`
+- portale e sedi: `AGILE_DATE_DISPLAY_FORMAT`, `AGILE_SITES`
+- database: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`
+- LDAP: `LDAP_ENABLED`, `LDAP_SERVER_URI`, `LDAP_BIND_DN`, `LDAP_BIND_PASSWORD`, `LDAP_USER_BASE_DN`, `LDAP_USER_FILTER`
+- email: `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`, `AGILE_EMAIL_REDIRECT_TO`
+- log e monitor admin: `AGILE_LOG_FILE`, `AGILE_LOG_LEVEL`, `AGILE_LOG_MONITOR_FILE`, `AGILE_LOG_MONITOR_SOURCES`, `AGILE_LOG_MONITOR_REFRESH_SECONDS`
+- scheduler: `REMINDER_CHECK_INTERVAL_SECONDS`
+- bootstrap superuser Docker: `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_EMAIL`, `DJANGO_SUPERUSER_PASSWORD`
+
+Per il dettaglio completo di tutte le variabili supportate: [`docs/variabili_env.md`](docs/variabili_env.md)
+
 `ALLOWED_HOSTS` (Django):
 - definisce gli hostname/domini autorizzati a raggiungere l'applicazione
 - richieste con `Host` non presente in elenco vengono rifiutate (`DisallowedHost`)
