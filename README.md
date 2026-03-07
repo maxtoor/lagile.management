@@ -66,34 +66,14 @@ Riepilogo rapido variabili ambiente:
 - scheduler: `REMINDER_CHECK_INTERVAL_SECONDS`
 - bootstrap superuser Docker: `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_EMAIL`, `DJANGO_SUPERUSER_PASSWORD`
 
+Note rapide:
+- `ALLOWED_HOSTS`: in sviluppo tipico `localhost,127.0.0.1`; in produzione inserire domini/IP reali esposti
+- `AGILE_DATE_DISPLAY_FORMAT`: `IT` per `gg/mm/aaaa`, `ISO` per `aaaa-mm-gg`
+- `AGILE_SITES`: CSV delle afferenze territoriali disponibili, ad esempio `Napoli,Catania,Sassari,Padova`
+- `AGILE_LOGIN_LOGO_URL` e `AGILE_FAVICON_URL`: URL assoluti opzionali per logo login e favicon
+- `AGILE_EMAIL_REDIRECT_TO`: utile in sviluppo/test per reindirizzare tutte le email a una casella di sicurezza
+
 Per il dettaglio completo di tutte le variabili supportate: [`docs/variabili_env.md`](docs/variabili_env.md)
-
-`ALLOWED_HOSTS` (Django):
-- definisce gli hostname/domini autorizzati a raggiungere l'applicazione
-- richieste con `Host` non presente in elenco vengono rifiutate (`DisallowedHost`)
-- sviluppo locale tipico: `ALLOWED_HOSTS=localhost,127.0.0.1`
-- produzione: inserire i domini/IP reali esposti (es. `lagile.example.org,10.0.0.15`)
-
-Formato data nel portale:
-- `AGILE_DATE_DISPLAY_FORMAT=IT` -> `gg/mm/aaaa` (default)
-- `AGILE_DATE_DISPLAY_FORMAT=ISO` -> `aaaa-mm-gg`
-
-Sedi ammesse (opzionale):
-- `AGILE_SITES=Sede principale` (default)
-- serve per definire l'elenco afferenze territoriali disponibili nell'app e nei processi di import LDAP/CSV
-- non e obbligatoria in `.env`: se assente viene usato il default
-- per piu afferenze territoriali, usa un CSV: `AGILE_SITES=Napoli,Catania,Sassari,Padova`
-
-Logo nella schermata login (opzionale):
-- `AGILE_LOGIN_LOGO_URL=` URL assoluto dell'immagine (es. `https://.../logo.png`)
-- se vuoto, il logo non viene mostrato
-
-Log applicativo e monitor admin:
-- `AGILE_LOG_FILE=/app/logs/agile.log` file log principale
-- `AGILE_LOG_LEVEL=INFO` livello log
-- `AGILE_LOG_MONITOR_FILE=/app/logs/agile.log` file mostrato nel monitor admin
-- `AGILE_LOG_MONITOR_SOURCES=app:/app/logs/agile.log;scheduler:/app/logs/scheduler.log` sorgenti selezionabili
-- `AGILE_LOG_MONITOR_REFRESH_SECONDS=8` intervallo refresh monitor
 
 3. Avvia:
 
