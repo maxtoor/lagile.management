@@ -26,15 +26,9 @@ Backend Django per gestione mensile del calendario di lavoro agile con autentica
 - PostgreSQL 16
 - LDAP opzionale con `django-auth-ldap`
 
-## Perche Django
+## Perché Django
 
-La scelta di Django e stata fatta per motivi pratici:
-
-- copre in modo nativo autenticazione, ruoli, amministrazione e workflow applicativi
-- semplifica la gestione on-premise su Linux con stack stabile e noto
-- con il numero di utenti coinvolti, non e necessario introdurre architetture piu complesse
-- la Pagina di Amministrazione riduce sviluppo custom per gestione utenti, referenti, import e template email
-- facilita manutenzione e evoluzione delle regole di business lato server
+Django offre un livello di sicurezza superiore out-of-the-box, grazie a protezioni integrate contro SQL injection, XSS e CSRF. Questo lo rende particolarmente adatto a un'applicazione gestionale con autenticazione, ruoli, workflow approvativi e interfaccia amministrativa. La precedente base Node.js era piu flessibile, ma richiedeva maggiore attenzione su configurazioni di sicurezza, dipendenze e codice custom nelle aree piu sensibili.
 
 ## Avvio rapido (Docker)
 
