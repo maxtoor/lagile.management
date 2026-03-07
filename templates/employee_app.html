@@ -30,6 +30,11 @@
         scrollbar-gutter: stable both-edges;
       }
 
+      html.modal-open,
+      body.modal-open {
+        overflow: hidden;
+      }
+
       body {
         margin: 0;
         font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
@@ -56,14 +61,14 @@
       }
 
       body.has-fixed-profile .wrap {
-        padding-top: calc(12px + var(--top-strip-height));
+        padding-top: 12px;
       }
 
       body[data-app-page="profile"] .wrap,
       body[data-app-page="overview"] .wrap,
       body[data-app-page="approvals"] .wrap,
       body[data-app-page="changes"] .wrap {
-        padding-top: calc(12px + var(--top-strip-height));
+        padding-top: 12px;
       }
 
       .subtitle {
@@ -819,12 +824,12 @@
 
       .main-menu {
         position: relative;
-        min-width: 180px;
+        min-width: 220px;
         flex: 0 0 auto;
       }
 
       .main-menu-toggle {
-        width: 180px;
+        width: 220px;
         min-height: 30px;
         padding: 6px 10px;
         font-size: 0.85rem;
@@ -1112,6 +1117,7 @@
         display: grid;
         place-items: center;
         padding: 16px;
+        overflow: auto;
         z-index: 120;
       }
 
@@ -1147,6 +1153,7 @@
 
       .details-modal-box {
         width: min(1026px, 100%);
+        min-width: min(calc(var(--app-min-width) - 32px), 1026px);
         max-height: calc(100vh - 32px);
       }
 
@@ -1358,7 +1365,7 @@
         }
 
         .main-menu {
-          min-width: 180px;
+          min-width: 220px;
           width: auto;
         }
 
@@ -2092,6 +2099,14 @@
         hasRejectedChangeRequest: false,
         latestRejectedChangeReason: "",
       };
+
+      function syncModalOpenState() {
+        const hasOpenOverlay = Boolean(
+          document.querySelector(".modal-backdrop:not(.hidden), #loginOverlay:not(.hidden)")
+        );
+        document.documentElement.classList.toggle("modal-open", hasOpenOverlay);
+        document.body.classList.toggle("modal-open", hasOpenOverlay);
+      }
 
       for (let m = 1; m <= 12; m++) {
         const item = document.createElement("button");
@@ -4828,6 +4843,16 @@
           navigateFromMenu(item.dataset.target || "");
         });
       });
+
+      [loginOverlay, ...document.querySelectorAll(".modal-backdrop")].forEach((element) => {
+        if (!element) return;
+        new MutationObserver(syncModalOpenState).observe(element, {
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+      });
+
+      syncModalOpenState();
 
       document.addEventListener("click", (event) => {
         if (mainMenu && !mainMenu.classList.contains("hidden") && !mainMenu.contains(event.target)) {
