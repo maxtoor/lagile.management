@@ -15,7 +15,7 @@
         --line: #dce4df;
         --danger: #bb2e38;
         --ok: #1f8b4c;
-        --title-min-width: 860px;
+        --app-min-width: 860px;
         --top-strip-height: 46px;
         --section-gap: 8px;
       }
@@ -27,7 +27,7 @@
       html {
         overflow-x: auto;
         overflow-y: scroll;
-        scrollbar-gutter: stable;
+        scrollbar-gutter: stable both-edges;
       }
 
       body {
@@ -36,17 +36,18 @@
         color: var(--ink);
         background: linear-gradient(160deg, #eef7f2 0%, #f9f2e6 45%, #f6f8f4 100%);
         min-height: 100vh;
-        min-width: var(--title-min-width);
+        min-width: var(--app-min-width);
         overflow-x: auto;
       }
 
       body.weekdays-compact {
-        min-width: 760px;
+        min-width: var(--app-min-width);
       }
 
       .wrap {
-        max-width: 1100px;
-        min-width: var(--title-min-width);
+        width: 100%;
+        min-width: var(--app-min-width);
+        max-width: 1148px;
         margin: 0 auto;
         padding: 0 24px 56px;
         min-height: 100vh;
@@ -58,7 +59,10 @@
         padding-top: calc(12px + var(--top-strip-height));
       }
 
-      body[data-app-page="profile"] .wrap {
+      body[data-app-page="profile"] .wrap,
+      body[data-app-page="overview"] .wrap,
+      body[data-app-page="approvals"] .wrap,
+      body[data-app-page="changes"] .wrap {
         padding-top: calc(12px + var(--top-strip-height));
       }
 
@@ -79,23 +83,23 @@
         display: grid;
         grid-template-columns: 1fr;
         gap: var(--section-gap);
-        width: calc(100% - 26px);
-        min-width: calc(var(--title-min-width) - 26px);
+        width: 100%;
+        min-width: 0;
         margin: 0 auto;
       }
 
       #approverCard {
         width: 100%;
-        min-width: calc(var(--title-min-width) - 26px);
+        min-width: 0;
         margin: 0 auto;
         overflow-x: auto;
       }
 
       .grid.programming-grid {
-        grid-template-columns: minmax(760px, 1fr) 190px;
+        grid-template-columns: minmax(0, 1fr) 190px;
         gap: var(--section-gap);
         align-items: stretch;
-        min-width: calc(var(--title-min-width) - 26px);
+        min-width: 0;
       }
 
       .grid.programming-grid > .card {
@@ -103,19 +107,7 @@
       }
 
       .grid.programming-grid #calendarCard {
-        min-width: max(500px, calc(var(--title-min-width) - 26px - 190px - 16px));
-      }
-
-      body.weekdays-compact .grid.programming-grid {
-        grid-template-columns: minmax(420px, 1fr) 190px;
-      }
-
-      body.weekdays-compact .grid.programming-grid #calendarCard {
-        min-width: 420px;
-      }
-
-      body.weekdays-compact .wrap {
-        min-width: 760px;
+        min-width: 0;
       }
 
       .toolbar {
@@ -610,6 +602,7 @@
         right: 0;
         bottom: 0;
         width: 100%;
+        min-width: var(--app-min-width);
         margin: 0;
         padding: 8px 24px;
         display: flex;
@@ -783,8 +776,8 @@
       .user-profile.fixed-top {
         position: sticky;
         top: var(--top-strip-height);
-        width: calc(100% - 26px);
-        min-width: calc(var(--title-min-width) - 26px);
+        width: 100%;
+        min-width: 0;
         margin: 0 auto var(--section-gap);
         padding: 10px 14px;
         box-shadow: 0 8px 20px rgba(16, 36, 29, 0.08);
@@ -792,12 +785,13 @@
       }
 
       .page-top-strip {
-        position: fixed;
-        left: 0;
-        right: 0;
+        position: sticky;
+        left: auto;
+        right: auto;
         top: 0;
         height: var(--top-strip-height);
         width: 100%;
+        min-width: var(--app-min-width);
         margin: 0;
         padding: 0 24px;
         border-bottom: 1px solid var(--line);
@@ -812,19 +806,25 @@
 
       .page-top-strip-title {
         margin: 0;
+        min-width: 0;
+        flex: 1 1 auto;
         font-size: clamp(0.96rem, 1.5vw, 1.1rem);
         line-height: 1.2;
         font-weight: 700;
         color: var(--ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .main-menu {
         position: relative;
-        min-width: 240px;
+        min-width: 180px;
+        flex: 0 0 auto;
       }
 
       .main-menu-toggle {
-        width: 100%;
+        width: 180px;
         min-height: 30px;
         padding: 6px 10px;
         font-size: 0.85rem;
@@ -940,7 +940,7 @@
       }
 
       .month-nav-inline .toolbar-field {
-        width: 148px;
+        width: 120px;
       }
 
       .month-nav-inline .toolbar-field input {
@@ -1358,7 +1358,7 @@
         }
 
         .main-menu {
-          min-width: 240px;
+          min-width: 180px;
           width: auto;
         }
 
