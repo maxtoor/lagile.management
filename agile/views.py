@@ -18,7 +18,7 @@ from rest_framework.views import APIView
 
 from .models import AuditLog, ChangeRequest, MonthlyPlan, SystemEmailTemplate, User
 from .permissions import IsAdminOrSuperAdmin
-from .runtime_settings import get_runtime_setting
+from .runtime_settings import build_email_link_context, get_runtime_setting
 from .serializers import (
     ApprovalSerializer,
     ChangeRequestItemSerializer,
@@ -99,10 +99,13 @@ def notify_plan_review(*, plan: MonthlyPlan, approved: bool) -> None:
     rejection_reason = plan.rejection_reason or 'non specificata'
     final_line = 'Il piano e ora definitivo.' if approved else f'Motivazione rifiuto: {rejection_reason}'
     default_subject = f'Esito piano lavoro agile {month_name_year}: {status_label}'
+    links = build_email_link_context()
+    portal_line = f"Link portale: {links['portal_url']}\n" if links['portal_url'] else ''
     default_body = (
         'Ciao {first_name_or_username},\n\n'
         'Il tuo piano di lavoro agile per {month_name_year} e stato {status_label_lower}.\n'
         '{final_line}\n\n'
+        '{portal_line}'
         'Puoi accedere al portale per vedere il dettaglio.'
     )
     template_key = SystemEmailTemplate.Key.PLAN_APPROVED if approved else SystemEmailTemplate.Key.PLAN_REJECTED
@@ -120,6 +123,8 @@ def notify_plan_review(*, plan: MonthlyPlan, approved: bool) -> None:
             'status_label_lower': status_label.lower(),
             'rejection_reason': rejection_reason,
             'final_line': final_line,
+            'portal_line': portal_line,
+            **links,
         },
     )
 
@@ -148,11 +153,14 @@ def notify_change_request_review(*, change_request: ChangeRequest, approved: boo
     final_line = 'La variazione e stata recepita nel piano.' if approved else f'Motivazione rifiuto: {rejection_reason}'
     month_name_year = month_name_year_it(month=change_request.plan.month, year=change_request.plan.year)
     default_subject = f'Esito richiesta variazione {month_name_year}: {status_label}'
+    links = build_email_link_context()
+    portal_line = f"Link portale: {links['portal_url']}\n" if links['portal_url'] else ''
     default_body = (
         'Gentile {full_name},\n'
         'La tua richiesta variazione per {month_name_year} e stata {status_label_lower}.\n'
         '{final_line}\n'
         '\n'
+        '{portal_line}'
         'Puoi accedere al portale per vedere il dettaglio.'
     )
     template_key = SystemEmailTemplate.Key.CHANGE_APPROVED if approved else SystemEmailTemplate.Key.CHANGE_REJECTED
@@ -173,6 +181,8 @@ def notify_change_request_review(*, change_request: ChangeRequest, approved: boo
             'change_reason': change_reason,
             'rejection_reason': rejection_reason,
             'final_line': final_line,
+            'portal_line': portal_line,
+            **links,
         },
     )
 
@@ -198,10 +208,13 @@ def notify_change_request_submitted(*, change_request: ChangeRequest) -> bool:
     manager_name = f'{(manager.first_name or "").strip()} {(manager.last_name or "").strip()}'.strip() or manager.username
     change_reason = change_request.reason or 'non specificata'
     default_subject = f'Nuova richiesta variazione da approvare - {month_name_year}'
+    links = build_email_link_context()
+    admin_line = f"Link gestione: {links['admin_url']}\n\n" if links['admin_url'] else ''
     default_body = (
         'Gentile {manager_name},\n\n'
         "L'utente {employee_name} ha inviato una richiesta variazione per il mese {month_name_year}.\n"
         'Motivazione richiesta: {change_reason}\n\n'
+        '{admin_line}'
         'Puoi accedere al portale per approvare o rifiutare la richiesta.'
     )
     subject, message = render_system_email_template(
@@ -214,6 +227,8 @@ def notify_change_request_submitted(*, change_request: ChangeRequest) -> bool:
             'month_label': month_label,
             'month_name_year': month_name_year,
             'change_reason': change_reason,
+            'admin_line': admin_line,
+            **links,
         },
     )
 

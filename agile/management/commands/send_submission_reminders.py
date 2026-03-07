@@ -7,7 +7,7 @@ from django.core.mail import send_mail
 from django.utils import timezone
 
 from agile.models import AuditLog, MonthlyPlan, SystemEmailTemplate, User
-from agile.runtime_settings import get_runtime_setting
+from agile.runtime_settings import build_email_link_context, get_runtime_setting
 
 
 class _SafeDict(dict):
@@ -156,10 +156,13 @@ class Command(BaseCommand):
 
             full_name = f'{(user.first_name or "").strip()} {(user.last_name or "").strip()}'.strip() or user.username
             default_subject = f'Promemoria invio piano lavoro agile - {month_name_year}'
+            links = build_email_link_context()
+            portal_line = f"Link portale: {links['portal_url']}\n\n" if links['portal_url'] else ''
             default_body = (
                 'Gentile {full_name},\n\n'
                 'ti ricordiamo di inviare in approvazione il piano di lavoro agile per {month_name_year}.\n'
                 'Stato attuale: {plan_status_label}.\n\n'
+                '{portal_line}'
                 'Puoi accedere al portale per completare l\'invio.'
             )
             subject, body = self._render_from_template(
@@ -175,6 +178,8 @@ class Command(BaseCommand):
                     'month_name_year': month_name_year,
                     'plan_status': status or 'ASSENTE',
                     'plan_status_label': status or 'ASSENTE',
+                    'portal_line': portal_line,
+                    **links,
                 },
             )
 

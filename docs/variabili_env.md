@@ -59,6 +59,7 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 | `DEFAULT_FROM_EMAIL` | No | `noreply@istituto.local` | Mittente email. |
 | `AGILE_EMAIL_FROM_NAME` | No | vuoto | Nome mittente (formato `Nome <email>`). |
 | `AGILE_EMAIL_REDIRECT_TO` | No | vuoto | Se valorizzata, tutte le email in uscita vengono reindirizzate a questa casella (o lista CSV) invece che ai destinatari reali. Utile in sviluppo/test. |
+| `AGILE_PUBLIC_BASE_URL` | No | vuoto | URL pubblico base dell'applicazione (es. `https://lagile.example.org`). Se valorizzata, viene usata per inserire link al portale o all'admin nelle email di comunicazione. |
 
 ## Logging e monitor admin
 

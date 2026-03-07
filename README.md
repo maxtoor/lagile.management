@@ -81,6 +81,7 @@ Note rapide:
 - `AGILE_SITES`: elenco separato da virgole delle afferenze territoriali disponibili (eventuali sedi secondarie)
 - `AGILE_LOGIN_LOGO_URL` e `AGILE_FAVICON_URL`: URL assoluti opzionali per logo login e favicon
 - `EMAIL_BACKEND`: se non impostato, il fallback reale del codice e `django.core.mail.backends.console.EmailBackend`; `.env.example` mostra invece una configurazione SMTP tipica
+- `AGILE_PUBLIC_BASE_URL`: URL pubblico base da usare nelle email per link al portale e all'admin
 - `AGILE_EMAIL_REDIRECT_TO`: utile in sviluppo/test per reindirizzare tutte le email a una casella di sicurezza
 
 Per il dettaglio completo di tutte le variabili supportate: [`docs/variabili_env.md`](docs/variabili_env.md)

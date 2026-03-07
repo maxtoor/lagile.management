@@ -7,7 +7,7 @@ from django.core.mail import send_mail
 from django.utils import timezone
 
 from agile.models import AuditLog, MonthlyPlan, SystemEmailTemplate, User
-from agile.runtime_settings import get_runtime_setting
+from agile.runtime_settings import build_email_link_context, get_runtime_setting
 
 
 class _SafeDict(dict):
@@ -170,6 +170,8 @@ class Command(BaseCommand):
 
             manager_name = f'{(manager.first_name or "").strip()} {(manager.last_name or "").strip()}'.strip() or manager.username
             default_subject = f'Riepilogo richieste e piani - {month_name_year}'
+            links = build_email_link_context()
+            admin_line = f"Link gestione: {links['admin_url']}\n\n" if links['admin_url'] else ''
             default_body = (
                 'Gentile {manager_name},\n\n'
                 'Riepilogo per {month_name_year}.\n\n'
@@ -181,6 +183,7 @@ class Command(BaseCommand):
                 '{missing_lines}\n\n'
                 'Utenti in auto-approvazione ({auto_approve_count}):\n'
                 '{auto_approve_lines}\n\n'
+                '{admin_line}'
                 'Puoi accedere al portale per gestire le richieste.'
             )
             subject, body = self._render_from_template(
@@ -199,6 +202,8 @@ class Command(BaseCommand):
                     'approved_lines': approved_lines,
                     'missing_lines': missing_lines,
                     'auto_approve_lines': auto_approve_lines,
+                    'admin_line': admin_line,
+                    **links,
                 },
             )
 

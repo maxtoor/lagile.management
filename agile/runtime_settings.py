@@ -43,6 +43,25 @@ def get_runtime_setting(name: str, fallback=None):
     return getattr(settings, name, fallback)
 
 
+def get_public_base_url() -> str:
+    return (get_runtime_setting('AGILE_PUBLIC_BASE_URL', '') or '').strip().rstrip('/')
+
+
+def build_email_link_context() -> dict:
+    base_url = get_public_base_url()
+    if not base_url:
+        return {
+            'public_base_url': '',
+            'portal_url': '',
+            'admin_url': '',
+        }
+    return {
+        'public_base_url': base_url,
+        'portal_url': f'{base_url}/',
+        'admin_url': f'{base_url}/admin/',
+    }
+
+
 def build_runtime_ui_context() -> dict:
     return {
         'login_logo_url': (get_runtime_setting('AGILE_LOGIN_LOGO_URL', '') or '').strip(),
