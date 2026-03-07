@@ -61,14 +61,14 @@
       }
 
       body.has-fixed-profile .wrap {
-        padding-top: 12px;
+        padding-top: calc(12px + var(--top-strip-height));
       }
 
       body[data-app-page="profile"] .wrap,
       body[data-app-page="overview"] .wrap,
       body[data-app-page="approvals"] .wrap,
       body[data-app-page="changes"] .wrap {
-        padding-top: 12px;
+        padding-top: calc(12px + var(--top-strip-height));
       }
 
       .subtitle {
@@ -790,12 +790,11 @@
       }
 
       .page-top-strip {
-        position: sticky;
-        left: auto;
-        right: auto;
+        position: fixed;
+        left: 0;
         top: 0;
         height: var(--top-strip-height);
-        width: 100%;
+        width: max(100vw, var(--app-min-width));
         min-width: var(--app-min-width);
         margin: 0;
         padding: 0 24px;
@@ -1946,6 +1945,7 @@
       const mainMenuToggle = document.getElementById("mainMenuToggle");
       const mainMenuPanel = document.getElementById("mainMenuPanel");
       const mainMenuLabel = document.getElementById("mainMenuLabel");
+      const pageTopStrip = document.querySelector(".page-top-strip");
       const menuProfile = document.getElementById("menuProfile");
       const menuProgramming = document.getElementById("menuProgramming");
       const menuOverview = document.getElementById("menuOverview");
@@ -2106,6 +2106,12 @@
         );
         document.documentElement.classList.toggle("modal-open", hasOpenOverlay);
         document.body.classList.toggle("modal-open", hasOpenOverlay);
+      }
+
+      function syncTopStripHorizontalPosition() {
+        if (!pageTopStrip) return;
+        const scrollX = window.scrollX || document.documentElement.scrollLeft || 0;
+        pageTopStrip.style.transform = `translateX(${-scrollX}px)`;
       }
 
       for (let m = 1; m <= 12; m++) {
@@ -4587,6 +4593,8 @@
         renderCalendar(dayValues);
       });
 
+      window.addEventListener("scroll", syncTopStripHorizontalPosition, { passive: true });
+
       document.getElementById("closeDetailsBtn").addEventListener("click", () => {
         detailsModal.classList.add("hidden");
       });
@@ -4853,6 +4861,7 @@
       });
 
       syncModalOpenState();
+      syncTopStripHorizontalPosition();
 
       document.addEventListener("click", (event) => {
         if (mainMenu && !mainMenu.classList.contains("hidden") && !mainMenu.contains(event.target)) {
