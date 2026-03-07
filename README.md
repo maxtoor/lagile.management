@@ -473,7 +473,7 @@ Esecuzione schedulata consigliata (cron giornaliero, il comando invia solo l'ult
 
 I vincoli sono validati sia in fase di creazione/modifica del piano, sia al momento dell'invio (`submit`).
 
-## Configurazione per afferenza territoriale
+## Configurazione per Afferenza territoriale (eventuali sedi distaccate)
 
 Dalla Pagina di Amministrazione puoi configurare:
 
