@@ -32,13 +32,22 @@ Django offre un livello di sicurezza superiore out-of-the-box, grazie a protezio
 
 ## Avvio rapido (Docker)
 
-1. Copia variabili ambiente:
+1. Crea la directory applicazione, scarica il progetto ed entra nella cartella:
+
+```bash
+mkdir -p /opt/lagile-management
+cd /opt/lagile-management
+git clone https://github.com/maxtoor/lagile.management.git
+cd lagile.management
+```
+
+2. Copia variabili ambiente:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Imposta almeno queste variabili in `.env`:
+3. Imposta almeno queste variabili in `.env`:
 
 ```env
 DJANGO_SECRET_KEY=una-chiave-forte
@@ -75,13 +84,13 @@ Note rapide:
 
 Per il dettaglio completo di tutte le variabili supportate: [`docs/variabili_env.md`](docs/variabili_env.md)
 
-3. Avvia:
+4. Avvia:
 
 ```bash
 docker compose up --build
 ```
 
-4. App disponibile su:
+5. App disponibile su:
 - Portale dipendenti: `http://localhost:8001/`
 - API: `http://localhost:8001/api/`
 - Admin: `http://localhost:8001/admin/`
