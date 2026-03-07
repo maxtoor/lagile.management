@@ -336,7 +336,8 @@ class AdminOverviewView(APIView):
         else:
             users_qs = User.objects.filter(is_active=True, manager=request.user).order_by('last_name', 'first_name', 'username')
 
-        users = list(users_qs.only('id', 'username', 'first_name', 'last_name', 'department'))
+        users = list(users_qs.only('id', 'username', 'first_name', 'last_name', 'department', 'aila_subscribed'))
+        visible_users = [user for user in users if bool(getattr(user, 'aila_subscribed', False))]
         plans = list(
             MonthlyPlan.objects.filter(user__in=users_qs, year=year, month=month)
             .prefetch_related('days')
@@ -362,6 +363,7 @@ class AdminOverviewView(APIView):
                         'first_name': user.first_name or '',
                         'last_name': user.last_name or '',
                         'department': user.department or '',
+                        'aila_subscribed': bool(getattr(user, 'aila_subscribed', False)),
                         'auto_approve': bool(getattr(user, 'auto_approve', False)),
                         'plan_id': None,
                         'status': 'MISSING',
@@ -384,6 +386,7 @@ class AdminOverviewView(APIView):
                     'first_name': user.first_name or '',
                     'last_name': user.last_name or '',
                     'department': user.department or '',
+                    'aila_subscribed': bool(getattr(user, 'aila_subscribed', False)),
                     'auto_approve': bool(getattr(user, 'auto_approve', False)),
                     'plan_id': plan.id,
                     'status': plan.status,
@@ -393,19 +396,23 @@ class AdminOverviewView(APIView):
                 }
             )
 
+        visible_rows = [row for row in rows if row.get('aila_subscribed')]
+        visible_plan_rows = [row for row in visible_rows if row.get('plan_id')]
+        visible_missing_rows = [row for row in visible_rows if row.get('status') == 'MISSING']
+
         return Response(
             {
                 'year': year,
                 'month': month,
                 'rows': rows,
                 'totals': {
-                    'users': len(users),
-                    'plans': len(plans),
-                    'missing': status_totals.get('MISSING', 0),
-                    'draft': status_totals.get('DRAFT', 0),
-                    'submitted': status_totals.get('SUBMITTED', 0),
-                    'approved': status_totals.get('APPROVED', 0),
-                    'rejected': status_totals.get('REJECTED', 0),
+                    'users': len(visible_users),
+                    'plans': len(visible_plan_rows),
+                    'missing': len(visible_missing_rows),
+                    'draft': sum(1 for row in visible_rows if row.get('status') == 'DRAFT'),
+                    'submitted': sum(1 for row in visible_rows if row.get('status') == 'SUBMITTED'),
+                    'approved': sum(1 for row in visible_rows if row.get('status') == 'APPROVED'),
+                    'rejected': sum(1 for row in visible_rows if row.get('status') == 'REJECTED'),
                 },
             }
         )

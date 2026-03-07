@@ -3647,11 +3647,16 @@
         }
       }
 
+      function isOverviewRowVisible(row) {
+        return Boolean(row?.aila_subscribed);
+      }
+
       function renderOverviewRows() {
         if (!overviewBody) return;
         const statusFilter = overviewStatusValue;
         const siteFilter = overviewSiteValue;
         const filtered = overviewRows.filter((row) => {
+          if (!isOverviewRowVisible(row)) return false;
           if (statusFilter && row.status !== statusFilter) return false;
           if (siteFilter && (row.department || "") !== siteFilter) return false;
           return true;
@@ -3701,6 +3706,7 @@
         const sites = Array.from(
           new Set(
             overviewRows
+              .filter((row) => isOverviewRowVisible(row))
               .map((row) => (row.department || "").trim())
               .filter((value) => value)
           )
