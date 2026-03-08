@@ -144,8 +144,8 @@ Opzioni principali:
 Comandi rapidi da server nuovo:
 
 ```bash
-git clone https://github.com/maxtoor/lagile.management.git
-cd lagile.management
+git clone https://github.com/maxtoor/lagile.management.git /opt/lagile-management
+cd /opt/lagile-management
 
 # Simulazione (consigliata prima esecuzione)
 bash scripts/install.sh --dry-run --install-dir /opt/lagile-management --branch main --port 8001
@@ -153,6 +153,10 @@ bash scripts/install.sh --dry-run --install-dir /opt/lagile-management --branch 
 # Installazione reale
 bash scripts/install.sh --install-dir /opt/lagile-management --branch main --port 8001
 ```
+
+Nota:
+- in questo esempio il repository viene clonato direttamente nella directory finale di installazione
+- e la forma piu lineare, perche evita di eseguire lo script da una checkout temporanea e installare altrove
 
 ### Upgrade applicazione (Linux, Docker)
 
