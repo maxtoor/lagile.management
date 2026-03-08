@@ -52,15 +52,20 @@ cp .env.example .env
 ```env
 DJANGO_SECRET_KEY=una-chiave-forte
 DEBUG=1
+ALLOWED_HOSTS=localhost,127.0.0.1
+TIME_ZONE=Europe/Rome
+
 AGILE_SITES=Sede principale
 AGILE_DATE_DISPLAY_FORMAT=IT
-AGILE_LOGIN_LOGO_URL=https://example.org/static/logo-istituto.png
+
 POSTGRES_DB=agile_work
 POSTGRES_USER=agile
 POSTGRES_PASSWORD=agile
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
+
 LDAP_ENABLED=0
+AGILE_PUBLIC_BASE_URL=http://localhost:8001
 ```
 
 Per la configurazione completa delle variabili ambiente:
@@ -258,6 +263,18 @@ Import/export release:
 - `python manage.py import_release_data ./release-export.json --mode replace`
 
 ## Configurazione
+
+### Logo di login
+
+Puoi personalizzare il logo della pagina di login tramite:
+
+```env
+AGILE_LOGIN_LOGO_URL=https://example.org/static/logo-istituto.png
+```
+
+Comportamento:
+- se `AGILE_LOGIN_LOGO_URL` e valorizzata, viene usato quel logo
+- se `AGILE_LOGIN_LOGO_URL` e vuota o assente, viene usato il logo di default incluso nell'applicazione (`informatici_cnr.png`)
 
 ### LDAP
 

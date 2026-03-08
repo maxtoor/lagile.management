@@ -3,6 +3,7 @@ from functools import lru_cache
 from django.conf import settings
 from django.db import connection
 from django.db.utils import OperationalError, ProgrammingError
+from django.templatetags.static import static
 
 
 def clear_runtime_settings_cache() -> None:
@@ -63,8 +64,11 @@ def build_email_link_context() -> dict:
 
 
 def build_runtime_ui_context() -> dict:
+    login_logo_url = (get_runtime_setting('AGILE_LOGIN_LOGO_URL', '') or '').strip()
+    if not login_logo_url:
+        login_logo_url = static('agile/informatici_cnr.png')
     return {
-        'login_logo_url': (get_runtime_setting('AGILE_LOGIN_LOGO_URL', '') or '').strip(),
+        'login_logo_url': login_logo_url,
         'company_name': get_runtime_setting('AGILE_COMPANY_NAME', 'LAgile.Management'),
         'copyright_year': get_runtime_setting('AGILE_COPYRIGHT_YEAR', 2026),
     }
