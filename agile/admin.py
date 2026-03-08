@@ -1123,13 +1123,16 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
             "<code>{{first_name_or_username}}</code>, <code>{{first_name}}</code>, <code>{{last_name}}</code>, "
             "<code>{{full_name}}</code>, <code>{{username}}</code>, "
             "<code>{{month_label}}</code>, <code>{{month_name_year}}</code>, "
-            "<code>{{status_label}}</code>, <code>{{status_label_lower}}</code>"
+            "<code>{{status_label}}</code>, <code>{{status_label_lower}}</code>, "
+            "<code>{{email}}</code>, <code>{{import_timestamp}}</code>"
             "<br><strong>Esiti:</strong> "
             "<code>{{change_reason}}</code>, <code>{{rejection_reason}}</code>, <code>{{final_line}}</code>"
             "<br><strong>Referente:</strong> "
             "<code>{{manager_name}}</code>, <code>{{employee_name}}</code>, "
             "<code>{{pending_count}}</code>, <code>{{missing_count}}</code>, "
             "<code>{{pending_lines}}</code>, <code>{{missing_lines}}</code>"
+            "<br><strong>Link:</strong> "
+            "<code>{{public_base_url}}</code>, <code>{{portal_url}}</code>, <code>{{admin_url}}</code>"
             "</div>"
         )
 
@@ -1164,6 +1167,11 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
             'change_reason': 'Aggiornamento attivita su progetto sperimentale',
             'rejection_reason': 'Motivazione di esempio',
             'final_line': 'La variazione e stata recepita nel piano.',
+            'email': 'mario.rossi@example.org',
+            'import_timestamp': '2026-03-08 10:30:00',
+            'public_base_url': 'https://lagile.example.org',
+            'portal_url': 'https://lagile.example.org/',
+            'admin_url': 'https://lagile.example.org/admin/',
         }
         if key == 'PLAN_APPROVED':
             base.update(

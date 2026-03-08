@@ -7,7 +7,7 @@ from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
 from .models import AuditLog, ChangeRequest, MonthlyPlan, PlanDay, User
-from .runtime_settings import get_runtime_setting
+from .runtime_settings import build_email_link_context, get_runtime_setting
 
 
 class LoginSerializer(serializers.Serializer):
@@ -35,6 +35,17 @@ class LoginSerializer(serializers.Serializer):
             return from_email
         return formataddr((from_name, from_email))
 
+    @staticmethod
+    def _render_system_email(*, key: str, default_subject: str, default_body: str, context: dict) -> tuple[str, str]:
+        from .views import render_system_email_template
+
+        return render_system_email_template(
+            key=key,
+            default_subject=default_subject,
+            default_body=default_body,
+            context=context,
+        )
+
     @classmethod
     def _notify_superusers_for_new_ldap_user(cls, user: User) -> None:
         recipients = list(
@@ -48,15 +59,33 @@ class LoginSerializer(serializers.Serializer):
 
         full_name = f'{(user.first_name or "").strip()} {(user.last_name or "").strip()}'.strip() or user.username
         now_str = timezone.localtime().strftime('%Y-%m-%d %H:%M:%S')
-        subject = f'Nuovo utente LDAP importato: {user.username}'
-        message = (
+        links = build_email_link_context()
+        default_subject = f'Nuovo utente LDAP importato: {user.username}'
+        default_body = (
             'E stato importato automaticamente un nuovo utente al primo login LDAP.\n\n'
             f'Username: {user.username}\n'
             f'Nome completo: {full_name}\n'
             f'Email: {user.email or "-"}\n'
             f'Data import: {now_str}\n\n'
+            'Pannello amministrativo: {admin_url}\n'
+            'Portale applicazione: {portal_url}\n\n'
             'Completare la configurazione nel pannello amministrativo: Attivo, Afferenza territoriale, Responsabile approvazione, '
             'Sottoscrizione AILA e altre impostazioni applicative.'
+        )
+        subject, message = cls._render_system_email(
+            key='LDAP_USER_IMPORTED',
+            default_subject=default_subject,
+            default_body=default_body,
+            context={
+                'username': user.username,
+                'first_name': (user.first_name or '').strip(),
+                'last_name': (user.last_name or '').strip(),
+                'full_name': full_name,
+                'first_name_or_username': (user.first_name or '').strip() or user.username,
+                'email': user.email or '-',
+                'import_timestamp': now_str,
+                **links,
+            },
         )
         send_mail(
             subject=subject,

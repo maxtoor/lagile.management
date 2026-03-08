@@ -458,6 +458,7 @@ class ChangeRequest(models.Model):
 
 class SystemEmailTemplate(models.Model):
     class Key(models.TextChoices):
+        LDAP_USER_IMPORTED = 'LDAP_USER_IMPORTED', 'Nuovo utente LDAP importato'
         CHANGE_REQUEST_SUBMITTED = 'CHANGE_REQUEST_SUBMITTED', 'Richiesta variazione inviata'
         REMINDER_PENDING_SUBMISSION = 'REMINDER_PENDING_SUBMISSION', 'Promemoria invio piano'
         MANAGER_MONTHLY_SUMMARY = 'MANAGER_MONTHLY_SUMMARY', 'Riepilogo mensile referente'
@@ -471,7 +472,7 @@ class SystemEmailTemplate(models.Model):
     body_template = models.TextField(
         help_text=(
             'Template con segnaposto Python-style, es: {first_name}, {username}, {month_label}, '
-            '{status_label}, {rejection_reason}, {change_reason}'
+            '{status_label}, {rejection_reason}, {change_reason}, {portal_url}, {admin_url}'
         )
     )
     updated_at = models.DateTimeField(auto_now=True)

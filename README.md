@@ -271,6 +271,36 @@ LDAP_IMPORT_FILTER=(objectClass=person)
 
 Con `LDAP_ENABLED=0` resta attivo il login locale Django.
 
+### Registrazione automatica al primo login (flusso ordinario)
+
+Con LDAP attivo, il comportamento ordinario dell'applicazione non e l'importazione massiva preventiva, ma la creazione automatica dell'utente locale al primo login LDAP riuscito.
+
+In pratica:
+- l'utente inserisce le proprie credenziali LDAP nel portale
+- se l'autenticazione LDAP riesce e l'utente non esiste ancora nel database locale, viene creato automaticamente
+- il record locale viene inizializzato con password non utilizzabile e configurazione applicativa minima
+- l'utente puo entrare nel portale, ma resta in onboarding finche non viene completata la configurazione applicativa
+
+Alla prima registrazione automatica:
+- viene inviata una email ai superuser
+- la email contiene i link al portale e alla Pagina di Amministrazione
+- il superuser deve completare i campi applicativi necessari, in particolare:
+  - `Attivo`
+  - `Afferenza territoriale`
+  - `Responsabile approvazione`
+  - `Sottoscrizione AILA`
+  - eventuali altre impostazioni locali
+
+Questo approccio e il piu adatto quando LDAP e la sorgente autorevole per l'identita utente:
+- evita precaricamenti massivi non necessari
+- crea gli account locali solo quando servono davvero
+- mantiene su LDAP autenticazione e anagrafica base
+- lascia all'applicazione solo i dati funzionali specifici del dominio
+
+In sintesi:
+- con LDAP attivo, la registrazione automatica al primo login e il flusso standard
+- `import_ldap_users` e `sync_ldap_users` sono strumenti opzionali di supporto operativo, non un prerequisito per il funzionamento normale
+
 ### Import utenti LDAP in locale (non attivi)
 
 Per importare utenti LDAP nel DB locale e gestirli manualmente:

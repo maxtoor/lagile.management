@@ -209,12 +209,12 @@ def notify_change_request_submitted(*, change_request: ChangeRequest) -> bool:
     change_reason = change_request.reason or 'non specificata'
     default_subject = f'Nuova richiesta variazione da approvare - {month_name_year}'
     links = build_email_link_context()
-    admin_line = f"Link gestione: {links['admin_url']}\n\n" if links['admin_url'] else ''
+    portal_line = f"Link portale: {links['portal_url']}\n\n" if links['portal_url'] else ''
     default_body = (
         'Gentile {manager_name},\n\n'
         "L'utente {employee_name} ha inviato una richiesta variazione per il mese {month_name_year}.\n"
         'Motivazione richiesta: {change_reason}\n\n'
-        '{admin_line}'
+        '{portal_line}'
         'Puoi accedere al portale per approvare o rifiutare la richiesta.'
     )
     subject, message = render_system_email_template(
@@ -227,7 +227,7 @@ def notify_change_request_submitted(*, change_request: ChangeRequest) -> bool:
             'month_label': month_label,
             'month_name_year': month_name_year,
             'change_reason': change_reason,
-            'admin_line': admin_line,
+            'portal_line': portal_line,
             **links,
         },
     )
