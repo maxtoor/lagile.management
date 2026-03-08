@@ -405,6 +405,7 @@ Se `AGILE_EMAIL_REDIRECT_TO` e valorizzato, tutte le email in uscita vengono inv
 Template email modificabili dalla Pagina di Amministrazione:
 - sezione: `Template email di sistema`
 - chiavi disponibili:
+  - `LDAP_USER_IMPORTED`
   - `CHANGE_REQUEST_SUBMITTED`
   - `REMINDER_PENDING_SUBMISSION`
   - `MANAGER_MONTHLY_SUMMARY`
@@ -418,19 +419,31 @@ Template email modificabili dalla Pagina di Amministrazione:
   - `{pending_count}`, `{missing_count}`, `{pending_lines}`, `{missing_lines}`
   - `{month_label}`, `{month_name_year}`, `{status_label}`, `{status_label_lower}`
   - `{plan_status}`, `{plan_status_label}`
+  - `{email}`, `{import_timestamp}`
+  - `{public_base_url}`, `{portal_url}`, `{admin_url}`
   - `{change_reason}`, `{rejection_reason}`, `{final_line}`
 - dalla scheda template e disponibile il pulsante `Invia email di test` con anteprima e invio verso destinatario scelto
 - eventi email principali:
-  - invio richiesta variazione: email al referente amministrativo dell'utente
-  - ultimo giorno del mese: promemoria invio piano al mese successivo per utenti attivi senza auto-approvazione che non hanno ancora stato `SUBMITTED`/`APPROVED` (una sola volta per utente/mese target)
-  - primo giorno del mese: email riepilogo al referente con piani in attesa di approvazione e utenti assegnati senza piano del mese corrente (una sola volta per referente/mese)
+  - primo login LDAP di un utente non ancora presente in locale: email ai superuser per completare onboarding e configurazione applicativa
+  - invio richiesta variazione: email al responsabile approvazione dell'utente
   - esito piano (approvato/rifiutato): email al dipendente
   - esito variazione (approvata/rifiutata): email al dipendente
 
-Comando promemoria:
+Email periodiche gestite dallo scheduler Docker:
+- `send_submission_reminders`
+  - ultimo giorno del mese
+  - invia promemoria per il piano del mese successivo agli utenti attivi senza auto-approvazione che non hanno ancora stato `SUBMITTED` o `APPROVED`
+  - una sola volta per utente e mese target
+- `send_manager_monthly_summary`
+  - primo giorno del mese
+  - invia ai responsabili approvazione il riepilogo con piani in attesa, piani approvati, utenti senza piano e utenti in auto-approvazione
+  - una sola volta per responsabile e mese
+
+Esecuzione manuale dei comandi email:
 
 ```bash
 python manage.py send_submission_reminders
+python manage.py send_manager_monthly_summary
 ```
 
 Opzioni utili:
@@ -442,14 +455,15 @@ python manage.py send_submission_reminders --date 2026-03-30 --dry-run
 python manage.py send_manager_monthly_summary --dry-run
 python manage.py send_manager_monthly_summary --force
 python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run
-python manage.py prepare_next_year_holidays --dry-run
-python manage.py prepare_next_year_holidays --force --year 2027
 ```
 
-Esecuzione schedulata consigliata (cron giornaliero, il comando invia solo l'ultimo giorno):
+Se usi Docker non serve un cron esterno: questi due comandi vengono gia eseguiti automaticamente dal servizio `scheduler`, che controlla ogni `REMINDER_CHECK_INTERVAL_SECONDS` se e il giorno corretto per inviare.
+
+Se invece vuoi eseguirli fuori Docker, puoi schedularli via cron. Esempio:
 
 ```cron
 15 8 * * * cd /app && python manage.py send_submission_reminders
+20 8 * * * cd /app && python manage.py send_manager_monthly_summary
 ```
 
 ## Vincoli di business implementati
