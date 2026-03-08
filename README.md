@@ -547,6 +547,21 @@ Per aggiornare anche nomi gia esistenti nello stesso giorno:
 python manage.py sync_holidays --year 2026 --overwrite
 ```
 
+### Preparazione festivita anno successivo
+
+Per predisporre automaticamente le festivita dell'anno successivo e inviare un report ai superuser e disponibile:
+
+```bash
+python manage.py prepare_next_year_holidays --dry-run
+python manage.py prepare_next_year_holidays --force --year 2027
+```
+
+Note:
+- il comando genera o aggiorna le festivita nazionali italiane dell'anno indicato
+- in ambiente Docker viene eseguito automaticamente dal servizio `scheduler` il 1 dicembre
+- il report finale viene inviato ai superuser via email
+- puo comunque essere eseguito manualmente quando serve
+
 ## Licenza
 
 Questo progetto e distribuito con licenza **GNU GPL v3.0 o successiva (GPL-3.0-or-later)**.
