@@ -518,6 +518,10 @@ Allineamento automatico implementato:
 ### Sync automatico festivita nazionali
 
 Puoi precaricare nel DB le festivita nazionali italiane:
+- dalla Pagina di Amministrazione, tramite gli strumenti dedicati
+- oppure da riga di comando
+
+Comando CLI:
 
 ```bash
 python manage.py sync_holidays --year 2026
@@ -528,12 +532,6 @@ Per aggiornare anche nomi gia esistenti nello stesso giorno:
 ```bash
 python manage.py sync_holidays --year 2026 --overwrite
 ```
-
-## Limiti attuali (da discutere)
-
-- Gestione utenti/gruppi avanzata delegata alla Pagina di Amministrazione
-- Notifiche email di base (template modificabili via admin)
-- Nessun frontend SPA separato (UI server-rendered)
 
 ## Licenza
 
