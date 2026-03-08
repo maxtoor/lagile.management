@@ -4,7 +4,7 @@ Applicazione on-premise per pianificazione e approvazione del lavoro agile. Vers
 
 Backend Django per gestione mensile del calendario di lavoro agile con autenticazione LDAP o locale, workflow di approvazione e audit log.
 
-## Funzionalita incluse
+## Panoramica
 
 - Login con token (`/api/auth/login/`) usando backend locale o LDAP
 - Gestione utenti con ruoli: `EMPLOYEE`, `ADMIN`, `SUPERADMIN`
@@ -276,48 +276,9 @@ Import/export release:
 - `python manage.py import_release_data ./release-export.json --mode merge`
 - `python manage.py import_release_data ./release-export.json --mode replace`
 
-## Endpoints principali
+## Configurazione
 
-- `POST /api/auth/login/`
-  - body: `{ "username": "...", "password": "..." }`
-  - response: token + profilo
-- `GET /api/auth/me/`
-  - include anche `manager_id`, `manager_name`, `aila_subscribed`, `auto_approve`
-- `GET/POST /api/plans/`
-- `GET/PUT/PATCH /api/plans/{id}/`
-- `POST /api/plans/{id}/submit/` (dipendente)
-- `POST /api/plans/{id}/request_change/` (dipendente, solo mese corrente)
-- `POST /api/plans/{id}/review/` (admin)
-- `GET /api/holidays/month/?year=YYYY&month=MM`
-  - body approvazione: `{ "approve": true }`
-  - body rifiuto: `{ "approve": false, "reason": "..." }`
-
-Header auth richiesto:
-
-```text
-Authorization: Token <token>
-```
-
-Esempio risposta profilo utente:
-
-```json
-{
-  "id": 12,
-  "username": "mrossi",
-  "email": "mrossi@example.org",
-  "first_name": "Mario",
-  "last_name": "Rossi",
-  "department": "Napoli",
-  "manager_id": 4,
-  "manager_name": "Luigi Bianchi",
-  "role": "EMPLOYEE",
-  "aila_subscribed": false,
-  "is_staff": false,
-  "is_superuser": false
-}
-```
-
-## LDAP
+### LDAP
 
 Abilita LDAP con:
 
@@ -334,7 +295,7 @@ LDAP_IMPORT_FILTER=(objectClass=person)
 
 Con `LDAP_ENABLED=0` resta attivo il login locale Django.
 
-### Registrazione automatica al primo login (flusso ordinario)
+#### Registrazione automatica al primo login (flusso ordinario)
 
 Con LDAP attivo, il comportamento ordinario dell'applicazione non e l'importazione massiva preventiva, ma la creazione automatica dell'utente locale al primo login LDAP riuscito.
 
@@ -364,7 +325,7 @@ In sintesi:
 - con LDAP attivo, la registrazione automatica al primo login e il flusso standard
 - `import_ldap_users` e `sync_ldap_users` sono strumenti opzionali di supporto operativo, non un prerequisito per il funzionamento normale
 
-### Controllo periodico presenza utenti in LDAP
+#### Controllo periodico presenza utenti in LDAP
 
 Per il controllo periodico degli utenti gia registrati localmente e disponibile un comando separato.
 Vedi anche la sezione `Comandi amministrativi`.
@@ -379,7 +340,7 @@ Questo comando:
 Questo e il comando piu adatto all'esecuzione periodica via scheduler.
 Non aggiorna nome, cognome o email, e non crea utenti mancanti.
 
-### Import utenti LDAP in locale (non attivi)
+#### Import utenti LDAP in locale (non attivi)
 
 Per importare utenti LDAP nel DB locale e gestirli manualmente, vedi la sezione `Comandi amministrativi`.
 
@@ -388,7 +349,7 @@ Note:
 - agli utenti importati viene impostata password locale non utilizzabile
 - il campo `Afferenza territoriale` viene valorizzato solo se il valore LDAP e tra quelli ammessi da `AGILE_SITES`, altrimenti resta vuoto
 
-### Sync periodico utenti LDAP (allineamento)
+#### Sync periodico utenti LDAP (allineamento)
 
 Per allineare gli utenti gia importati quando LDAP cambia, vedi la sezione `Comandi amministrativi`.
 
@@ -402,40 +363,7 @@ Regole sync:
 - con `--create-missing` crea in locale gli utenti LDAP assenti nel DB
 - con `--deactivate-missing` vengono disattivati gli account LDAP locali non piu presenti su LDAP (solo account con password non utilizzabile)
 
-## Import/Export release (JSON)
-
-Per trasferire configurazione e anagrafica base tra installazioni (es. bootstrap nuova istanza) sono disponibili i comandi riepilogati nella sezione `Comandi amministrativi`.
-
-Contenuti esportati:
-- utenti (anagrafica applicativa, ruolo, referente, gruppi, stato AILA/auto-approvazione)
-- gruppi
-- policy afferenze territoriali (`DepartmentPolicy`)
-- festivita (`Holiday`)
-- template email di sistema
-- impostazioni applicazione (`AppSetting`)
-
-Note operative:
-- formato versionato: `schema_version=1`
-- `--dry-run` valida e simula senza salvare modifiche
-- `--mode merge` (default): upsert senza cancellazioni
-- `--mode replace`: oltre all'upsert, sostituisce dataset di `DepartmentPolicy`, `Holiday`, `SystemEmailTemplate` e `AppSetting` (non cancella utenti)
-- gli utenti nuovi vengono creati con password locale non utilizzabile
-- il campo referente viene assegnato in seconda fase usando `manager_username`
-
-Flusso consigliato installazione ex-novo:
-1. deploy stack + migrate + superuser
-2. `import_release_data` dal file export della sorgente
-3. verifica accesso admin/portale e test SMTP
-4. eventuale import CSV ICB dalla pagina `Strumenti`
-
-## Migrazione dalla versione precedente
-
-Nota: questa procedura riguarda esclusivamente gli Istituti del CNR che avevano adottato la versione precedente di questo software.
-
-Dettagli operativi nel documento dedicato:
-- [`docs/migrazione_cnr.md`](docs/migrazione_cnr.md)
-
-## Email notifiche
+### Email notifiche
 
 Configura SMTP in `.env`:
 
@@ -496,7 +424,44 @@ Se invece vuoi eseguirli fuori Docker, puoi schedularli via cron. Esempio:
 20 8 * * * cd /app && python manage.py send_manager_monthly_summary
 ```
 
-## Vincoli di business implementati
+## Operazioni straordinarie
+
+### Import/Export release (JSON)
+
+Per trasferire configurazione e anagrafica base tra installazioni (es. bootstrap nuova istanza) sono disponibili i comandi riepilogati nella sezione `Comandi amministrativi`.
+
+Contenuti esportati:
+- utenti (anagrafica applicativa, ruolo, referente, gruppi, stato AILA/auto-approvazione)
+- gruppi
+- policy afferenze territoriali (`DepartmentPolicy`)
+- festivita (`Holiday`)
+- template email di sistema
+- impostazioni applicazione (`AppSetting`)
+
+Note operative:
+- formato versionato: `schema_version=1`
+- `--dry-run` valida e simula senza salvare modifiche
+- `--mode merge` (default): upsert senza cancellazioni
+- `--mode replace`: oltre all'upsert, sostituisce dataset di `DepartmentPolicy`, `Holiday`, `SystemEmailTemplate` e `AppSetting` (non cancella utenti)
+- gli utenti nuovi vengono creati con password locale non utilizzabile
+- il campo referente viene assegnato in seconda fase usando `manager_username`
+
+Flusso consigliato installazione ex-novo:
+1. deploy stack + migrate + superuser
+2. `import_release_data` dal file export della sorgente
+3. verifica accesso admin/portale e test SMTP
+4. eventuale import CSV ICB dalla pagina `Strumenti`
+
+### Migrazione dalla versione precedente
+
+Nota: questa procedura riguarda esclusivamente gli Istituti del CNR che avevano adottato la versione precedente di questo software.
+
+Dettagli operativi nel documento dedicato:
+- [`docs/migrazione_cnr.md`](docs/migrazione_cnr.md)
+
+## Funzionamento applicativo
+
+### Vincoli di business implementati
 
 - Limite giorni lavoro agile: massimo 10 giorni/mese
 - Eccezione febbraio: massimo 8 giorni
@@ -510,7 +475,7 @@ Se invece vuoi eseguirli fuori Docker, puoi schedularli via cron. Esempio:
 
 I vincoli sono validati sia in fase di creazione/modifica del piano, sia al momento dell'invio (`submit`).
 
-## Configurazione per Afferenza territoriale (eventuali sedi distaccate)
+### Configurazione per Afferenza territoriale (eventuali sedi distaccate)
 
 Dalla Pagina di Amministrazione puoi configurare:
 
@@ -520,7 +485,7 @@ Dalla Pagina di Amministrazione puoi configurare:
   - `require_on_site_prevalence`
 - `Holiday`: festivita globali (campo afferenza territoriale vuoto) o specifiche per afferenza territoriale
 
-## Anagrafica utente e referente
+### Anagrafica utente e referente
 
 Nella Pagina di Amministrazione, nella scheda utente (`Users`), sono disponibili:
 - `Afferenza territoriale` (campo tecnico: `department`)
@@ -536,7 +501,7 @@ Note:
 - se `Sottoscrizione AILA=No` ma l'utente e `ADMIN`/`SUPERADMIN`, puo comunque accedere e operare nelle code approvazioni/variazioni
 - se `Approvazione automatica=Si`, invio piano e richieste variazione vengono approvati direttamente senza passare dalle code
 
-## Ruoli e permessi (Django vs App)
+### Ruoli e permessi (Django vs App)
 
 Per evitare ambiguita, i livelli sono due:
 
@@ -559,7 +524,7 @@ Allineamento automatico implementato:
 - `role=ADMIN` mantiene `is_staff=False` (resta approvatore nell'app ma senza accesso Pagina di Amministrazione)
 - utente `EMPLOYEE` non superuser viene riallineato con `is_staff=False`
 
-### Sync automatico festivita nazionali
+#### Sync automatico festivita nazionali
 
 Puoi precaricare nel DB le festivita nazionali italiane:
 - dalla Pagina di Amministrazione, tramite gli strumenti dedicati
@@ -567,7 +532,7 @@ Puoi precaricare nel DB le festivita nazionali italiane:
 
 Per i comandi CLI, vedi la sezione `Comandi amministrativi`.
 
-### Preparazione festivita anno successivo
+#### Preparazione festivita anno successivo
 
 Per predisporre automaticamente le festivita dell'anno successivo e inviare un report ai superuser, vedi la sezione `Comandi amministrativi`.
 
@@ -576,6 +541,47 @@ Note:
 - in ambiente Docker viene eseguito automaticamente dal servizio `scheduler` il 1 dicembre
 - il report finale viene inviato ai superuser via email
 - puo comunque essere eseguito manualmente quando serve
+
+## API
+
+- `POST /api/auth/login/`
+  - body: `{ "username": "...", "password": "..." }`
+  - response: token + profilo
+- `GET /api/auth/me/`
+  - include anche `manager_id`, `manager_name`, `aila_subscribed`, `auto_approve`
+- `GET/POST /api/plans/`
+- `GET/PUT/PATCH /api/plans/{id}/`
+- `POST /api/plans/{id}/submit/` (dipendente)
+- `POST /api/plans/{id}/request_change/` (dipendente, solo mese corrente)
+- `POST /api/plans/{id}/review/` (admin)
+- `GET /api/holidays/month/?year=YYYY&month=MM`
+  - body approvazione: `{ "approve": true }`
+  - body rifiuto: `{ "approve": false, "reason": "..." }`
+
+Header auth richiesto:
+
+```text
+Authorization: Token <token>
+```
+
+Esempio risposta profilo utente:
+
+```json
+{
+  "id": 12,
+  "username": "mrossi",
+  "email": "mrossi@example.org",
+  "first_name": "Mario",
+  "last_name": "Rossi",
+  "department": "Napoli",
+  "manager_id": 4,
+  "manager_name": "Luigi Bianchi",
+  "role": "EMPLOYEE",
+  "aila_subscribed": false,
+  "is_staff": false,
+  "is_superuser": false
+}
+```
 
 ## Licenza
 
