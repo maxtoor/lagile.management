@@ -181,12 +181,7 @@ Opzioni utili:
 - `--allow-dirty` per forzare anche con working tree non pulita
 
 Nota Docker:
-- e presente un servizio `scheduler` che esegue periodicamente:
-  - `send_submission_reminders` (promemoria utente ultimo giorno mese)
-  - `send_manager_monthly_summary` (riepilogo referente primo giorno mese)
-  - `prepare_next_year_holidays` (il 1 dicembre prepara le festivita dell'anno successivo e invia report ai superuser)
-- intervallo controllo configurabile con `REMINDER_CHECK_INTERVAL_SECONDS` (default `86400`)
-- i comandi inviano realmente email solo nel loro giorno previsto (a meno di `--force`)
+- e presente un servizio `scheduler`; dettagli operativi nella sezione `Scheduler`
 - nella Pagina di Amministrazione e disponibile il link `Monitor log` per visualizzare il tail live e selezionare la sorgente (es. `app` / `scheduler`)
 
 ## Avvio locale (senza Docker)
@@ -212,6 +207,70 @@ Override da interfaccia Pagina di Amministrazione:
   - logo login
   - nome azienda + anno copyright
   - mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
+
+## Scheduler
+
+Nel deploy Docker e presente un servizio `scheduler` che esegue periodicamente alcuni comandi applicativi.
+
+Intervallo di controllo:
+- configurabile con `REMINDER_CHECK_INTERVAL_SECONDS`
+- fallback in `docker-compose.yml`: `3600` secondi
+
+Job attuali:
+- `send_submission_reminders`
+  - promemoria ultimo giorno del mese per l'invio del piano del mese successivo
+  - invia email agli utenti attivi senza auto-approvazione che non hanno ancora stato `SUBMITTED` o `APPROVED`
+- `send_manager_monthly_summary`
+  - riepilogo il primo giorno del mese per i responsabili approvazione
+  - include piani in attesa, piani approvati, utenti senza piano e utenti in auto-approvazione
+- `prepare_next_year_holidays`
+  - il 1 dicembre prepara le festivita dell'anno successivo
+  - invia un report ai superuser
+- `check_ldap_user_presence`
+  - verifica periodicamente se gli utenti locali gestiti via LDAP esistono ancora nella directory
+  - se un utente non esiste piu, lo disattiva e invia un report ai superuser
+
+Note operative:
+- il loop esegue i comandi a ogni intervallo, ma ciascun comando applica internamente le proprie condizioni temporali
+- i comandi che lavorano su date specifiche non inviano nulla fuori finestra, salvo uso esplicito di `--force`
+- nella Pagina di Amministrazione e disponibile il monitor log per controllare il comportamento del servizio
+
+## Comandi amministrativi
+
+Riepilogo dei principali comandi manuali/amministrativi disponibili.
+
+LDAP:
+- `python manage.py import_ldap_users`
+- `python manage.py import_ldap_users --dry-run`
+- `python manage.py import_ldap_users --base-dn "ou=people,dc=example,dc=org" --filter "(objectClass=person)"`
+- `python manage.py sync_ldap_users`
+- `python manage.py sync_ldap_users --dry-run`
+- `python manage.py sync_ldap_users --deactivate-missing`
+- `python manage.py sync_ldap_users --create-missing`
+- `python manage.py check_ldap_user_presence`
+- `python manage.py check_ldap_user_presence --dry-run`
+
+Email operative:
+- `python manage.py send_submission_reminders`
+- `python manage.py send_submission_reminders --dry-run`
+- `python manage.py send_submission_reminders --force`
+- `python manage.py send_submission_reminders --date 2026-03-30 --dry-run`
+- `python manage.py send_manager_monthly_summary`
+- `python manage.py send_manager_monthly_summary --dry-run`
+- `python manage.py send_manager_monthly_summary --force`
+- `python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run`
+
+Festivita:
+- `python manage.py sync_holidays --year 2026`
+- `python manage.py sync_holidays --year 2026 --overwrite`
+- `python manage.py prepare_next_year_holidays --dry-run`
+- `python manage.py prepare_next_year_holidays --force --year 2027`
+
+Import/export release:
+- `python manage.py export_release_data ./release-export.json`
+- `python manage.py import_release_data ./release-export.json --dry-run`
+- `python manage.py import_release_data ./release-export.json --mode merge`
+- `python manage.py import_release_data ./release-export.json --mode replace`
 
 ## Endpoints principali
 
@@ -301,20 +360,24 @@ In sintesi:
 - con LDAP attivo, la registrazione automatica al primo login e il flusso standard
 - `import_ldap_users` e `sync_ldap_users` sono strumenti opzionali di supporto operativo, non un prerequisito per il funzionamento normale
 
+### Controllo periodico presenza utenti in LDAP
+
+Per il controllo periodico degli utenti gia registrati localmente e disponibile un comando separato.
+Vedi anche la sezione `Comandi amministrativi`.
+
+Questo comando:
+- prende in considerazione solo gli utenti locali attivi gestiti via LDAP
+- verifica per ciascuno se esiste ancora nella directory LDAP usando `LDAP_USER_FILTER`
+- se l'utente non esiste piu, lo imposta `is_active=False`
+- registra un audit log applicativo
+- invia una email riepilogativa ai superuser con l'elenco degli utenti disattivati
+
+Questo e il comando piu adatto all'esecuzione periodica via scheduler.
+Non aggiorna nome, cognome o email, e non crea utenti mancanti.
+
 ### Import utenti LDAP in locale (non attivi)
 
-Per importare utenti LDAP nel DB locale e gestirli manualmente:
-
-```bash
-python manage.py import_ldap_users
-```
-
-Opzioni utili:
-
-```bash
-python manage.py import_ldap_users --dry-run
-python manage.py import_ldap_users --base-dn "ou=people,dc=example,dc=org" --filter "(objectClass=person)"
-```
+Per importare utenti LDAP nel DB locale e gestirli manualmente, vedi la sezione `Comandi amministrativi`.
 
 Note:
 - gli utenti importati (nuovi o aggiornati) vengono impostati `is_active=False`
@@ -323,34 +386,21 @@ Note:
 
 ### Sync periodico utenti LDAP (allineamento)
 
-Per allineare gli utenti gia importati quando LDAP cambia:
-
-```bash
-python manage.py sync_ldap_users --dry-run
-python manage.py sync_ldap_users
-python manage.py sync_ldap_users --deactivate-missing
-python manage.py sync_ldap_users --create-missing
-```
+Per allineare gli utenti gia importati quando LDAP cambia, vedi la sezione `Comandi amministrativi`.
 
 Regole sync:
 - chiave di allineamento: `username`
 - campi aggiornati dal sync: `first_name`, `last_name`, `email`
 - campi non toccati: `Afferenza territoriale`, `Responsabile approvazione`, `Sottoscrizione AILA`, `Ruolo`, `Auto-approvazione`
 - gli account locali con password utilizzabile non vengono modificati
+- non e il comando pensato per il controllo periodico di presenza LDAP: per quello usare `check_ldap_user_presence`
 - per default non crea utenti mancanti (evita import massivo involontario)
 - con `--create-missing` crea in locale gli utenti LDAP assenti nel DB
 - con `--deactivate-missing` vengono disattivati gli account LDAP locali non piu presenti su LDAP (solo account con password non utilizzabile)
 
 ## Import/Export release (JSON)
 
-Per trasferire configurazione e anagrafica base tra installazioni (es. bootstrap nuova istanza) sono disponibili:
-
-```bash
-python manage.py export_release_data ./release-export.json
-python manage.py import_release_data ./release-export.json --dry-run
-python manage.py import_release_data ./release-export.json --mode merge
-python manage.py import_release_data ./release-export.json --mode replace
-```
+Per trasferire configurazione e anagrafica base tra installazioni (es. bootstrap nuova istanza) sono disponibili i comandi riepilogati nella sezione `Comandi amministrativi`.
 
 Contenuti esportati:
 - utenti (anagrafica applicativa, ruolo, referente, gruppi, stato AILA/auto-approvazione)
@@ -429,35 +479,11 @@ Template email modificabili dalla Pagina di Amministrazione:
   - esito piano (approvato/rifiutato): email al dipendente
   - esito variazione (approvata/rifiutata): email al dipendente
 
-Email periodiche gestite dallo scheduler Docker:
-- `send_submission_reminders`
-  - ultimo giorno del mese
-  - invia promemoria per il piano del mese successivo agli utenti attivi senza auto-approvazione che non hanno ancora stato `SUBMITTED` o `APPROVED`
-  - una sola volta per utente e mese target
-- `send_manager_monthly_summary`
-  - primo giorno del mese
-  - invia ai responsabili approvazione il riepilogo con piani in attesa, piani approvati, utenti senza piano e utenti in auto-approvazione
-  - una sola volta per responsabile e mese
+Le email periodiche sono gestite dal servizio `scheduler`; vedi la sezione dedicata `Scheduler`.
 
-Esecuzione manuale dei comandi email:
+Per l'esecuzione manuale dei comandi email, vedi la sezione `Comandi amministrativi`.
 
-```bash
-python manage.py send_submission_reminders
-python manage.py send_manager_monthly_summary
-```
-
-Opzioni utili:
-
-```bash
-python manage.py send_submission_reminders --dry-run
-python manage.py send_submission_reminders --force
-python manage.py send_submission_reminders --date 2026-03-30 --dry-run
-python manage.py send_manager_monthly_summary --dry-run
-python manage.py send_manager_monthly_summary --force
-python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run
-```
-
-Se usi Docker non serve un cron esterno: questi due comandi vengono gia eseguiti automaticamente dal servizio `scheduler`, che controlla ogni `REMINDER_CHECK_INTERVAL_SECONDS` se e il giorno corretto per inviare.
+Se usi Docker non serve un cron esterno: questi comandi vengono gia eseguiti automaticamente dal servizio `scheduler`.
 
 Se invece vuoi eseguirli fuori Docker, puoi schedularli via cron. Esempio:
 
@@ -535,26 +561,11 @@ Puoi precaricare nel DB le festivita nazionali italiane:
 - dalla Pagina di Amministrazione, tramite gli strumenti dedicati
 - oppure da riga di comando
 
-Comando CLI:
-
-```bash
-python manage.py sync_holidays --year 2026
-```
-
-Per aggiornare anche nomi gia esistenti nello stesso giorno:
-
-```bash
-python manage.py sync_holidays --year 2026 --overwrite
-```
+Per i comandi CLI, vedi la sezione `Comandi amministrativi`.
 
 ### Preparazione festivita anno successivo
 
-Per predisporre automaticamente le festivita dell'anno successivo e inviare un report ai superuser e disponibile:
-
-```bash
-python manage.py prepare_next_year_holidays --dry-run
-python manage.py prepare_next_year_holidays --force --year 2027
-```
+Per predisporre automaticamente le festivita dell'anno successivo e inviare un report ai superuser, vedi la sezione `Comandi amministrativi`.
 
 Note:
 - il comando genera o aggiorna le festivita nazionali italiane dell'anno indicato
