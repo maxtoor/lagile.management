@@ -63,28 +63,9 @@ POSTGRES_PORT=5432
 LDAP_ENABLED=0
 ```
 
-Riepilogo rapido variabili ambiente:
-- obbligatorie minime: `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`
-- quasi sempre da impostare: `ALLOWED_HOSTS`, `DEBUG`, `TIME_ZONE`
-- identita applicazione: `AGILE_COMPANY_NAME`, `AGILE_COPYRIGHT_YEAR`, `AGILE_LOGIN_LOGO_URL`, `AGILE_FAVICON_URL`
-- portale e sedi: `AGILE_DATE_DISPLAY_FORMAT`, `AGILE_SITES`
-- database: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`
-- LDAP: `LDAP_ENABLED`, `LDAP_SERVER_URI`, `LDAP_BIND_DN`, `LDAP_BIND_PASSWORD`, `LDAP_USER_BASE_DN`, `LDAP_USER_FILTER`
-- email: `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`, `AGILE_EMAIL_REDIRECT_TO`
-- log e monitor admin: `AGILE_LOG_FILE`, `AGILE_LOG_LEVEL`, `AGILE_LOG_MONITOR_FILE`, `AGILE_LOG_MONITOR_SOURCES`, `AGILE_LOG_MONITOR_REFRESH_SECONDS`
-- scheduler: `REMINDER_CHECK_INTERVAL_SECONDS`
-- bootstrap superuser Docker: `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_EMAIL`, `DJANGO_SUPERUSER_PASSWORD`
-
-Note rapide:
-- `ALLOWED_HOSTS`: in sviluppo tipico `localhost,127.0.0.1`; in produzione inserire domini/IP reali esposti
-- `AGILE_DATE_DISPLAY_FORMAT`: `IT` per `gg/mm/aaaa`, `ISO` per `aaaa-mm-gg`
-- `AGILE_SITES`: elenco separato da virgole delle afferenze territoriali disponibili (eventuali sedi secondarie)
-- `AGILE_LOGIN_LOGO_URL` e `AGILE_FAVICON_URL`: URL assoluti opzionali per logo login e favicon
-- `EMAIL_BACKEND`: se non impostato, il fallback reale del codice e `django.core.mail.backends.console.EmailBackend`; `.env.example` mostra invece una configurazione SMTP tipica
-- `AGILE_PUBLIC_BASE_URL`: URL pubblico base da usare nelle email per link al portale e all'admin
-- `AGILE_EMAIL_REDIRECT_TO`: utile in sviluppo/test per reindirizzare tutte le email a una casella di sicurezza
-
-Per il dettaglio completo di tutte le variabili supportate: [`docs/variabili_env.md`](docs/variabili_env.md)
+Per la configurazione completa delle variabili ambiente:
+- vedi la sezione `Configurazione`
+- oppure il dettaglio completo in [`docs/variabili_env.md`](docs/variabili_env.md)
 
 4. Avvia:
 
