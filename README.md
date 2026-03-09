@@ -35,10 +35,9 @@ Django offre un livello di sicurezza superiore out-of-the-box, grazie a protezio
 1. Crea la directory applicazione, scarica il progetto ed entra nella cartella:
 
 ```bash
-mkdir -p /opt/lagile-management
-cd /opt/lagile-management
-git clone https://github.com/maxtoor/lagile.management.git
-cd lagile.management
+mkdir -p /opt/containers
+git clone https://github.com/maxtoor/lagile.management.git /opt/containers/lagile-management
+cd /opt/containers/lagile-management
 ```
 
 2. Copia variabili ambiente:
@@ -96,7 +95,7 @@ Esempio:
 
 ```bash
 bash scripts/install.sh \
-  --install-dir /opt/lagile-management \
+  --install-dir /opt/containers/lagile-management \
   --repo-url https://github.com/maxtoor/lagile.management.git \
   --branch main \
   --port 8001
@@ -109,7 +108,7 @@ Esecuzione diretta da GitHub (senza clone manuale):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/maxtoor/lagile.management/main/scripts/install.sh | bash -s -- \
-  --install-dir /opt/lagile-management \
+  --install-dir /opt/containers/lagile-management \
   --repo-url https://github.com/maxtoor/lagile.management.git
 ```
 
@@ -117,7 +116,7 @@ Alternativa con `wget`:
 
 ```bash
 wget -qO- https://raw.githubusercontent.com/maxtoor/lagile.management/main/scripts/install.sh | bash -s -- \
-  --install-dir /opt/lagile-management \
+  --install-dir /opt/containers/lagile-management \
   --repo-url https://github.com/maxtoor/lagile.management.git
 ```
 
@@ -130,14 +129,15 @@ Opzioni principali:
 Comandi rapidi da server nuovo:
 
 ```bash
-git clone https://github.com/maxtoor/lagile.management.git /opt/lagile-management
-cd /opt/lagile-management
+mkdir -p /opt/containers
+git clone https://github.com/maxtoor/lagile.management.git /opt/containers/lagile-management
+cd /opt/containers/lagile-management
 
 # Simulazione (consigliata prima esecuzione)
-bash scripts/install.sh --dry-run --install-dir /opt/lagile-management --branch main --port 8001
+bash scripts/install.sh --dry-run --install-dir /opt/containers/lagile-management --branch main --port 8001
 
 # Installazione reale
-bash scripts/install.sh --install-dir /opt/lagile-management --branch main --port 8001
+bash scripts/install.sh --install-dir /opt/containers/lagile-management --branch main --port 8001
 ```
 
 Nota:
@@ -163,7 +163,7 @@ bash scripts/upgrade.sh
 ```
 
 Opzioni utili:
-- `--project-dir /opt/lagile-management` se il progetto non e nella directory corrente
+- `--project-dir /opt/containers/lagile-management` se il progetto non e nella directory corrente
 - `--branch main` branch remoto da usare
 - `--skip-backup` se vuoi saltare il backup
 - `--skip-fetch` se hai gia fatto fetch/pull manuale
