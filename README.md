@@ -266,6 +266,7 @@ Import storico legacy ICB:
 - `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --dry-run`
 - `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync`
 - `python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run`
+- `python manage.py import_legacy_icb_notes ./ICB_leaves_report_between_2025_01_01_and_2025_12_31.csv --dry-run`
 
 ## Configurazione
 
@@ -507,12 +508,27 @@ Comandi essenziali:
 - bundle completo: `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --dry-run`
 - bundle completo con allineamento LDAP: `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync`
 - solo storico giorni: `python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run`
+- solo descrizioni attivita da leaves report: `python manage.py import_legacy_icb_notes ./ICB_leaves_report_between_2025_01_01_and_2025_12_31.csv --backup-csv-path ./ICB_backup.csv --dry-run`
 
 Se vuoi lanciare solo la seconda fase, resta disponibile anche il comando dedicato:
 
 ```bash
 python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run
 ```
+
+Se disponi anche del leaves report legacy con la colonna `Comment`, puoi importare successivamente le descrizioni attivita sui `PlanDay` gia creati:
+
+```bash
+python manage.py import_legacy_icb_notes ./ICB_leaves_report_between_2025_01_01_and_2025_12_31.csv --backup-csv-path ./ICB_backup.csv --dry-run
+```
+
+Questo comando:
+- legge solo le righe `Programmazione`
+- usa `Comment` come sorgente di `PlanDay.notes`
+- aggiorna solo giorni `REMOTE` gia presenti
+- puo usare `ICB_backup.csv` come mappa ausiliaria nome->email->utente
+- per default non sovrascrive note gia valorizzate
+- supporta `--overwrite` se vuoi forzare il testo legacy
 
 ## Funzionamento applicativo
 
