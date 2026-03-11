@@ -1,4 +1,5 @@
 import csv
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -17,6 +18,7 @@ class PlanImportBucket:
     year: int
     month: int
     days: set[date] = field(default_factory=set)
+    legacy_statuses: set[str] = field(default_factory=set)
 
 
 class Command(BaseCommand):
@@ -37,6 +39,17 @@ class Command(BaseCommand):
             dest='email_filter',
             default='',
             help='Importa solo le righe relative a una specifica email utente',
+        )
+        parser.add_argument(
+            '--overwrite-existing',
+            action='store_true',
+            help='Sovrascrive i piani gia esistenti per gli stessi utente/mese',
+        )
+        parser.add_argument(
+            '--leaves-report-csv',
+            action='append',
+            default=[],
+            help='CSV legacy Leaves report da usare come sorgente status per mese corrente/prossimo (ripetibile)',
         )
 
     @staticmethod
@@ -89,6 +102,55 @@ class Command(BaseCommand):
         if len(rows[0]) < 9:
             raise CommandError('Formato CSV non valido: intestazione incompleta')
         return rows
+
+    def _load_leaves_report_status_map(self, csv_paths: list[str]) -> dict[tuple[str, str, date], set[str]]:
+        status_map: dict[tuple[str, str, date], set[str]] = defaultdict(set)
+        for raw_path in csv_paths:
+            csv_path = Path(str(raw_path or '').strip()).expanduser()
+            if not csv_path.exists():
+                raise CommandError(f'Leaves report CSV non trovato: {csv_path}')
+            try:
+                with csv_path.open('r', encoding='utf-8-sig', newline='') as handle:
+                    reader = csv.DictReader(handle)
+                    rows = list(reader)
+            except OSError as exc:
+                raise CommandError(f'Impossibile leggere il leaves report CSV: {exc}') from exc
+
+            required = {'Employee', 'Department', 'Leave Type', 'From', 'To', 'Status'}
+            if rows and not required.issubset(set(rows[0].keys())):
+                raise CommandError(f'Formato leaves report non valido: colonne richieste mancanti in {csv_path}')
+
+            for row in rows:
+                leave_type = self._norm(row.get('Leave Type'))
+                if leave_type != 'Programmazione':
+                    continue
+                employee = self._fold(self._norm(row.get('Employee')))
+                department = self._norm(row.get('Department')).split()[-1].strip().lower() if self._norm(row.get('Department')) else ''
+                status = self._norm(row.get('Status'))
+                if not employee or not status:
+                    continue
+                try:
+                    start_day = datetime.strptime(self._norm(row.get('From')), '%Y-%m-%d').date()
+                    end_day = datetime.strptime(self._norm(row.get('To')), '%Y-%m-%d').date()
+                except ValueError:
+                    continue
+                for legacy_day in self._iter_days(start_day, end_day):
+                    status_map[(employee, department, legacy_day)].add(status)
+        return status_map
+
+    @staticmethod
+    def _department_from_group(raw_group: str) -> str:
+        chunks = [part.strip(" ,;:.()[]{}") for part in str(raw_group or '').split()]
+        chunks = [part for part in chunks if part]
+        return chunks[-1].lower() if chunks else ''
+
+    @staticmethod
+    def _resolve_plan_status(legacy_statuses: set[str]) -> str:
+        if 'New' in legacy_statuses:
+            return MonthlyPlan.Status.SUBMITTED
+        if 'Rejected' in legacy_statuses:
+            return MonthlyPlan.Status.REJECTED
+        return MonthlyPlan.Status.APPROVED
 
     def _resolve_user(
         self,
@@ -151,6 +213,8 @@ class Command(BaseCommand):
         csv_path = Path(options['csv_path']).expanduser()
         dry_run = bool(options.get('dry_run'))
         email_filter = str(options.get('email_filter') or '').strip().lower()
+        overwrite_existing = bool(options.get('overwrite_existing'))
+        leaves_report_csv_paths = [str(item).strip() for item in (options.get('leaves_report_csv') or []) if str(item).strip()]
 
         rows = self._load_rows(csv_path)
         header, data_rows = rows[0], rows[1:]
@@ -169,9 +233,17 @@ class Command(BaseCommand):
 
         today = timezone.localdate()
         current_month_start = today.replace(day=1)
+        if today.month == 12:
+            month_after_next_start = date(today.year + 1, 2, 1)
+        else:
+            if today.month == 11:
+                month_after_next_start = date(today.year + 1, 1, 1)
+            else:
+                month_after_next_start = date(today.year, today.month + 2, 1)
         users = list(
             User.objects.only('id', 'username', 'email', 'first_name', 'last_name', 'department')
         )
+        leaves_report_status_map = self._load_leaves_report_status_map(leaves_report_csv_paths)
 
         counters = {
             'rows_total': len(data_rows),
@@ -192,8 +264,14 @@ class Command(BaseCommand):
             'days_imported': 0,
             'days_weekend_skipped': 0,
             'days_holiday_skipped': 0,
-            'days_current_or_future_skipped': 0,
-            'rows_no_usable_past_days': 0,
+            'days_future_skipped': 0,
+            'days_next_month_without_status_skipped': 0,
+            'days_next_month_unsupported_status_skipped': 0,
+            'rows_no_usable_days': 0,
+            'plans_overwritten': 0,
+            'plans_status_approved': 0,
+            'plans_status_submitted': 0,
+            'plans_status_rejected': 0,
         }
         missing_emails: set[str] = set()
         grouped: dict[tuple[int, int, int], PlanImportBucket] = {}
@@ -248,9 +326,11 @@ class Command(BaseCommand):
 
             usable_past_days = 0
             holiday_cache: dict[tuple[int, int, str], set[date]] = {}
+            folded_full_name = self._fold(f'{raw_firstname} {raw_lastname}')
+            folded_department = self._department_from_group(row[0])
             for legacy_day in self._iter_days(start_day, end_day):
-                if legacy_day >= current_month_start:
-                    counters['days_current_or_future_skipped'] += 1
+                if legacy_day >= month_after_next_start:
+                    counters['days_future_skipped'] += 1
                     continue
                 if legacy_day.weekday() >= 5:
                     counters['days_weekend_skipped'] += 1
@@ -267,22 +347,40 @@ class Command(BaseCommand):
                     counters['days_holiday_skipped'] += 1
                     continue
 
+                legacy_status = ''
+                if legacy_day >= current_month_start:
+                    statuses = leaves_report_status_map.get((folded_full_name, folded_department, legacy_day), set())
+                    if not statuses:
+                        counters['days_next_month_without_status_skipped'] += 1
+                        continue
+                    if 'New' in statuses:
+                        legacy_status = 'New'
+                    elif 'Rejected' in statuses:
+                        legacy_status = 'Rejected'
+                    elif 'Approved' in statuses:
+                        legacy_status = 'Approved'
+                    else:
+                        counters['days_next_month_unsupported_status_skipped'] += 1
+                        continue
+
                 key = self._plan_key(user_id=user.id, year=legacy_day.year, month=legacy_day.month)
                 bucket = grouped.get(key)
                 if not bucket:
                     bucket = PlanImportBucket(user=user, year=legacy_day.year, month=legacy_day.month)
                     grouped[key] = bucket
                 bucket.days.add(legacy_day)
+                if legacy_status:
+                    bucket.legacy_statuses.add(legacy_status)
                 usable_past_days += 1
 
             if usable_past_days == 0:
-                counters['rows_no_usable_past_days'] += 1
+                counters['rows_no_usable_days'] += 1
 
-        existing_plan_keys = {
-            self._plan_key(user_id=plan.user_id, year=plan.year, month=plan.month)
+        existing_plans = {
+            self._plan_key(user_id=plan.user_id, year=plan.year, month=plan.month): plan
             for plan in MonthlyPlan.objects.filter(
                 user_id__in=[bucket.user.id for bucket in grouped.values()]
-            ).only('user_id', 'year', 'month')
+            ).only('id', 'user_id', 'year', 'month')
         }
 
         try:
@@ -293,39 +391,77 @@ class Command(BaseCommand):
                 ):
                     if not bucket.days:
                         continue
-                    if key in existing_plan_keys:
+                    existing_plan = existing_plans.get(key)
+                    if existing_plan and not overwrite_existing:
                         counters['plans_existing_skipped'] += 1
                         continue
 
                     if dry_run:
-                        counters['plans_created'] += 1
+                        plan_status = self._resolve_plan_status(bucket.legacy_statuses)
+                        if existing_plan:
+                            counters['plans_overwritten'] += 1
+                        else:
+                            counters['plans_created'] += 1
+                        counters[f'plans_status_{plan_status.lower()}'] += 1
                         counters['days_imported'] += len(bucket.days)
                         continue
 
                     now = timezone.now()
-                    plan = MonthlyPlan.objects.create(
-                        user=bucket.user,
-                        year=bucket.year,
-                        month=bucket.month,
-                        status=MonthlyPlan.Status.APPROVED,
-                        submitted_at=now,
-                        approved_at=now,
-                    )
+                    plan_status = self._resolve_plan_status(bucket.legacy_statuses)
+                    if existing_plan:
+                        plan = MonthlyPlan.objects.select_for_update().get(pk=existing_plan.id)
+                        existing_notes_by_day = {
+                            item.day: item.notes or ''
+                            for item in plan.days.all().only('day', 'notes')
+                        }
+                        plan.status = plan_status
+                        plan.submitted_at = now
+                        plan.approved_at = now if plan_status == MonthlyPlan.Status.APPROVED else None
+                        plan.approved_by = None
+                        plan.rejection_reason = 'Import legacy CSV: stato rifiutato' if plan_status == MonthlyPlan.Status.REJECTED else ''
+                        plan.approved_days_snapshot = [] if plan_status != MonthlyPlan.Status.APPROVED else plan.approved_days_snapshot
+                        plan.save(
+                            update_fields=[
+                                'status',
+                                'submitted_at',
+                                'approved_at',
+                                'approved_by',
+                                'rejection_reason',
+                                'approved_days_snapshot',
+                                'updated_at',
+                            ]
+                        )
+                        plan.days.all().delete()
+                    else:
+                        plan = MonthlyPlan.objects.create(
+                            user=bucket.user,
+                            year=bucket.year,
+                            month=bucket.month,
+                            status=plan_status,
+                            submitted_at=now,
+                            approved_at=now if plan_status == MonthlyPlan.Status.APPROVED else None,
+                            rejection_reason='Import legacy CSV: stato rifiutato' if plan_status == MonthlyPlan.Status.REJECTED else '',
+                        )
+                        existing_notes_by_day = {}
                     PlanDay.objects.bulk_create(
                         [
                             PlanDay(
                                 plan=plan,
                                 day=day_value,
                                 work_type=PlanDay.WorkType.REMOTE,
-                                notes='',
+                                notes=existing_notes_by_day.get(day_value, ''),
                             )
                             for day_value in sorted(bucket.days)
                         ]
                     )
-                    plan.capture_approved_snapshot()
+                    if plan_status == MonthlyPlan.Status.APPROVED:
+                        plan.capture_approved_snapshot()
+                    else:
+                        plan.approved_days_snapshot = []
+                        plan.save(update_fields=['approved_days_snapshot', 'updated_at'])
                     AuditLog.track(
                         actor=None,
-                        action='legacy_icb_backup_imported',
+                        action='legacy_icb_backup_overwritten' if existing_plan else 'legacy_icb_backup_imported',
                         target_type='MonthlyPlan',
                         target_id=plan.id,
                         metadata={
@@ -335,9 +471,15 @@ class Command(BaseCommand):
                             'year': bucket.year,
                             'month': bucket.month,
                             'days_imported': len(bucket.days),
+                            'legacy_statuses': sorted(bucket.legacy_statuses),
+                            'final_status': plan_status,
                         },
                     )
-                    counters['plans_created'] += 1
+                    if existing_plan:
+                        counters['plans_overwritten'] += 1
+                    else:
+                        counters['plans_created'] += 1
+                    counters[f'plans_status_{plan_status.lower()}'] += 1
                     counters['days_imported'] += len(bucket.days)
 
                 if dry_run:
@@ -352,8 +494,12 @@ class Command(BaseCommand):
                 f'{suffix}: righe={counters["rows_total"]}, '
                 f'programmazione={counters["rows_programmazione"]}, '
                 f'piani creati={counters["plans_created"]}, '
+                f'piani sovrascritti={counters["plans_overwritten"]}, '
                 f'piani esistenti saltati={counters["plans_existing_skipped"]}, '
-                f'giorni importati={counters["days_imported"]}'
+                f'giorni importati={counters["days_imported"]}, '
+                f'piani_status_approved={counters["plans_status_approved"]}, '
+                f'piani_status_submitted={counters["plans_status_submitted"]}, '
+                f'piani_status_rejected={counters["plans_status_rejected"]}'
             )
         )
         self.stdout.write(
@@ -364,8 +510,10 @@ class Command(BaseCommand):
             f'righe non valide={counters["rows_invalid"]}, '
             f'weekend={counters["days_weekend_skipped"]}, '
             f'festivita={counters["days_holiday_skipped"]}, '
-            f'corrente/futuro={counters["days_current_or_future_skipped"]}, '
-            f'righe senza giorni utili={counters["rows_no_usable_past_days"]}'
+            f'future={counters["days_future_skipped"]}, '
+            f'corrente_prossimo_senza_status={counters["days_next_month_without_status_skipped"]}, '
+            f'corrente_prossimo_status_non_supportato={counters["days_next_month_unsupported_status_skipped"]}, '
+            f'righe senza giorni utili={counters["rows_no_usable_days"]}'
         )
         self.stdout.write(
             'Match utenti: '

@@ -264,7 +264,7 @@ Import/export release:
 
 Import storico legacy ICB:
 - `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --dry-run`
-- `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync`
+- `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync --overwrite-existing-plans --leaves-report-csv ./ICB_leaves_report_between_2026_01_01_and_2026_12_31.csv`
 - `python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run`
 - `python manage.py import_legacy_icb_notes ./ICB_leaves_report_between_2025_01_01_and_2025_12_31.csv --dry-run`
 
@@ -477,11 +477,16 @@ Comportamento:
 - legge il CSV backup legacy ICB
 - importa solo le righe `Programmazione`
 - ignora le righe `Variazione`
-- importa solo giorni appartenenti a mesi gia chiusi
+- importa anche il mese corrente
+- puo importare anche il mese prossimo se presente nei `Leaves report` legacy con stato noto
+- esclude i mesi futuri non coperti dal `Leaves report`
 - filtra weekend e festivita
-- crea `MonthlyPlan` storici in stato `APPROVED`
+- crea `MonthlyPlan` storici con stato derivato dal legacy:
+  - `Approved` -> `APPROVED`
+  - `New` -> `SUBMITTED`
+  - `Rejected` -> `REJECTED`
 - crea i `PlanDay` importati come `REMOTE`
-- non sovrascrive i piani gia presenti nel database
+- con `--overwrite-existing-plans` puo sovrascrivere i piani gia presenti nel database
 
 Riconciliazione utenti:
 - email esatta
@@ -492,6 +497,8 @@ Opzioni utili:
 - `--with-ldap-sync`: dopo il sync utenti ICB esegue anche l’allineamento anagrafico da LDAP
 - `--skip-user-sync`: esegue solo l’import storico dei giorni
 - `--skip-history-import`: esegue solo la fase utenti/referenti
+- `--overwrite-existing-plans`: sovrascrive i piani gia presenti nella fase storico
+- `--leaves-report-csv`: usa uno o piu `Leaves report` legacy per decidere lo stato di mese corrente/prossimo
 
 Uso consigliato:
 1. eseguire prima `--dry-run`
@@ -501,12 +508,12 @@ Uso consigliato:
 Esempio import reale:
 
 ```bash
-python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync
+python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync --overwrite-existing-plans --leaves-report-csv ./ICB_leaves_report_between_2026_01_01_and_2026_12_31.csv
 ```
 
 Comandi essenziali:
 - bundle completo: `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --dry-run`
-- bundle completo con allineamento LDAP: `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync`
+- bundle completo con allineamento LDAP: `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync --overwrite-existing-plans --leaves-report-csv ./ICB_leaves_report_between_2026_01_01_and_2026_12_31.csv`
 - solo storico giorni: `python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run`
 - solo descrizioni attivita da leaves report: `python manage.py import_legacy_icb_notes ./ICB_leaves_report_between_2025_01_01_and_2025_12_31.csv --backup-csv-path ./ICB_backup.csv --dry-run`
 

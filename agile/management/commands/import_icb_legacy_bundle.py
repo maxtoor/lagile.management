@@ -32,6 +32,17 @@ class Command(BaseCommand):
             action='store_true',
             help='Salta la fase di import storico Programmazione',
         )
+        parser.add_argument(
+            '--overwrite-existing-plans',
+            action='store_true',
+            help='Sovrascrive eventuali piani gia presenti nella fase di import storico',
+        )
+        parser.add_argument(
+            '--leaves-report-csv',
+            action='append',
+            default=[],
+            help='CSV legacy Leaves report usato per stato mese corrente/prossimo (ripetibile)',
+        )
 
     @staticmethod
     def _emit_summary(*, label: str, raw_output: str, writer) -> None:
@@ -61,6 +72,8 @@ class Command(BaseCommand):
         dry_run = bool(options.get('dry_run'))
         skip_user_sync = bool(options.get('skip_user_sync'))
         skip_history_import = bool(options.get('skip_history_import'))
+        overwrite_existing_plans = bool(options.get('overwrite_existing_plans'))
+        leaves_report_csv_paths = [str(item).strip() for item in (options.get('leaves_report_csv') or []) if str(item).strip()]
 
         if skip_user_sync and skip_history_import:
             raise CommandError('Nessuna fase da eseguire: hai saltato sia sync utenti sia import storico')
@@ -108,6 +121,8 @@ class Command(BaseCommand):
                         'import_legacy_icb_backup',
                         csv_path,
                         dry_run=False,
+                        overwrite_existing=overwrite_existing_plans,
+                        leaves_report_csv=leaves_report_csv_paths,
                         stdout=phase_stdout,
                         stderr=self.stderr,
                     )

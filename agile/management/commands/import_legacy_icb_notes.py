@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from agile.models import AuditLog, PlanDay, SITE_CHOICES, User
+from agile.models import AuditLog, MonthlyPlan, PlanDay, SITE_CHOICES, User
 
 
 class Command(BaseCommand):
@@ -209,7 +209,13 @@ class Command(BaseCommand):
         dry_run = bool(options.get('dry_run'))
         overwrite = bool(options.get('overwrite'))
         today = timezone.localdate()
-        current_month_start = today.replace(day=1)
+        if today.month == 12:
+            month_after_next_start = date(today.year + 1, 2, 1)
+        else:
+            if today.month == 11:
+                month_after_next_start = date(today.year + 1, 1, 1)
+            else:
+                month_after_next_start = date(today.year, today.month + 2, 1)
 
         rows = self._load_rows(csv_path)
         users = list(User.objects.only('id', 'username', 'first_name', 'last_name', 'department'))
@@ -240,6 +246,9 @@ class Command(BaseCommand):
             'rows_user_ambiguous': 0,
             'days_current_or_future_skipped': 0,
             'plan_days_missing': 0,
+            'plan_days_missing_weekend': 0,
+            'plan_days_missing_holiday': 0,
+            'plan_days_missing_other': 0,
             'plan_days_updated': 0,
             'plan_days_unchanged': 0,
             'plan_days_conflict_skipped': 0,
@@ -296,7 +305,7 @@ class Command(BaseCommand):
                 continue
 
             for legacy_day in self._iter_days(start_day, end_day):
-                if legacy_day >= current_month_start:
+                if legacy_day >= month_after_next_start:
                     counters['days_current_or_future_skipped'] += 1
                     continue
                 comments_by_user_day[(user.id, legacy_day)].append(comment)
@@ -307,6 +316,7 @@ class Command(BaseCommand):
             .filter(work_type=PlanDay.WorkType.REMOTE)
             .only('id', 'day', 'notes', 'plan__user_id', 'plan_id')
         }
+        holiday_cache: dict[tuple[int, int, str], set[date]] = {}
         touched_plans: dict[int, int] = defaultdict(int)
 
         try:
@@ -315,6 +325,22 @@ class Command(BaseCommand):
                     plan_day = plan_days.get((user_id, work_day))
                     if not plan_day:
                         counters['plan_days_missing'] += 1
+                        user = next((item for item in users if item.id == user_id), None)
+                        department = (user.department or '') if user else ''
+                        if work_day.weekday() >= 5:
+                            counters['plan_days_missing_weekend'] += 1
+                        else:
+                            cache_key = (work_day.year, work_day.month, department)
+                            if cache_key not in holiday_cache:
+                                holiday_cache[cache_key] = MonthlyPlan.holiday_days_for_month(
+                                    year=work_day.year,
+                                    month=work_day.month,
+                                    department=department,
+                                )
+                            if work_day in holiday_cache[cache_key]:
+                                counters['plan_days_missing_holiday'] += 1
+                            else:
+                                counters['plan_days_missing_other'] += 1
                         continue
 
                     new_notes = '\n\n'.join(dict.fromkeys(comment for comment in comments if comment))
@@ -371,6 +397,9 @@ class Command(BaseCommand):
             f'utenti_ambigui={counters["rows_user_ambiguous"]}, '
             f'righe_non_valide={counters["rows_invalid"]}, '
             f'corrente_futuro={counters["days_current_or_future_skipped"]}, '
+            f'giorni_non_trovati_weekend={counters["plan_days_missing_weekend"]}, '
+            f'giorni_non_trovati_festivita={counters["plan_days_missing_holiday"]}, '
+            f'giorni_non_trovati_altro={counters["plan_days_missing_other"]}, '
             f'giorni_invariati={counters["plan_days_unchanged"]}, '
             f'conflitti_note={counters["plan_days_conflict_skipped"]}'
         )
