@@ -661,6 +661,17 @@ class Command(BaseCommand):
                                         f'Riga {row_index}: match per email "{raw_email}" -> utente "{user.username}"'
                                     )
                                 )
+                        if not user and raw_email:
+                            username_from_email = self._username_from_email(raw_email)
+                            if username_from_email:
+                                user = User.objects.filter(username__iexact=username_from_email).first()
+                                if user:
+                                    self.stdout.write(
+                                        self.style.WARNING(
+                                            f'Riga {row_index}: email non trovata, match username "{username_from_email}" '
+                                            f'-> utente "{user.username}"'
+                                        )
+                                    )
 
                         # 2) email diversa/non trovata -> lastname CSV == lastname DB
                         folded_lastname = self._fold(raw_lastname)

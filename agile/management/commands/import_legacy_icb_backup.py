@@ -176,36 +176,28 @@ class Command(BaseCommand):
                 if len(username_matches) == 1:
                     return username_matches[0], 'username_from_email'
 
+        folded_full_name = self._fold(f'{raw_firstname} {raw_lastname}')
+        if folded_full_name:
+            full_name_matches = [
+                user
+                for user in users
+                if self._fold(f'{user.first_name} {user.last_name}') == folded_full_name
+            ]
+            if len(full_name_matches) == 1:
+                return full_name_matches[0], 'full_name'
+
         folded_lastname = self._fold(raw_lastname)
         folded_firstname = self._fold(raw_firstname)
         if folded_lastname:
             surname_matches = [
                 user for user in users if self._fold(user.last_name) == folded_lastname
             ]
-            if len(surname_matches) == 1:
-                return surname_matches[0], 'lastname'
             if len(surname_matches) > 1 and folded_firstname:
                 narrowed = [
                     user for user in surname_matches if self._fold(user.first_name) == folded_firstname
                 ]
                 if len(narrowed) == 1:
                     return narrowed[0], 'lastname_firstname'
-
-            email_contains_matches = [
-                user
-                for user in users
-                if folded_lastname and folded_lastname in self._fold(user.email)
-            ]
-            if len(email_contains_matches) == 1:
-                return email_contains_matches[0], 'lastname_in_email'
-            if len(email_contains_matches) > 1 and folded_firstname:
-                narrowed = [
-                    user
-                    for user in email_contains_matches
-                    if self._fold(user.first_name) == folded_firstname
-                ]
-                if len(narrowed) == 1:
-                    return narrowed[0], 'lastname_in_email_firstname'
 
         return None, ''
 

@@ -52,6 +52,13 @@ class Command(BaseCommand):
         return datetime.strptime(raw.strip(), '%Y-%m-%d').date()
 
     @staticmethod
+    def _approved_snapshot_notes_for_day(plan: MonthlyPlan, work_day: date) -> str:
+        for item in (plan.approved_days_snapshot or []):
+            if item.get('day') == work_day.isoformat():
+                return str(item.get('notes') or '').strip()
+        return ''
+
+    @staticmethod
     def _iter_days(start: date, end: date):
         current = start
         while current <= end:
@@ -147,48 +154,6 @@ class Command(BaseCommand):
                 user = users_by_username.get(username_from_email)
                 if user:
                     return user, 'backup_username_from_email'
-            parts = [part for part in employee_name.split() if part.strip()]
-            raw_firstname = parts[0] if parts else ''
-            raw_lastname = parts[-1] if len(parts) >= 2 else ''
-            folded_lastname = self._fold(raw_lastname)
-            folded_firstname = self._fold(raw_firstname)
-
-            if folded_lastname:
-                surname_matches = [
-                    user for user in users_by_username.values()
-                    if self._fold(user.last_name) == folded_lastname
-                ]
-                unique_surname_matches = list({user.id: user for user in surname_matches}.values())
-                if len(unique_surname_matches) == 1:
-                    return unique_surname_matches[0], 'lastname'
-                if len(unique_surname_matches) > 1 and folded_firstname:
-                    narrowed = [
-                        user for user in unique_surname_matches if self._fold(user.first_name) == folded_firstname
-                    ]
-                    if len(narrowed) == 1:
-                        return narrowed[0], 'lastname_firstname'
-
-                backup_email_matches = []
-                for (mapped_name, mapped_department), emails in backup_email_map.items():
-                    if normalized_department and mapped_department != normalized_department.lower():
-                        continue
-                    if not emails:
-                        continue
-                    if folded_lastname not in mapped_name:
-                        continue
-                    for email in emails:
-                        user = users_by_email.get(email) or users_by_username.get(email.split('@', 1)[0].strip().lower())
-                        if user:
-                            backup_email_matches.append(user)
-                unique_backup_matches = list({user.id: user for user in backup_email_matches}.values())
-                if len(unique_backup_matches) == 1:
-                    return unique_backup_matches[0], 'lastname_in_backup_email'
-                if len(unique_backup_matches) > 1 and folded_firstname:
-                    narrowed = [
-                        user for user in unique_backup_matches if self._fold(user.first_name) == folded_firstname
-                    ]
-                    if len(narrowed) == 1:
-                        return narrowed[0], 'lastname_in_backup_email_firstname'
 
             return None, ''
         if len(matches) == 1:
@@ -314,10 +279,11 @@ class Command(BaseCommand):
             (plan_day.plan.user_id, plan_day.day): plan_day
             for plan_day in PlanDay.objects.select_related('plan')
             .filter(work_type=PlanDay.WorkType.REMOTE)
-            .only('id', 'day', 'notes', 'plan__user_id', 'plan_id')
+            .only('id', 'day', 'notes', 'plan__user_id', 'plan_id', 'plan__status')
         }
         holiday_cache: dict[tuple[int, int, str], set[date]] = {}
         touched_plans: dict[int, int] = defaultdict(int)
+        touched_approved_plan_ids: set[int] = set()
 
         try:
             with transaction.atomic():
@@ -349,7 +315,14 @@ class Command(BaseCommand):
                         continue
 
                     current_notes = (plan_day.notes or '').strip()
+                    approved_snapshot_notes = self._approved_snapshot_notes_for_day(plan_day.plan, work_day)
                     if current_notes == new_notes:
+                        if (
+                            not dry_run
+                            and plan_day.plan.status == MonthlyPlan.Status.APPROVED
+                            and approved_snapshot_notes != new_notes
+                        ):
+                            touched_approved_plan_ids.add(plan_day.plan_id)
                         counters['plan_days_unchanged'] += 1
                         continue
                     if current_notes and not overwrite:
@@ -361,8 +334,12 @@ class Command(BaseCommand):
                         plan_day.save(update_fields=['notes'])
                     counters['plan_days_updated'] += 1
                     touched_plans[plan_day.plan_id] += 1
+                    if plan_day.plan.status == MonthlyPlan.Status.APPROVED:
+                        touched_approved_plan_ids.add(plan_day.plan_id)
 
                 if not dry_run:
+                    for plan in MonthlyPlan.objects.filter(id__in=touched_approved_plan_ids).prefetch_related('days'):
+                        plan.capture_approved_snapshot()
                     for plan_id, days_updated in touched_plans.items():
                         AuditLog.track(
                             actor=None,
