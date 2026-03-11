@@ -262,6 +262,11 @@ Import/export release:
 - `python manage.py import_release_data ./release-export.json --mode merge`
 - `python manage.py import_release_data ./release-export.json --mode replace`
 
+Import storico legacy ICB:
+- `python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run`
+- `python manage.py import_legacy_icb_backup ./ICB_backup.csv`
+- `python manage.py import_legacy_icb_backup ./ICB_backup.csv --email nome.cognome@icb.cnr.it --dry-run`
+
 ## Configurazione
 
 ### Logo di login
@@ -456,6 +461,40 @@ Nota: questa procedura riguarda esclusivamente gli Istituti del CNR che avevano 
 
 Dettagli operativi nel documento dedicato:
 - [`docs/migrazione_cnr.md`](docs/migrazione_cnr.md)
+
+### Import storico legacy ICB
+
+Per importare i giorni storici della vecchia applicazione Node.js da CSV e disponibile il comando:
+
+```bash
+python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run
+```
+
+Comportamento:
+- legge il CSV backup legacy ICB
+- importa solo le righe `Programmazione`
+- ignora le righe `Variazione`
+- importa solo giorni appartenenti a mesi gia chiusi
+- filtra weekend e festivita
+- crea `MonthlyPlan` storici in stato `APPROVED`
+- crea i `PlanDay` importati come `REMOTE`
+- non sovrascrive i piani gia presenti nel database
+
+Riconciliazione utenti:
+- email esatta
+- username ricavato dalla parte locale della mail legacy
+- fallback su cognome, con disambiguazione sul nome quando possibile
+
+Uso consigliato:
+1. eseguire prima `--dry-run`
+2. verificare quanti piani risultano creabili e quanti record vengono scartati
+3. eseguire l'import reale solo dopo la verifica del report
+
+Esempio import reale:
+
+```bash
+python manage.py import_legacy_icb_backup ./ICB_backup.csv
+```
 
 ## Funzionamento applicativo
 
