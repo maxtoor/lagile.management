@@ -263,9 +263,9 @@ Import/export release:
 - `python manage.py import_release_data ./release-export.json --mode replace`
 
 Import storico legacy ICB:
+- `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --dry-run`
+- `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync`
 - `python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run`
-- `python manage.py import_legacy_icb_backup ./ICB_backup.csv`
-- `python manage.py import_legacy_icb_backup ./ICB_backup.csv --email nome.cognome@icb.cnr.it --dry-run`
 
 ## Configurazione
 
@@ -464,13 +464,15 @@ Dettagli operativi nel documento dedicato:
 
 ### Import storico legacy ICB
 
-Per importare i giorni storici della vecchia applicazione Node.js da CSV e disponibile il comando:
+Se disponi del backup CSV completo ICB, usa la procedura unica:
 
 ```bash
-python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run
+python manage.py import_icb_legacy_bundle ./ICB_backup.csv --dry-run
 ```
 
 Comportamento:
+- fase 1: aggiorna o crea gli utenti locali a partire dal CSV completo ICB
+- fase 2: importa i giorni storici della vecchia applicazione Node.js
 - legge il CSV backup legacy ICB
 - importa solo le righe `Programmazione`
 - ignora le righe `Variazione`
@@ -485,6 +487,11 @@ Riconciliazione utenti:
 - username ricavato dalla parte locale della mail legacy
 - fallback su cognome, con disambiguazione sul nome quando possibile
 
+Opzioni utili:
+- `--with-ldap-sync`: dopo il sync utenti ICB esegue anche l’allineamento anagrafico da LDAP
+- `--skip-user-sync`: esegue solo l’import storico dei giorni
+- `--skip-history-import`: esegue solo la fase utenti/referenti
+
 Uso consigliato:
 1. eseguire prima `--dry-run`
 2. verificare quanti piani risultano creabili e quanti record vengono scartati
@@ -493,7 +500,18 @@ Uso consigliato:
 Esempio import reale:
 
 ```bash
-python manage.py import_legacy_icb_backup ./ICB_backup.csv
+python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync
+```
+
+Comandi essenziali:
+- bundle completo: `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --dry-run`
+- bundle completo con allineamento LDAP: `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync`
+- solo storico giorni: `python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run`
+
+Se vuoi lanciare solo la seconda fase, resta disponibile anche il comando dedicato:
+
+```bash
+python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run
 ```
 
 ## Funzionamento applicativo
