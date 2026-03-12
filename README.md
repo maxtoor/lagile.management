@@ -271,22 +271,25 @@ Per l'esecuzione manuale dei comandi email, vedi la sezione `Comandi amministrat
 
 I vincoli sono validati sia in fase di creazione/modifica del piano, sia al momento dell'invio (`submit`).
 
-### Anagrafica utente e referente
+### Configurazione utente nel portale
 
-Nella Pagina di Amministrazione, nella scheda utente (`Users`), sono disponibili:
-- `Afferenza territoriale` (campo tecnico: `department`)
+Nella Pagina di Amministrazione, nella scheda `Users`, i campi applicativi principali sono:
+- `Afferenza territoriale` (`department`)
 - `Ruolo` (`EMPLOYEE`, `ADMIN`, `SUPERADMIN`)
-- `Responsabile approvazione` (campo tecnico: `manager`)
-- `Sottoscrizione AILA` (`aila_subscribed`), scelta `No`/`Si` (default `No`)
-- `Approvazione automatica` (`auto_approve`), scelta `No`/`Si` (default `No`)
+- `Responsabile approvazione` (`manager`)
+- `Sottoscrizione AILA` (`aila_subscribed`)
+- `Approvazione automatica` (`auto_approve`)
 
-Significato pratico:
-- `Responsabile approvazione` e l'utente che approva piano e richieste variazione per un dipendente
-- il referente puo essere assegnato solo a utenti con ruolo applicativo `ADMIN` o `SUPERADMIN`, oppure a un utente Django `is_superuser=True`
-- un utente con ruolo `ADMIN` o `SUPERADMIN` non ha a sua volta un referente diverso da se stesso: il campo puo essere solo vuoto oppure uguale al proprio utente
-- se `Sottoscrizione AILA=No`, l'utente non puo creare, modificare o inviare piani e richieste variazione
-- se `Sottoscrizione AILA=No` ma l'utente e `ADMIN` o `SUPERADMIN`, puo comunque accedere al portale e lavorare nelle code di approvazione/variazione
-- se `Approvazione automatica=Si`, piano e richieste variazione vengono approvati direttamente senza passare dalle code
+Uso pratico dei campi:
+- `Afferenza territoriale`: sede o unita di riferimento dell'utente nel portale
+- `Responsabile approvazione`: utente che approva piano e richieste variazione del dipendente
+- `Sottoscrizione AILA=No`: l'utente non puo compilare o inviare piani e richieste variazione
+- `Approvazione automatica=Si`: piano e richieste variazione vengono approvati direttamente, senza passare dalle code
+
+Regole sul responsabile approvazione:
+- il responsabile puo essere solo un utente con ruolo applicativo `ADMIN` o `SUPERADMIN`, oppure un utente Django `is_superuser=True`
+- un utente con ruolo `ADMIN` o `SUPERADMIN` non ha a sua volta un responsabile diverso da se stesso: il campo puo essere solo vuoto oppure uguale al proprio utente
+- se `Sottoscrizione AILA=No` ma l'utente e `ADMIN` o `SUPERADMIN`, puo comunque accedere al portale e lavorare nelle code di approvazione e variazione
 
 ### Ruoli e permessi (Django vs App)
 
