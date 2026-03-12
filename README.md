@@ -128,15 +128,17 @@ python manage.py runserver
 Riferimento rapido configurazione:
 - dettagli di tutte le variabili `.env`: [`docs/variabili_env.md`](docs/variabili_env.md)
 
-Override da interfaccia Pagina di Amministrazione:
-- in `Strumenti` e disponibile `Impostazioni applicazione`
-- i valori salvati in questa pagina hanno priorita su `.env` per:
-  - formato data portale
-  - logo login
-  - nome azienda + anno copyright
-  - mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
-
 ## Configurazione
+
+### Override da Pagina di Amministrazione
+
+In `Strumenti` e disponibile `Impostazioni applicazione`.
+
+I valori salvati in questa pagina hanno priorita su `.env` per:
+- formato data portale
+- logo login
+- nome azienda + anno copyright
+- mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
 
 ### Logo di login
 
