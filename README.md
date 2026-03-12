@@ -14,7 +14,6 @@ Backend Django per gestione mensile del calendario di lavoro agile con autentica
 - Tracciamento eventi principali in `AuditLog`
 - Pannello amministrativo Django (`/admin/`)
 - Portale web unico con area dipendente e coda approvazioni per `ADMIN`/`SUPERADMIN`
-- Scheda utente nel portale con `Nome e cognome`, `Afferenza territoriale` e `Responsabile approvazione`
 - Gli approvatori possono aprire il dettaglio giornaliero del piano prima di approvare/rifiutare
 - Invio email automatico al dipendente quando il piano viene approvato o rifiutato
 - I dipendenti possono modificare il piano del mese corrente e del mese successivo; il mese corrente non e inviabile in approvazione ma solo in richiesta variazione
@@ -82,96 +81,25 @@ docker compose up --build
 - API: `http://localhost:8001/api/`
 - Admin: `http://localhost:8001/admin/`
 
-### Installazione automatica da zero (Linux)
+Per installazione automatica e upgrade via script:
+- `scripts/install.sh`
+- `scripts/upgrade.sh`
 
-E disponibile uno script installer idempotente che:
-- verifica/installa Docker + Docker Compose (apt/dnf)
-- crea directory di installazione
-- clona/aggiorna il repository
-- prepara `.env` da `.env.example`
-- avvia lo stack Docker
-
-Esempio:
+Esempi rapidi:
 
 ```bash
-bash scripts/install.sh \
-  --install-dir /opt/containers/lagile-management \
-  --repo-url https://github.com/maxtoor/lagile.management.git \
-  --branch main \
-  --port 8001
-
-# Solo simulazione (nessuna modifica)
-bash scripts/install.sh --dry-run
-```
-
-Esecuzione diretta da GitHub (senza clone manuale):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/maxtoor/lagile.management/main/scripts/install.sh | bash -s -- \
-  --install-dir /opt/containers/lagile-management \
-  --repo-url https://github.com/maxtoor/lagile.management.git
-```
-
-Alternativa con `wget`:
-
-```bash
-wget -qO- https://raw.githubusercontent.com/maxtoor/lagile.management/main/scripts/install.sh | bash -s -- \
-  --install-dir /opt/containers/lagile-management \
-  --repo-url https://github.com/maxtoor/lagile.management.git
-```
-
-Opzioni principali:
-- `--app-user <utente>` proprietario file installazione
-- `--skip-docker-install` se Docker e gia presente
-- `--dry-run` mostra i comandi senza eseguirli
-- `--help` elenco completo opzioni
-
-Comandi rapidi da server nuovo:
-
-```bash
-mkdir -p /opt/containers
-git clone https://github.com/maxtoor/lagile.management.git /opt/containers/lagile-management
-cd /opt/containers/lagile-management
-
-# Simulazione (consigliata prima esecuzione)
-bash scripts/install.sh --dry-run --install-dir /opt/containers/lagile-management --branch main --port 8001
-
-# Installazione reale
+# Installazione automatica
 bash scripts/install.sh --install-dir /opt/containers/lagile-management --branch main --port 8001
-```
 
-Nota:
-- in questo esempio il repository viene clonato direttamente nella directory finale di installazione
-- e la forma piu lineare, perche evita di eseguire lo script da una checkout temporanea e installare altrove
+# Simulazione installazione
+bash scripts/install.sh --dry-run
 
-### Upgrade applicazione (Linux, Docker)
-
-E disponibile uno script di aggiornamento con backup pre-upgrade:
-- backup DB PostgreSQL + copia `.env`
-- aggiornamento codice (`git pull --ff-only`)
-- rebuild container `web`/`scheduler`
-- migrate + check post-upgrade
-
-Esempi:
-
-```bash
-# Simulazione (consigliata)
-bash scripts/upgrade.sh --dry-run
-
-# Upgrade reale
+# Upgrade
 bash scripts/upgrade.sh
 ```
 
-Opzioni utili:
-- `--project-dir /opt/containers/lagile-management` se il progetto non e nella directory corrente
-- `--branch main` branch remoto da usare
-- `--skip-backup` se vuoi saltare il backup
-- `--skip-fetch` se hai gia fatto fetch/pull manuale
-- `--skip-migrate` se vuoi eseguire migrate separatamente
-- `--allow-dirty` per forzare anche con working tree non pulita
-
 Nota Docker:
-- e presente un servizio `scheduler`; dettagli operativi nella sezione `Scheduler`
+- e presente un servizio `scheduler`; dettagli operativi nella sezione `Automazioni`
 - nella Pagina di Amministrazione e disponibile il link `Monitor log` per visualizzare il tail live e selezionare la sorgente (es. `app` / `scheduler`)
 
 ## Avvio locale (senza Docker)
@@ -207,70 +135,6 @@ Override da interfaccia Pagina di Amministrazione:
   - logo login
   - nome azienda + anno copyright
   - mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
-
-## Scheduler
-
-Nel deploy Docker e presente un servizio `scheduler` che esegue periodicamente alcuni comandi applicativi.
-
-Intervallo di controllo:
-- configurabile con `REMINDER_CHECK_INTERVAL_SECONDS`
-- fallback in `docker-compose.yml`: `3600` secondi
-
-Job attuali:
-- `send_submission_reminders`
-  - promemoria ultimo giorno del mese per l'invio del piano del mese successivo
-  - invia email agli utenti attivi senza auto-approvazione che non hanno ancora stato `SUBMITTED` o `APPROVED`
-- `send_manager_monthly_summary`
-  - riepilogo il primo giorno del mese per i responsabili approvazione
-  - include piani in attesa, piani approvati, utenti senza piano e utenti in auto-approvazione
-- `prepare_next_year_holidays`
-  - il 1 dicembre prepara le festivita dell'anno successivo
-  - invia un report ai superuser
-- `check_ldap_user_presence`
-  - verifica periodicamente se gli utenti locali gestiti via LDAP esistono ancora nella directory
-  - se un utente non esiste piu, lo disattiva e invia un report ai superuser
-
-Note operative:
-- il loop esegue i comandi a ogni intervallo, ma ciascun comando applica internamente le proprie condizioni temporali
-- i comandi che lavorano su date specifiche non inviano nulla fuori finestra, salvo uso esplicito di `--force`
-- nella Pagina di Amministrazione e disponibile il monitor log per controllare il comportamento del servizio
-
-## Comandi amministrativi
-
-Riepilogo dei principali comandi manuali/amministrativi disponibili.
-
-LDAP:
-- `python manage.py import_ldap_users`
-- `python manage.py import_ldap_users --dry-run`
-- `python manage.py import_ldap_users --base-dn "ou=people,dc=example,dc=org" --filter "(objectClass=person)"`
-- `python manage.py sync_ldap_users`
-- `python manage.py sync_ldap_users --dry-run`
-- `python manage.py sync_ldap_users --deactivate-missing`
-- `python manage.py sync_ldap_users --create-missing`
-- `python manage.py check_ldap_user_presence`
-- `python manage.py check_ldap_user_presence --dry-run`
-
-Email operative:
-- `python manage.py send_submission_reminders`
-- `python manage.py send_submission_reminders --dry-run`
-- `python manage.py send_submission_reminders --force`
-- `python manage.py send_submission_reminders --date 2026-03-30 --dry-run`
-- `python manage.py send_manager_monthly_summary`
-- `python manage.py send_manager_monthly_summary --dry-run`
-- `python manage.py send_manager_monthly_summary --force`
-- `python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run`
-
-Festivita:
-- `python manage.py sync_holidays --year 2026`
-- `python manage.py sync_holidays --year 2026 --overwrite`
-- `python manage.py prepare_next_year_holidays --dry-run`
-- `python manage.py prepare_next_year_holidays --force --year 2027`
-
-Import/export release:
-- `python manage.py export_release_data ./release-export.json`
-- `python manage.py import_release_data ./release-export.json --dry-run`
-- `python manage.py import_release_data ./release-export.json --mode merge`
-- `python manage.py import_release_data ./release-export.json --mode replace`
 
 ## Configurazione
 
@@ -419,7 +283,7 @@ Template email modificabili dalla Pagina di Amministrazione:
   - esito piano (approvato/rifiutato): email al dipendente
   - esito variazione (approvata/rifiutata): email al dipendente
 
-Le email periodiche sono gestite dal servizio `scheduler`; vedi la sezione dedicata `Scheduler`.
+Le email periodiche sono gestite dal servizio `scheduler`; vedi la sezione dedicata `Automazioni`.
 
 Per l'esecuzione manuale dei comandi email, vedi la sezione `Comandi amministrativi`.
 
@@ -431,41 +295,6 @@ Se invece vuoi eseguirli fuori Docker, puoi schedularli via cron. Esempio:
 15 8 * * * cd /app && python manage.py send_submission_reminders
 20 8 * * * cd /app && python manage.py send_manager_monthly_summary
 ```
-
-## Operazioni straordinarie
-
-### Import/Export release (JSON)
-
-Per trasferire configurazione e anagrafica base tra installazioni (es. bootstrap nuova istanza) sono disponibili i comandi riepilogati nella sezione `Comandi amministrativi`.
-
-Contenuti esportati:
-- utenti (anagrafica applicativa, ruolo, referente, gruppi, stato AILA/auto-approvazione)
-- gruppi
-- policy afferenze territoriali (`DepartmentPolicy`)
-- festivita (`Holiday`)
-- template email di sistema
-- impostazioni applicazione (`AppSetting`)
-
-Note operative:
-- formato versionato: `schema_version=1`
-- `--dry-run` valida e simula senza salvare modifiche
-- `--mode merge` (default): upsert senza cancellazioni
-- `--mode replace`: oltre all'upsert, sostituisce dataset di `DepartmentPolicy`, `Holiday`, `SystemEmailTemplate` e `AppSetting` (non cancella utenti)
-- gli utenti nuovi vengono creati con password locale non utilizzabile
-- il campo referente viene assegnato in seconda fase usando `manager_username`
-
-Flusso consigliato installazione ex-novo:
-1. deploy stack + migrate + superuser
-2. `import_release_data` dal file export della sorgente
-3. verifica accesso admin/portale e test SMTP
-4. eventuale import CSV ICB dalla pagina `Strumenti`
-
-### Migrazione dalla versione precedente
-
-Nota: questa procedura riguarda esclusivamente gli Istituti del CNR che avevano adottato la versione precedente di questo software.
-
-Dettagli operativi nel documento dedicato:
-- [`docs/migrazione_cnr.md`](docs/migrazione_cnr.md)
 
 ## Funzionamento applicativo
 
@@ -549,6 +378,105 @@ Note:
 - in ambiente Docker viene eseguito automaticamente dal servizio `scheduler` il 1 dicembre
 - il report finale viene inviato ai superuser via email
 - puo comunque essere eseguito manualmente quando serve
+
+## Automazioni
+
+Nel deploy Docker e presente un servizio `scheduler` che esegue periodicamente alcuni comandi applicativi.
+
+Intervallo di controllo:
+- configurabile con `REMINDER_CHECK_INTERVAL_SECONDS`
+- fallback in `docker-compose.yml`: `3600` secondi
+
+Job attuali:
+- `send_submission_reminders`
+  - promemoria ultimo giorno del mese per l'invio del piano del mese successivo
+  - invia email agli utenti attivi senza auto-approvazione che non hanno ancora stato `SUBMITTED` o `APPROVED`
+- `send_manager_monthly_summary`
+  - riepilogo il primo giorno del mese per i responsabili approvazione
+  - include piani in attesa, piani approvati, utenti senza piano e utenti in auto-approvazione
+- `prepare_next_year_holidays`
+  - il 1 dicembre prepara le festivita dell'anno successivo
+  - invia un report ai superuser
+- `check_ldap_user_presence`
+  - verifica periodicamente se gli utenti locali gestiti via LDAP esistono ancora nella directory
+  - se un utente non esiste piu, lo disattiva e invia un report ai superuser
+
+Note operative:
+- il loop esegue i comandi a ogni intervallo, ma ciascun comando applica internamente le proprie condizioni temporali
+- i comandi che lavorano su date specifiche non inviano nulla fuori finestra, salvo uso esplicito di `--force`
+- nella Pagina di Amministrazione e disponibile il monitor log per controllare il comportamento del servizio
+
+## Comandi amministrativi
+
+Riepilogo dei principali comandi manuali/amministrativi disponibili.
+
+LDAP:
+- `python manage.py import_ldap_users`
+- `python manage.py import_ldap_users --dry-run`
+- `python manage.py import_ldap_users --base-dn "ou=people,dc=example,dc=org" --filter "(objectClass=person)"`
+- `python manage.py sync_ldap_users`
+- `python manage.py sync_ldap_users --dry-run`
+- `python manage.py sync_ldap_users --deactivate-missing`
+- `python manage.py sync_ldap_users --create-missing`
+- `python manage.py check_ldap_user_presence`
+- `python manage.py check_ldap_user_presence --dry-run`
+
+Email operative:
+- `python manage.py send_submission_reminders`
+- `python manage.py send_submission_reminders --dry-run`
+- `python manage.py send_submission_reminders --force`
+- `python manage.py send_submission_reminders --date 2026-03-30 --dry-run`
+- `python manage.py send_manager_monthly_summary`
+- `python manage.py send_manager_monthly_summary --dry-run`
+- `python manage.py send_manager_monthly_summary --force`
+- `python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run`
+
+Festivita:
+- `python manage.py sync_holidays --year 2026`
+- `python manage.py sync_holidays --year 2026 --overwrite`
+- `python manage.py prepare_next_year_holidays --dry-run`
+- `python manage.py prepare_next_year_holidays --force --year 2027`
+
+Import/export release:
+- `python manage.py export_release_data ./release-export.json`
+- `python manage.py import_release_data ./release-export.json --dry-run`
+- `python manage.py import_release_data ./release-export.json --mode merge`
+- `python manage.py import_release_data ./release-export.json --mode replace`
+
+## Operazioni straordinarie
+
+### Import/Export release (JSON)
+
+Per trasferire configurazione e anagrafica base tra installazioni (es. bootstrap nuova istanza) sono disponibili i comandi riepilogati nella sezione `Comandi amministrativi`.
+
+Contenuti esportati:
+- utenti (anagrafica applicativa, ruolo, referente, gruppi, stato AILA/auto-approvazione)
+- gruppi
+- policy afferenze territoriali (`DepartmentPolicy`)
+- festivita (`Holiday`)
+- template email di sistema
+- impostazioni applicazione (`AppSetting`)
+
+Note operative:
+- formato versionato: `schema_version=1`
+- `--dry-run` valida e simula senza salvare modifiche
+- `--mode merge` (default): upsert senza cancellazioni
+- `--mode replace`: oltre all'upsert, sostituisce dataset di `DepartmentPolicy`, `Holiday`, `SystemEmailTemplate` e `AppSetting` (non cancella utenti)
+- gli utenti nuovi vengono creati con password locale non utilizzabile
+- il campo referente viene assegnato in seconda fase usando `manager_username`
+
+Flusso consigliato installazione ex-novo:
+1. deploy stack + migrate + superuser
+2. `import_release_data` dal file export della sorgente
+3. verifica accesso admin/portale e test SMTP
+4. eventuale import CSV ICB dalla pagina `Strumenti`
+
+### Migrazione dalla versione precedente
+
+Nota: questa procedura riguarda esclusivamente gli Istituti del CNR che avevano adottato la versione precedente di questo software.
+
+Dettagli operativi nel documento dedicato:
+- [`docs/migrazione_cnr.md`](docs/migrazione_cnr.md)
 
 ## API
 
