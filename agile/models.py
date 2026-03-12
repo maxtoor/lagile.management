@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import date
+from typing import Optional
 
 from django.contrib.auth.models import AbstractUser, Group
 from django.conf import settings
@@ -49,7 +52,7 @@ class User(AbstractUser):
         return self.role in {self.Role.ADMIN, self.Role.SUPERADMIN}
 
     @staticmethod
-    def _is_local_superuser_state(*, is_superuser: bool, is_active: bool, password: str | None) -> bool:
+    def _is_local_superuser_state(*, is_superuser: bool, is_active: bool, password: Optional[str]) -> bool:
         raw_password = str(password or '')
         return bool(is_superuser and is_active and raw_password and not raw_password.startswith('!'))
 
@@ -164,7 +167,7 @@ class MonthlyPlan(models.Model):
             raise ValidationError('Il mese deve essere tra 1 e 12')
 
     @classmethod
-    def max_remote_days_for_month(cls, month: int, policy: 'DepartmentPolicy | None' = None) -> int:
+    def max_remote_days_for_month(cls, month: int, policy: Optional['DepartmentPolicy'] = None) -> int:
         if policy:
             if month == 2 and policy.february_max_remote_days is not None:
                 return policy.february_max_remote_days
@@ -173,7 +176,7 @@ class MonthlyPlan(models.Model):
         return cls.DEFAULT_MAX_REMOTE_DAYS_FEBRUARY if month == 2 else cls.DEFAULT_MAX_REMOTE_DAYS
 
     @staticmethod
-    def get_department_policy(department: str) -> 'DepartmentPolicy | None':
+    def get_department_policy(department: str) -> Optional['DepartmentPolicy']:
         if not department:
             return None
         return DepartmentPolicy.objects.filter(department=department).first()
@@ -185,7 +188,7 @@ class MonthlyPlan(models.Model):
         month: int,
         remote_days: int,
         on_site_days: int,
-        policy: 'DepartmentPolicy | None' = None,
+        policy: Optional['DepartmentPolicy'] = None,
     ) -> None:
         max_remote_days = cls.max_remote_days_for_month(month, policy)
         if remote_days > max_remote_days:
@@ -555,7 +558,15 @@ class AuditLog(models.Model):
         ordering = ('-created_at',)
 
     @classmethod
-    def track(cls, *, actor: User | None, action: str, target_type: str, target_id: int | None, metadata: dict | None = None) -> 'AuditLog':
+    def track(
+        cls,
+        *,
+        actor: Optional[User],
+        action: str,
+        target_type: str,
+        target_id: Optional[int],
+        metadata: Optional[dict] = None,
+    ) -> 'AuditLog':
         return cls.objects.create(
             actor=actor,
             action=action,

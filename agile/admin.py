@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth.forms import UserChangeForm
@@ -23,6 +25,7 @@ from collections import deque
 from pathlib import Path
 from email.utils import formataddr
 import re
+from typing import Optional
 
 from .models import AppSetting, AgileGroup, AuditLog, ChangeRequest, DepartmentPolicy, Holiday, MonthlyPlan, PlanDay, SystemEmailTemplate, User
 from .runtime_settings import build_runtime_ui_context, get_runtime_setting
@@ -432,7 +435,7 @@ class AgileGroupAdmin(GroupAdmin):
     pass
 
 
-def _read_log_tail(log_path: str, lines: int) -> tuple[str, str | None]:
+def _read_log_tail(log_path: str, lines: int) -> tuple[str, Optional[str]]:
     target = Path(log_path)
     if not target.exists():
         return '', f'File log non trovato: {target}'
@@ -476,7 +479,7 @@ def _get_log_sources() -> tuple[list[dict], str]:
     return options, selected_default
 
 
-def _resolve_log_source_key(raw_key: str | None) -> tuple[str, str, list[dict]]:
+def _resolve_log_source_key(raw_key: Optional[str]) -> tuple[str, str, list[dict]]:
     sources, default_key = _get_log_sources()
     selected_key = (raw_key or '').strip() or default_key
     if not sources:
@@ -1137,7 +1140,7 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
         )
 
     @staticmethod
-    def _sender_from_env() -> str | None:
+    def _sender_from_env() -> Optional[str]:
         from_email = (get_runtime_setting('DEFAULT_FROM_EMAIL', '') or '').strip()
         from_name = (get_runtime_setting('AGILE_EMAIL_FROM_NAME', '') or '').strip()
         if not from_email:

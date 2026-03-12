@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 from email.utils import formataddr
+from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -32,7 +35,7 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
-def sender_from_env() -> str | None:
+def sender_from_env() -> Optional[str]:
     from_email = get_runtime_setting('DEFAULT_FROM_EMAIL', '') or ''
     from_name = get_runtime_setting('AGILE_EMAIL_FROM_NAME', '') or ''
     from_email = from_email.strip()
@@ -534,7 +537,7 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
     def _has_aila_subscription(user) -> bool:
         return bool(getattr(user, 'aila_subscribed', False))
 
-    def _assert_programming_enabled(self, *, plan_owner_id: int | None = None) -> None:
+    def _assert_programming_enabled(self, *, plan_owner_id: Optional[int] = None) -> None:
         if plan_owner_id is not None and plan_owner_id != self.request.user.id:
             return
         if self._has_aila_subscription(self.request.user):

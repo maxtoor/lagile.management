@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -5,6 +7,7 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
+from typing import Optional
 
 from .models import AuditLog, ChangeRequest, MonthlyPlan, PlanDay, User
 from .runtime_settings import build_email_link_context, get_runtime_setting
@@ -24,7 +27,7 @@ class LoginSerializer(serializers.Serializer):
         return username
 
     @staticmethod
-    def _sender_from_runtime() -> str | None:
+    def _sender_from_runtime() -> Optional[str]:
         from email.utils import formataddr
 
         from_email = (get_runtime_setting('DEFAULT_FROM_EMAIL', '') or '').strip()

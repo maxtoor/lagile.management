@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import csv
 import os
 import unicodedata
+from typing import Optional
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -204,7 +207,7 @@ class Command(BaseCommand):
         return out
 
     @staticmethod
-    def _is_same_user(left: User | None, right: User | None) -> bool:
+    def _is_same_user(left: Optional[User], right: Optional[User]) -> bool:
         if not left or not right:
             return False
         if left.pk and right.pk:
@@ -225,7 +228,7 @@ class Command(BaseCommand):
         return str(manager.username or '').strip().lower() if manager else ''
 
     @classmethod
-    def _has_same_manager(cls, user: User, manager_user: User | None) -> bool:
+    def _has_same_manager(cls, user: User, manager_user: Optional[User]) -> bool:
         current_manager_username = cls._user_manager_username(user)
         target_username = str(getattr(manager_user, 'username', '') or '').strip().lower()
         if not target_username:

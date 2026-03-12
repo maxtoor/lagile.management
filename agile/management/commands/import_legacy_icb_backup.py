@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import csv
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Optional
 import unicodedata
 
 from django.core.management.base import BaseCommand, CommandError
@@ -159,7 +162,7 @@ class Command(BaseCommand):
         raw_firstname: str,
         raw_lastname: str,
         users: list[User],
-    ) -> tuple[User | None, str]:
+    ) -> tuple[Optional[User], str]:
         email = self._norm(raw_email).lower()
         if email:
             email_matches = [user for user in users if (user.email or '').strip().lower() == email]

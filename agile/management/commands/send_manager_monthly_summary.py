@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import calendar
 from datetime import date
 from email.utils import formataddr
+from typing import Optional
 
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
@@ -27,7 +30,7 @@ class Command(BaseCommand):
         parser.add_argument('--date', dest='as_of_date', help='Data di riferimento YYYY-MM-DD (default: data server locale)')
 
     @staticmethod
-    def _sender_from_env() -> str | None:
+    def _sender_from_env() -> Optional[str]:
         from_email = (get_runtime_setting('DEFAULT_FROM_EMAIL', '') or '').strip()
         from_name = (get_runtime_setting('AGILE_EMAIL_FROM_NAME', '') or '').strip()
         if not from_email:

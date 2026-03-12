@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import csv
 import unicodedata
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Optional
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -137,7 +140,7 @@ class Command(BaseCommand):
         users_by_email: dict[str, User],
         users_by_username: dict[str, User],
         backup_email_map: dict[tuple[str, str], set[str]],
-    ) -> tuple[User | None, str]:
+    ) -> tuple[Optional[User], str]:
         folded_name = self._fold(employee_name)
         normalized_department = self._normalize_department(department_name)
         if not folded_name:

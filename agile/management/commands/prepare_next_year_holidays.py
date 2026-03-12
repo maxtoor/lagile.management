@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from datetime import date
 from email.utils import formataddr
+from typing import Optional
 
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
@@ -39,7 +42,7 @@ class Command(BaseCommand):
         )
 
     @staticmethod
-    def _sender_from_runtime() -> str | None:
+    def _sender_from_runtime() -> Optional[str]:
         from_email = (get_runtime_setting('DEFAULT_FROM_EMAIL', '') or '').strip()
         from_name = (get_runtime_setting('AGILE_EMAIL_FROM_NAME', '') or '').strip()
         if not from_email:
@@ -68,7 +71,7 @@ class Command(BaseCommand):
         return labels
 
     @staticmethod
-    def _target_year(today: date, explicit_year: int | None) -> int:
+    def _target_year(today: date, explicit_year: Optional[int]) -> int:
         if explicit_year:
             return explicit_year
         return today.year + 1
