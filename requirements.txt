@@ -4,3 +4,4 @@ psycopg[binary]==3.2.3
 django-auth-ldap==5.0.0
 python-ldap==3.4.4
 holidays>=0.56,<1.0
+whitenoise==6.9.0
