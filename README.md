@@ -371,40 +371,15 @@ Note operative:
 
 ## Comandi amministrativi
 
-Riepilogo dei principali comandi manuali/amministrativi disponibili.
+Riepilogo per categorie:
 
-LDAP:
-- `python manage.py import_ldap_users`
-- `python manage.py import_ldap_users --dry-run`
-- `python manage.py import_ldap_users --base-dn "ou=people,dc=example,dc=org" --filter "(objectClass=person)"`
-- `python manage.py sync_ldap_users`
-- `python manage.py sync_ldap_users --dry-run`
-- `python manage.py sync_ldap_users --deactivate-missing`
-- `python manage.py sync_ldap_users --create-missing`
-- `python manage.py check_ldap_user_presence`
-- `python manage.py check_ldap_user_presence --dry-run`
+- LDAP: `import_ldap_users`, `sync_ldap_users`, `check_ldap_user_presence`
+- Email operative: `send_submission_reminders`, `send_manager_monthly_summary`
+- Festivita: `sync_holidays`, `prepare_next_year_holidays`
+- Import/export release: `export_release_data`, `import_release_data`
 
-Email operative:
-- `python manage.py send_submission_reminders`
-- `python manage.py send_submission_reminders --dry-run`
-- `python manage.py send_submission_reminders --force`
-- `python manage.py send_submission_reminders --date 2026-03-30 --dry-run`
-- `python manage.py send_manager_monthly_summary`
-- `python manage.py send_manager_monthly_summary --dry-run`
-- `python manage.py send_manager_monthly_summary --force`
-- `python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run`
-
-Festivita:
-- `python manage.py sync_holidays --year 2026`
-- `python manage.py sync_holidays --year 2026 --overwrite`
-- `python manage.py prepare_next_year_holidays --dry-run`
-- `python manage.py prepare_next_year_holidays --force --year 2027`
-
-Import/export release:
-- `python manage.py export_release_data ./release-export.json`
-- `python manage.py import_release_data ./release-export.json --dry-run`
-- `python manage.py import_release_data ./release-export.json --mode merge`
-- `python manage.py import_release_data ./release-export.json --mode replace`
+Spiegazione comando-per-comando:
+- [`docs/comandi_amministrativi.md`](docs/comandi_amministrativi.md)
 
 ## Operazioni straordinarie
 
