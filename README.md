@@ -259,6 +259,34 @@ Template email modificabili dalla Pagina di Amministrazione:
 Le email periodiche sono gestite dal servizio `scheduler`; vedi la sezione `Automazioni`.
 Per l'esecuzione manuale dei comandi email, vedi la sezione `Comandi amministrativi`.
 
+### Configurazione da Pagina di Amministrazione
+
+Le principali aree configurabili da interfaccia sono:
+
+- `Impostazioni applicazione`
+  - formato data del portale
+  - logo di login
+  - nome azienda
+  - anno copyright
+  - mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
+- `Template email di sistema`
+  - personalizzazione oggetti e corpi email
+  - invio email di test
+- `DepartmentPolicy`
+  - override limiti per afferenza territoriale
+- `Holiday`
+  - festivita globali o per afferenza territoriale
+- `Users`
+  - ruolo applicativo
+  - afferenza territoriale
+  - responsabile approvazione
+  - sottoscrizione AILA
+  - approvazione automatica
+- `Strumenti`
+  - monitor log
+  - sync festivita
+  - altre operazioni di supporto amministrativo
+
 ## Funzionamento applicativo
 
 ### Vincoli di business implementati
@@ -274,16 +302,6 @@ Per l'esecuzione manuale dei comandi email, vedi la sezione `Comandi amministrat
 - Mese corrente: solo richiesta variazione con motivazione (non invio in approvazione)
 
 I vincoli sono validati sia in fase di creazione/modifica del piano, sia al momento dell'invio (`submit`).
-
-### Configurazione per Afferenza territoriale (eventuali sedi distaccate)
-
-Dalla Pagina di Amministrazione puoi configurare:
-
-- `DepartmentPolicy`: override dei limiti per singola afferenza territoriale
-  - `max_remote_days`
-  - `february_max_remote_days`
-  - `require_on_site_prevalence`
-- `Holiday`: festivita globali (campo afferenza territoriale vuoto) o specifiche per afferenza territoriale
 
 ### Anagrafica utente e referente
 
@@ -323,24 +341,6 @@ Allineamento automatico implementato:
 - `role=SUPERADMIN` forza `is_staff=True`
 - `role=ADMIN` mantiene `is_staff=False` (resta approvatore nell'app ma senza accesso Pagina di Amministrazione)
 - utente `EMPLOYEE` non superuser viene riallineato con `is_staff=False`
-
-#### Sync automatico festivita nazionali
-
-Puoi precaricare nel DB le festivita nazionali italiane:
-- dalla Pagina di Amministrazione, tramite gli strumenti dedicati
-- oppure da riga di comando
-
-Per i comandi CLI, vedi la sezione `Comandi amministrativi`.
-
-#### Preparazione festivita anno successivo
-
-Per predisporre automaticamente le festivita dell'anno successivo e inviare un report ai superuser, vedi la sezione `Comandi amministrativi`.
-
-Note:
-- il comando genera o aggiorna le festivita nazionali italiane dell'anno indicato
-- in ambiente Docker viene eseguito automaticamente dal servizio `scheduler` il 1 dicembre
-- il report finale viene inviato ai superuser via email
-- puo comunque essere eseguito manualmente quando serve
 
 ## Automazioni
 
