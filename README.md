@@ -290,34 +290,37 @@ Nella Pagina di Amministrazione, nella scheda utente (`Users`), sono disponibili
 - `Sottoscrizione AILA` (`aila_subscribed`), scelta `No`/`Si` (default `No`)
 - `Approvazione automatica` (`auto_approve`), scelta `No`/`Si` (default `No`)
 
-Note:
-- il referente puo essere assegnato solo a utenti con ruolo `ADMIN`/`SUPERADMIN` (o superuser)
-- per utenti `ADMIN`/`SUPERADMIN` (o superuser), il referente puo essere solo se stesso (oppure vuoto)
-- se `Sottoscrizione AILA=No`, l'utente non puo creare/modificare/inviare piani o richieste variazione
-- se `Sottoscrizione AILA=No` ma l'utente e `ADMIN`/`SUPERADMIN`, puo comunque accedere e operare nelle code approvazioni/variazioni
-- se `Approvazione automatica=Si`, invio piano e richieste variazione vengono approvati direttamente senza passare dalle code
+Significato pratico:
+- `Responsabile approvazione` e l'utente che approva piano e richieste variazione per un dipendente
+- il referente puo essere assegnato solo a utenti con ruolo applicativo `ADMIN` o `SUPERADMIN`, oppure a un utente Django `is_superuser=True`
+- un utente con ruolo `ADMIN` o `SUPERADMIN` non ha a sua volta un referente diverso da se stesso: il campo puo essere solo vuoto oppure uguale al proprio utente
+- se `Sottoscrizione AILA=No`, l'utente non puo creare, modificare o inviare piani e richieste variazione
+- se `Sottoscrizione AILA=No` ma l'utente e `ADMIN` o `SUPERADMIN`, puo comunque accedere al portale e lavorare nelle code di approvazione/variazione
+- se `Approvazione automatica=Si`, piano e richieste variazione vengono approvati direttamente senza passare dalle code
 
 ### Ruoli e permessi (Django vs App)
 
-Per evitare ambiguita, i livelli sono due:
+Per evitare ambiguita, i livelli da distinguere sono due:
 
-1. Ruolo applicativo (`role`):
-   - `EMPLOYEE`: utente standard
-   - `ADMIN` (Responsabile approvazione): gestisce code approvazione/variazione per utenti assegnati
-   - `SUPERADMIN`: visione/operativita globale nell'applicazione
+1. Ruolo applicativo (`role`), usato dal portale:
+   - `EMPLOYEE`: utente standard che gestisce il proprio piano
+   - `ADMIN`: Responsabile approvazione, vede e gestisce le code per gli utenti che hanno lui come referente
+   - `SUPERADMIN`: visione e operativita globale su tutto il portale
 
 2. Permessi Django (`is_staff`, `is_superuser`):
-   - `is_staff`: accesso all'interfaccia Pagina di Amministrazione
-   - `is_superuser`: privilegi massimi Pagina di Amministrazione
+   - `is_staff`: accesso all'interfaccia di amministrazione Django (`/admin/`)
+   - `is_superuser`: privilegi massimi nella Pagina di Amministrazione Django
 
-Comportamento nel portale applicativo:
-- un utente `is_superuser=True` viene trattato come super admin anche nell'app (equivalente operativo a `SUPERADMIN`)
-- l'accesso a code approvazione/variazioni dipende dal ruolo applicativo (`ADMIN`/`SUPERADMIN`), non dal flag `is_staff`
+In pratica:
+- il portale applicativo decide cosa puoi fare in base a `role`
+- la Pagina di Amministrazione Django decide cosa puoi fare in base a `is_staff` e `is_superuser`
+- l'accesso alle code approvazione/variazioni dipende dal ruolo applicativo `ADMIN` o `SUPERADMIN`, non da `is_staff`
+- un utente `is_superuser=True` viene trattato anche come super admin nel portale, cioe con comportamento equivalente a `SUPERADMIN`
 
-Allineamento automatico implementato:
+Allineamento automatico:
 - `is_superuser=True` forza automaticamente `role=SUPERADMIN` e `is_staff=True`
 - `role=SUPERADMIN` forza `is_staff=True`
-- `role=ADMIN` mantiene `is_staff=False` (resta approvatore nell'app ma senza accesso Pagina di Amministrazione)
+- `role=ADMIN` mantiene `is_staff=False` di default: resta approvatore nel portale ma senza accesso automatico alla Pagina di Amministrazione
 - utente `EMPLOYEE` non superuser viene riallineato con `is_staff=False`
 
 ## Automazioni
