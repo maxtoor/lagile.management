@@ -199,43 +199,14 @@ In sintesi:
 - con LDAP attivo, la registrazione automatica al primo login e il flusso standard
 - `import_ldap_users` e `sync_ldap_users` sono strumenti opzionali di supporto operativo, non un prerequisito per il funzionamento normale
 
-#### Controllo periodico presenza utenti in LDAP
+Operazioni LDAP disponibili:
+- import utenti LDAP in locale
+- sync anagrafico utenti gia importati
+- controllo periodico presenza utenti in directory
 
-Per il controllo periodico degli utenti gia registrati localmente e disponibile un comando separato.
-Vedi anche la sezione `Comandi amministrativi`.
-
-Questo comando:
-- prende in considerazione solo gli utenti locali attivi gestiti via LDAP
-- verifica per ciascuno se esiste ancora nella directory LDAP usando `LDAP_USER_FILTER`
-- se l'utente non esiste piu, lo imposta `is_active=False`
-- registra un audit log applicativo
-- invia una email riepilogativa ai superuser con l'elenco degli utenti disattivati
-
-Questo e il comando piu adatto all'esecuzione periodica via scheduler.
-Non aggiorna nome, cognome o email, e non crea utenti mancanti.
-
-#### Import utenti LDAP in locale (non attivi)
-
-Per importare utenti LDAP nel DB locale e gestirli manualmente, vedi la sezione `Comandi amministrativi`.
-
-Note:
-- gli utenti importati (nuovi o aggiornati) vengono impostati `is_active=False`
-- agli utenti importati viene impostata password locale non utilizzabile
-- il campo `Afferenza territoriale` viene valorizzato solo se il valore LDAP e tra quelli ammessi da `AGILE_SITES`, altrimenti resta vuoto
-
-#### Sync periodico utenti LDAP (allineamento)
-
-Per allineare gli utenti gia importati quando LDAP cambia, vedi la sezione `Comandi amministrativi`.
-
-Regole sync:
-- chiave di allineamento: `username`
-- campi aggiornati dal sync: `first_name`, `last_name`, `email`
-- campi non toccati: `Afferenza territoriale`, `Responsabile approvazione`, `Sottoscrizione AILA`, `Ruolo`, `Auto-approvazione`
-- gli account locali con password utilizzabile non vengono modificati
-- non e il comando pensato per il controllo periodico di presenza LDAP: per quello usare `check_ldap_user_presence`
-- per default non crea utenti mancanti (evita import massivo involontario)
-- con `--create-missing` crea in locale gli utenti LDAP assenti nel DB
-- con `--deactivate-missing` vengono disattivati gli account LDAP locali non piu presenti su LDAP (solo account con password non utilizzabile)
+Per dettagli operativi e comandi:
+- vedi `Comandi amministrativi`
+- vedi `Automazioni` per il controllo periodico pianificato
 
 ### Email notifiche
 
@@ -285,18 +256,8 @@ Template email modificabili dalla Pagina di Amministrazione:
   - esito piano (approvato/rifiutato): email al dipendente
   - esito variazione (approvata/rifiutata): email al dipendente
 
-Le email periodiche sono gestite dal servizio `scheduler`; vedi la sezione dedicata `Automazioni`.
-
+Le email periodiche sono gestite dal servizio `scheduler`; vedi la sezione `Automazioni`.
 Per l'esecuzione manuale dei comandi email, vedi la sezione `Comandi amministrativi`.
-
-Se usi Docker non serve un cron esterno: questi comandi vengono gia eseguiti automaticamente dal servizio `scheduler`.
-
-Se invece vuoi eseguirli fuori Docker, puoi schedularli via cron. Esempio:
-
-```cron
-15 8 * * * cd /app && python manage.py send_submission_reminders
-20 8 * * * cd /app && python manage.py send_manager_monthly_summary
-```
 
 ## Funzionamento applicativo
 
