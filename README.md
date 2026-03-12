@@ -176,12 +176,22 @@ Nota Docker:
 
 ## Avvio locale (senza Docker)
 
+Requisiti minimi:
+- Python 3.12
+- PostgreSQL 16
+
+Nota:
+- il percorso consigliato e Docker
+- l'avvio locale senza Docker e adatto soprattutto a sviluppo o troubleshooting su host gia predisposti
+
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-export $(grep -v '^#' .env | xargs)
+set -a
+source .env
+set +a
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
@@ -261,12 +271,6 @@ Import/export release:
 - `python manage.py import_release_data ./release-export.json --dry-run`
 - `python manage.py import_release_data ./release-export.json --mode merge`
 - `python manage.py import_release_data ./release-export.json --mode replace`
-
-Import storico legacy ICB:
-- `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --dry-run`
-- `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync --overwrite-existing-plans --leaves-report-csv ./ICB_leaves_report_between_2026_01_01_and_2026_12_31.csv`
-- `python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run`
-- `python manage.py import_legacy_icb_notes ./ICB_leaves_report_between_2025_01_01_and_2025_12_31.csv --dry-run`
 
 ## Configurazione
 
@@ -462,80 +466,6 @@ Nota: questa procedura riguarda esclusivamente gli Istituti del CNR che avevano 
 
 Dettagli operativi nel documento dedicato:
 - [`docs/migrazione_cnr.md`](docs/migrazione_cnr.md)
-
-### Import storico legacy ICB
-
-Se disponi del backup CSV completo ICB, usa la procedura unica:
-
-```bash
-python manage.py import_icb_legacy_bundle ./ICB_backup.csv --dry-run
-```
-
-Comportamento:
-- fase 1: aggiorna o crea gli utenti locali a partire dal CSV completo ICB
-- fase 2: importa i giorni storici della vecchia applicazione Node.js
-- legge il CSV backup legacy ICB
-- importa solo le righe `Programmazione`
-- ignora le righe `Variazione`
-- importa anche il mese corrente
-- puo importare anche il mese prossimo se presente nei `Leaves report` legacy con stato noto
-- esclude i mesi futuri non coperti dal `Leaves report`
-- filtra weekend e festivita
-- crea `MonthlyPlan` storici con stato derivato dal legacy:
-  - `Approved` -> `APPROVED`
-  - `New` -> `SUBMITTED`
-  - `Rejected` -> `REJECTED`
-- crea i `PlanDay` importati come `REMOTE`
-- con `--overwrite-existing-plans` puo sovrascrivere i piani gia presenti nel database
-
-Riconciliazione utenti:
-- email esatta
-- username ricavato dalla parte locale della mail legacy
-- fallback su cognome, con disambiguazione sul nome quando possibile
-
-Opzioni utili:
-- `--with-ldap-sync`: dopo il sync utenti ICB esegue anche l’allineamento anagrafico da LDAP
-- `--skip-user-sync`: esegue solo l’import storico dei giorni
-- `--skip-history-import`: esegue solo la fase utenti/referenti
-- `--overwrite-existing-plans`: sovrascrive i piani gia presenti nella fase storico
-- `--leaves-report-csv`: usa uno o piu `Leaves report` legacy per decidere lo stato di mese corrente/prossimo
-
-Uso consigliato:
-1. eseguire prima `--dry-run`
-2. verificare quanti piani risultano creabili e quanti record vengono scartati
-3. eseguire l'import reale solo dopo la verifica del report
-
-Esempio import reale:
-
-```bash
-python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync --overwrite-existing-plans --leaves-report-csv ./ICB_leaves_report_between_2026_01_01_and_2026_12_31.csv
-```
-
-Comandi essenziali:
-- bundle completo: `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --dry-run`
-- bundle completo con allineamento LDAP: `python manage.py import_icb_legacy_bundle ./ICB_backup.csv --with-ldap-sync --overwrite-existing-plans --leaves-report-csv ./ICB_leaves_report_between_2026_01_01_and_2026_12_31.csv`
-- solo storico giorni: `python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run`
-- solo descrizioni attivita da leaves report: `python manage.py import_legacy_icb_notes ./ICB_leaves_report_between_2025_01_01_and_2025_12_31.csv --backup-csv-path ./ICB_backup.csv --dry-run`
-
-Se vuoi lanciare solo la seconda fase, resta disponibile anche il comando dedicato:
-
-```bash
-python manage.py import_legacy_icb_backup ./ICB_backup.csv --dry-run
-```
-
-Se disponi anche del leaves report legacy con la colonna `Comment`, puoi importare successivamente le descrizioni attivita sui `PlanDay` gia creati:
-
-```bash
-python manage.py import_legacy_icb_notes ./ICB_leaves_report_between_2025_01_01_and_2025_12_31.csv --backup-csv-path ./ICB_backup.csv --dry-run
-```
-
-Questo comando:
-- legge solo le righe `Programmazione`
-- usa `Comment` come sorgente di `PlanDay.notes`
-- aggiorna solo giorni `REMOTE` gia presenti
-- puo usare `ICB_backup.csv` come mappa ausiliaria nome->email->utente
-- per default non sovrascrive note gia valorizzate
-- supporta `--overwrite` se vuoi forzare il testo legacy
 
 ## Funzionamento applicativo
 
