@@ -391,7 +391,10 @@ Flusso consigliato installazione ex-novo:
 
 Nota: questa procedura riguarda esclusivamente gli Istituti del CNR che avevano adottato la versione precedente di questo software.
 
-Dettagli operativi nel documento dedicato:
+Dettagli operativi per l'import legacy ICB:
+- [`docs/import_legacy_icb.md`](docs/import_legacy_icb.md)
+
+Materiale storico generale:
 - [`docs/migrazione_cnr.md`](docs/migrazione_cnr.md)
 
 ## API
