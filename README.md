@@ -109,7 +109,7 @@ Requisiti minimi:
 - PostgreSQL 16
 
 Nota:
-- il percorso consigliato e Docker
+- il percorso consigliato e l'avvio rapido con Docker
 - l'avvio locale senza Docker e adatto soprattutto a sviluppo o troubleshooting su host gia predisposti
 
 ```bash
