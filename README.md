@@ -130,6 +130,16 @@ Riferimento rapido configurazione:
 
 ## Configurazione
 
+Nota sugli override:
+- alcune impostazioni possono essere salvate anche dalla Pagina di Amministrazione, in `Impostazioni applicazione`
+- quando presenti, questi valori prevalgono sui corrispondenti valori in `.env`
+- in pratica questo vale soprattutto per:
+  - formato data del portale
+  - logo di login
+  - nome azienda
+  - anno copyright
+  - mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
+
 ### LDAP
 
 Abilita LDAP con:
@@ -236,52 +246,6 @@ Template email modificabili dalla Pagina di Amministrazione:
 
 Le email periodiche sono gestite dal servizio `scheduler`; vedi la sezione `Automazioni`.
 Per l'esecuzione manuale dei comandi email, vedi la sezione `Comandi amministrativi`.
-
-### Configurazione da Pagina di Amministrazione
-
-Le principali aree configurabili da interfaccia sono:
-
-- `Impostazioni applicazione`
-  - impostazioni salvate nel database applicativo e gestite da interfaccia
-  - formato data del portale
-  - logo di login
-  - nome azienda
-  - anno copyright
-  - mittente email
-- `Template email di sistema`
-  - personalizzazione oggetti e corpi email
-  - invio email di test
-- `DepartmentPolicy`
-  - override limiti per afferenza territoriale
-- `Holiday`
-  - festivita globali o per afferenza territoriale
-- `Users`
-  - ruolo applicativo
-  - afferenza territoriale
-  - responsabile approvazione
-  - sottoscrizione AILA
-  - approvazione automatica
-- `Strumenti`
-  - monitor log
-  - sync festivita
-  - altre operazioni di supporto amministrativo
-
-In pratica, dalla Pagina di Amministrazione esistono due livelli distinti:
-
-- configurazione applicativa gestita da interfaccia
-  - `Users`
-  - `DepartmentPolicy`
-  - `Holiday`
-  - `Template email di sistema`
-  - `Impostazioni applicazione`
-- override di valori definiti anche in `.env`
-  - formato data del portale
-  - logo di login
-  - nome azienda
-  - anno copyright
-  - mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
-
-Quando questi valori vengono salvati in `Impostazioni applicazione`, prevalgono sui corrispondenti valori presenti in `.env`.
 
 ## Funzionamento applicativo
 
