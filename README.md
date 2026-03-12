@@ -242,11 +242,12 @@ Per l'esecuzione manuale dei comandi email, vedi la sezione `Comandi amministrat
 Le principali aree configurabili da interfaccia sono:
 
 - `Impostazioni applicazione`
+  - impostazioni salvate nel database applicativo e gestite da interfaccia
   - formato data del portale
   - logo di login
   - nome azienda
   - anno copyright
-  - mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
+  - mittente email
 - `Template email di sistema`
   - personalizzazione oggetti e corpi email
   - invio email di test
@@ -264,6 +265,23 @@ Le principali aree configurabili da interfaccia sono:
   - monitor log
   - sync festivita
   - altre operazioni di supporto amministrativo
+
+In pratica, dalla Pagina di Amministrazione esistono due livelli distinti:
+
+- configurazione applicativa gestita da interfaccia
+  - `Users`
+  - `DepartmentPolicy`
+  - `Holiday`
+  - `Template email di sistema`
+  - `Impostazioni applicazione`
+- override di valori definiti anche in `.env`
+  - formato data del portale
+  - logo di login
+  - nome azienda
+  - anno copyright
+  - mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
+
+Quando questi valori vengono salvati in `Impostazioni applicazione`, prevalgono sui corrispondenti valori presenti in `.env`.
 
 ## Funzionamento applicativo
 
