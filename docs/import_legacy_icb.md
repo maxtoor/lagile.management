@@ -8,7 +8,7 @@ Per il flusso completo servono:
 
 - `ICB_backup.csv`
   - backup CSV completo usato per utenti, afferenze territoriali, referenti e storico `Programmazione`
-- `ICB_leaves_report_between_2025_01_01_and_2026_04_30.csv`
+- `ICB_leaves_report_between_2025_01_01_and_2026_12_31.csv`
   - leaves report legacy usato per stati e note/attivita
 
 ## Comandi principali
@@ -27,7 +27,7 @@ Esempio:
 python manage.py import_icb_legacy_bundle ./import/ICB_backup.csv \
   --with-ldap-sync \
   --overwrite-existing-plans \
-  --leaves-report-csv ./import/ICB_leaves_report_between_2025_01_01_and_2026_04_30.csv
+  --leaves-report-csv ./import/ICB_leaves_report_between_2025_01_01_and_2026_12_31.csv
 ```
 
 Opzioni rilevanti:
@@ -44,7 +44,7 @@ Importa le descrizioni attivita dal `Leaves report` legacy e le copia in `PlanDa
 Esempio:
 
 ```bash
-python manage.py import_legacy_icb_notes ./import/ICB_leaves_report_between_2025_01_01_and_2026_04_30.csv \
+python manage.py import_legacy_icb_notes ./import/ICB_leaves_report_between_2025_01_01_and_2026_12_31.csv \
   --backup-csv-path ./import/ICB_backup.csv
 ```
 
@@ -80,10 +80,10 @@ Prima dell'import reale:
 python manage.py import_icb_legacy_bundle ./import/ICB_backup.csv \
   --with-ldap-sync \
   --overwrite-existing-plans \
-  --leaves-report-csv ./import/ICB_leaves_report_between_2025_01_01_and_2026_04_30.csv \
+  --leaves-report-csv ./import/ICB_leaves_report_between_2025_01_01_and_2026_12_31.csv \
   --dry-run
 
-python manage.py import_legacy_icb_notes ./import/ICB_leaves_report_between_2025_01_01_and_2026_04_30.csv \
+python manage.py import_legacy_icb_notes ./import/ICB_leaves_report_between_2025_01_01_and_2026_12_31.csv \
   --backup-csv-path ./import/ICB_backup.csv \
   --dry-run
 ```
@@ -99,7 +99,7 @@ Leaves report CSV:
 - export CSV via route:
 
 ```text
-/reports/leaves/?as-csv=1&start_date=2025-01-01&end_date=2026-04-30
+/reports/leaves/?as-csv=1&start_date=2025-01-01&end_date=2026-12-31
 ```
 
 ## Note pratiche
