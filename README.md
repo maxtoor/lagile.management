@@ -219,24 +219,32 @@ Se `AGILE_EMAIL_REDIRECT_TO` e valorizzato, tutte le email in uscita vengono inv
 
 Template email modificabili dalla Pagina di Amministrazione:
 - sezione: `Template email di sistema`
-- chiavi disponibili:
-  - `LDAP_USER_IMPORTED`
-  - `CHANGE_REQUEST_SUBMITTED`
-  - `REMINDER_PENDING_SUBMISSION`
-  - `MANAGER_MONTHLY_SUMMARY`
-  - `PLAN_APPROVED`
-  - `PLAN_REJECTED`
-  - `CHANGE_APPROVED`
-  - `CHANGE_REJECTED`
-- segnaposto utili nei template:
-  - `{first_name_or_username}`, `{first_name}`, `{last_name}`, `{full_name}`, `{username}`
-  - `{manager_name}`, `{employee_name}`
-  - `{pending_count}`, `{missing_count}`, `{pending_lines}`, `{missing_lines}`
-  - `{month_label}`, `{month_name_year}`, `{status_label}`, `{status_label_lower}`
-  - `{plan_status}`, `{plan_status_label}`
-  - `{email}`, `{import_timestamp}`
-  - `{public_base_url}`, `{portal_url}`, `{admin_url}`
-  - `{change_reason}`, `{rejection_reason}`, `{final_line}`
+- segnaposto principali:
+  - identita utente:
+    - `{first_name_or_username}`: nome se presente, altrimenti username
+    - `{first_name}`, `{last_name}`, `{full_name}`, `{username}`
+    - `{email}`
+  - soggetti coinvolti nel workflow:
+    - `{manager_name}`: nome del responsabile approvazione
+    - `{employee_name}`: nome del dipendente nella richiesta
+  - periodo e stato:
+    - `{month_label}`, `{month_name_year}`
+    - `{status_label}`, `{status_label_lower}`
+    - `{plan_status}`, `{plan_status_label}`
+  - riepiloghi e report:
+    - `{pending_count}`, `{missing_count}`
+    - `{pending_lines}`, `{missing_lines}`
+    - queste variabili sono utili soprattutto nei template riepilogativi per referenti e superuser
+  - motivazioni e testo finale:
+    - `{change_reason}`: motivazione richiesta variazione
+    - `{rejection_reason}`: motivazione rifiuto
+    - `{final_line}`: chiusura pronta gia formattata dove prevista
+  - link applicativi:
+    - `{public_base_url}`: URL pubblico base dell'applicazione
+    - `{portal_url}`: link diretto al portale
+    - `{admin_url}`: link diretto alla Pagina di Amministrazione
+  - contesto tecnico:
+    - `{import_timestamp}`: timestamp di importazione/onboarding, dove previsto
 - dalla scheda template e disponibile il pulsante `Invia email di test` con anteprima e invio verso destinatario scelto
 - eventi email principali:
   - primo login LDAP di un utente non ancora presente in locale: email ai superuser per completare onboarding e configurazione applicativa
