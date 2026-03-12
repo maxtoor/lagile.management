@@ -130,28 +130,6 @@ Riferimento rapido configurazione:
 
 ## Configurazione
 
-### Override da Pagina di Amministrazione
-
-In `Strumenti` e disponibile `Impostazioni applicazione`.
-
-I valori salvati in questa pagina hanno priorita su `.env` per:
-- formato data portale
-- logo login
-- nome azienda + anno copyright
-- mittente email (`DEFAULT_FROM_EMAIL`, `AGILE_EMAIL_FROM_NAME`)
-
-### Logo di login
-
-Puoi personalizzare il logo della pagina di login tramite:
-
-```env
-AGILE_LOGIN_LOGO_URL=https://example.org/static/logo-istituto.png
-```
-
-Comportamento:
-- se `AGILE_LOGIN_LOGO_URL` e valorizzata, viene usato quel logo
-- se `AGILE_LOGIN_LOGO_URL` e vuota o assente, viene usato il logo di default incluso nell'applicazione (`informatici_cnr.png`)
-
 ### LDAP
 
 Abilita LDAP con:
