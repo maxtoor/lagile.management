@@ -16,7 +16,9 @@ class RedirectEmailBackend(BaseEmailBackend):
             'AGILE_EMAIL_REAL_BACKEND',
             'django.core.mail.backends.smtp.EmailBackend',
         )
-        self.connection = get_connection(self.real_backend, fail_silently=self.fail_silently, **kwargs)
+        backend_kwargs = dict(kwargs)
+        backend_kwargs.pop('fail_silently', None)
+        self.connection = get_connection(self.real_backend, fail_silently=self.fail_silently, **backend_kwargs)
 
     def open(self):
         return self.connection.open()
