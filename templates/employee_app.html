@@ -798,8 +798,8 @@
       }
 
       .user-profile.fixed-top {
-        position: static;
-        top: auto;
+        position: sticky;
+        top: var(--top-strip-height);
         width: 100%;
         min-width: 0;
         margin: 0 auto var(--section-gap);
@@ -809,19 +809,19 @@
       }
 
       .page-top-strip {
-        position: relative;
+        position: sticky;
         left: auto;
-        top: auto;
+        top: 0;
         box-sizing: border-box;
         height: var(--top-strip-height);
         width: 100%;
         min-width: 0;
-        margin: 0 0 12px 0;
+        margin: 0;
         padding: 0 24px;
         border-bottom: 1px solid var(--line);
         background: linear-gradient(180deg, rgba(250, 251, 253, 0.98), rgba(240, 244, 249, 0.98));
         box-shadow: 0 8px 18px rgba(61, 81, 109, 0.08);
-        z-index: auto;
+        z-index: 50;
         display: flex;
         align-items: center;
         justify-content: space-between;
