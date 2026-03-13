@@ -1967,6 +1967,7 @@
       const softwareInfoLink = document.getElementById("softwareInfoLink");
       const softwareInfoModal = document.getElementById("softwareInfoModal");
       const closeSoftwareInfoBtn = document.getElementById("closeSoftwareInfoBtn");
+      const pageFooter = document.querySelector(".page-footer");
       const mainMenu = document.getElementById("mainMenu");
       const mainMenuToggle = document.getElementById("mainMenuToggle");
       const mainMenuPanel = document.getElementById("mainMenuPanel");
@@ -2138,6 +2139,12 @@
         if (!pageTopStrip) return;
         const scrollX = window.scrollX || document.documentElement.scrollLeft || 0;
         pageTopStrip.style.transform = `translateX(${-scrollX}px)`;
+      }
+
+      function syncFooterHorizontalPosition() {
+        if (!pageFooter) return;
+        const scrollX = window.scrollX || document.documentElement.scrollLeft || 0;
+        pageFooter.style.left = `${-scrollX}px`;
       }
 
       for (let m = 1; m <= 12; m++) {
@@ -4894,6 +4901,7 @@
 
       syncModalOpenState();
       syncTopStripHorizontalPosition();
+      syncFooterHorizontalPosition();
 
       document.addEventListener("click", (event) => {
         if (mainMenu && !mainMenu.classList.contains("hidden") && !mainMenu.contains(event.target)) {
@@ -4920,6 +4928,8 @@
           noteModalWorkTypePanel.classList.add("hidden");
         }
       });
+
+      window.addEventListener("scroll", syncFooterHorizontalPosition, { passive: true });
 
       bootstrap();
     </script>
