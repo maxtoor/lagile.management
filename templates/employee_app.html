@@ -3797,14 +3797,12 @@
           return;
         }
         if (APP_PAGE === "approvals") {
-          const plans = await api("/plans/");
-          const pending = plans.filter((p) => p.status === "SUBMITTED");
-          renderApproverQueue(pending);
+          const plans = await api("/plans/?status=SUBMITTED");
+          renderApproverQueue(plans);
           return;
         }
-        const changeRequests = await api("/change-requests/");
-        const pendingChangeRequests = changeRequests.filter((r) => r.status === "PENDING");
-        renderChangeRequests(pendingChangeRequests);
+        const changeRequests = await api("/change-requests/?status=PENDING");
+        renderChangeRequests(changeRequests);
       }
 
       function startApproverAutoRefresh() {

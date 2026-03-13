@@ -608,6 +608,12 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
             if month < 1 or month > 12:
                 raise ValidationError('Parametro month non valido')
             queryset = queryset.filter(month=month)
+        status_raw = (self.request.query_params.get('status') or '').strip().upper()
+        if status_raw:
+            valid_statuses = {choice[0] for choice in MonthlyPlan.Status.choices}
+            if status_raw not in valid_statuses:
+                raise ValidationError('Parametro status non valido')
+            queryset = queryset.filter(status=status_raw)
         return queryset
 
     def perform_create(self, serializer):
@@ -917,8 +923,17 @@ class ChangeRequestViewSet(viewsets.ReadOnlyModelViewSet):
         base = ChangeRequest.objects.select_related('user', 'plan', 'plan__user', 'processed_by').order_by('-created_at')
         user = self.request.user
         if MonthlyPlanViewSet._is_superadmin_user(user):
-            return base
-        return base.filter(Q(plan__user=user) | Q(plan__user__manager=user))
+            queryset = base
+        else:
+            queryset = base.filter(Q(plan__user=user) | Q(plan__user__manager=user))
+
+        status_raw = (self.request.query_params.get('status') or '').strip().upper()
+        if status_raw:
+            valid_statuses = {choice[0] for choice in ChangeRequest.Status.choices}
+            if status_raw not in valid_statuses:
+                raise ValidationError('Parametro status non valido')
+            queryset = queryset.filter(status=status_raw)
+        return queryset
 
     @action(detail=True, methods=['post'])
     def review(self, request, pk=None):
