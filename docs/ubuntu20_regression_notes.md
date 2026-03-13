@@ -103,6 +103,21 @@ pg_lsclusters
 sudo -u postgres psql -c "\l"
 ```
 
+Nota:
+- su installazioni Ubuntu minimali `it_IT.UTF-8` potrebbe non essere disponibile
+- in quel caso usare `C.UTF-8`, che e sufficiente per avere un cluster/database in `UTF8`
+
+Esempio compatibile:
+
+```bash
+systemctl stop postgresql
+pg_dropcluster --stop 12 main
+pg_createcluster --locale C.UTF-8 --encoding UTF8 12 main
+systemctl start postgresql
+pg_lsclusters
+sudo -u postgres psql -c "\l"
+```
+
 ### 4. Crea database e utente
 
 ```bash
