@@ -3225,7 +3225,7 @@
         const nextYm = nextYearMonth();
 
         const [plans, holidays] = await Promise.all([
-          api("/plans/"),
+          api(`/plans/?mine=1&year=${year}&month=${month}`),
           api(`/holidays/month/?year=${year}&month=${month}`),
         ]);
         currentHolidayDays = new Set(holidays.days || []);
