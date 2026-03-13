@@ -550,6 +550,10 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
     def _has_aila_subscription(user) -> bool:
         return bool(getattr(user, 'aila_subscribed', False))
 
+    @staticmethod
+    def _as_bool_query_param(value) -> bool:
+        return str(value or '').strip().lower() in {'1', 'true', 'yes', 'si', 'on'}
+
     def _assert_programming_enabled(self, *, plan_owner_id: Optional[int] = None) -> None:
         if plan_owner_id is not None and plan_owner_id != self.request.user.id:
             return
@@ -580,11 +584,31 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
                 latest_change_request_response_reason_db=Subquery(latest_change_request.values('response_reason')[:1]),
             )
         )
-        if self._is_superadmin_user(user):
-            return base
-        if self._is_admin_user(user):
-            return base.filter(Q(user=user) | Q(user__manager=user))
-        return base.filter(user=user)
+        if self._as_bool_query_param(self.request.query_params.get('mine')):
+            queryset = base.filter(user=user)
+        elif self._is_superadmin_user(user):
+            queryset = base
+        elif self._is_admin_user(user):
+            queryset = base.filter(Q(user=user) | Q(user__manager=user))
+        else:
+            queryset = base.filter(user=user)
+
+        year_raw = self.request.query_params.get('year')
+        month_raw = self.request.query_params.get('month')
+        if year_raw:
+            try:
+                queryset = queryset.filter(year=int(year_raw))
+            except (TypeError, ValueError):
+                raise ValidationError('Parametro year non valido')
+        if month_raw:
+            try:
+                month = int(month_raw)
+            except (TypeError, ValueError):
+                raise ValidationError('Parametro month non valido')
+            if month < 1 or month > 12:
+                raise ValidationError('Parametro month non valido')
+            queryset = queryset.filter(month=month)
+        return queryset
 
     def perform_create(self, serializer):
         self._assert_programming_enabled()
