@@ -4,6 +4,7 @@ Questo documento riassume le ottimizzazioni applicate nel fork Ubuntu 20 per rid
 - `Quadro generale`
 - `Richieste approvazione`
 - `Richieste variazioni`
+- `Programmazione`
 - apertura `Dettaglio`
 
 Obiettivo:
@@ -18,6 +19,8 @@ Branch fork:
 
 Commit di riferimento:
 - `ea23217` `Reduce admin queue and overview latency`
+- `36eb1b3` `Reduce programming month load payload`
+- `f15bff0` `Filter approval queues server-side`
 
 File sorgente principali:
 - [`agile/views.py`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/agile/views.py)
@@ -54,6 +57,28 @@ Nel template:
 - il click su `Dettaglio` nell'overview ricaricava `/plans/` completo
 
 Per aprire un solo dettaglio si scaricavano liste intere.
+
+### 4. Programmazione caricava piu piani del necessario
+
+Nel caricamento mese di `Programmazione`, il template chiamava sempre:
+- `/plans/`
+
+e poi cercava nel browser il solo piano dell'utente corrente per `year` e `month`.
+
+Per utenti approvatori o dataset cresciuti, questo aumentava:
+- payload JSON
+- serializzazione backend
+- tempo di filtro lato frontend
+
+### 5. Code approvazione filtrate lato client
+
+Nel caricamento delle code:
+- `Richieste approvazione` scaricava tutti i piani accessibili e poi filtrava `SUBMITTED` in JavaScript
+- `Richieste variazioni` scaricava tutte le change request accessibili e poi filtrava `PENDING` in JavaScript
+
+Anche qui il problema era soprattutto:
+- payload eccessivo
+- lavoro inutile lato browser
 
 ## Ottimizzazioni applicate
 
@@ -93,6 +118,32 @@ Nel template `employee_app.html`:
   - se manca, si usa `GET /plans/{id}/` oppure `GET /change-requests/{id}/`
   - non si scaricano piu liste complete
 
+### Backend + frontend: Programmazione con filtro mese utente
+
+In `MonthlyPlanViewSet.get_queryset()` sono stati aggiunti query param opzionali:
+- `mine=1`
+- `year=...`
+- `month=...`
+
+Nel template `employee_app.html`, `loadMonth()` ora chiama:
+- `/plans/?mine=1&year=YYYY&month=MM`
+
+invece di:
+- `/plans/`
+
+Questo riduce in modo netto il caricamento iniziale e il cambio mese nella pagina `Programmazione`.
+
+### Backend + frontend: code approvazione filtrate lato server
+
+In `MonthlyPlanViewSet.get_queryset()` e `ChangeRequestViewSet.get_queryset()` e stato aggiunto il query param:
+- `status=...`
+
+Nel template:
+- `Richieste approvazione` usa `/plans/?status=SUBMITTED`
+- `Richieste variazioni` usa `/change-requests/?status=PENDING`
+
+Quindi le code ricevono solo gli elementi da mostrare, senza filtro successivo lato browser.
+
 ## Checklist di porting verso advanced
 
 Applicare in quest'ordine:
@@ -106,9 +157,16 @@ Applicare in quest'ordine:
    - ultimo stato change request
    - ultima response reason
 6. Aggiornare il serializer per usare le annotazioni quando presenti.
-7. Nel frontend, evitare `GET` di collezioni intere quando serve un singolo dettaglio.
-8. Mantenere una cache locale `id -> oggetto` per righe gia renderizzate.
-9. Dove manca l'oggetto, fare una retrieve singola `/{id}/`.
+7. Aggiungere filtri query param per limitare i queryset quando il frontend conosce gia:
+   - utente corrente
+   - mese
+   - anno
+   - stato
+8. In `Programmazione`, richiedere solo il piano del mese corrente dell'utente.
+9. Nelle code, richiedere solo gli elementi con lo stato utile alla pagina.
+10. Nel frontend, evitare `GET` di collezioni intere quando serve un singolo dettaglio.
+11. Mantenere una cache locale `id -> oggetto` per righe gia renderizzate.
+12. Dove manca l'oggetto, fare una retrieve singola `/{id}/`.
 
 ## Punti da cercare nella versione advanced
 
@@ -116,8 +174,12 @@ Backend:
 - view overview admin
 - queryset piani admin/approvatore
 - serializer piano con campi derivati da `change_requests`
+- punti in cui il frontend potrebbe passare `year`, `month`, `status`, `mine`
 
 Frontend:
+- caricamento pagina `Programmazione`
+- cambio mese
+- caricamento code approvazione
 - handler click pulsante `Dettaglio`
 - chiamate a `/plans/`
 - chiamate a `/change-requests/`
@@ -130,9 +192,15 @@ Se l'interfaccia deve aprire il dettaglio di un solo elemento:
 - altrimenti chiamare l'endpoint singolo `/{id}/`
 - evitare di ricaricare l'intera collezione solo per fare una `find(...)`
 
+Se il frontend conosce gia i filtri naturali della pagina:
+- passarli sempre all'API
+- non scaricare tutta la collezione per poi filtrarla in JavaScript
+
 ## Verifica consigliata dopo il porting
 
 Misurare almeno questi casi:
+- caricamento iniziale `Programmazione`
+- cambio mese in `Programmazione`
 - apertura `Quadro generale`
 - apertura `Richieste approvazione`
 - apertura `Richieste variazioni`
