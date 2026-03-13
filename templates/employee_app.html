@@ -2142,15 +2142,6 @@
         pageTopStrip.style.transform = `translateX(${-scrollX}px)`;
       }
 
-      function refreshFixedChrome() {
-        syncTopStripHorizontalPosition();
-        window.requestAnimationFrame(() => {
-          syncTopStripHorizontalPosition();
-          window.dispatchEvent(new Event("scroll"));
-          window.dispatchEvent(new Event("resize"));
-        });
-      }
-
       for (let m = 1; m <= 12; m++) {
         const item = document.createElement("button");
         item.type = "button";
@@ -2766,7 +2757,6 @@
         overviewPanel.classList.toggle("hidden", !isOverviewPage);
         approvalsPanel.classList.toggle("hidden", !isApprovalsPage);
         changesPanel.classList.toggle("hidden", !isChangesPage);
-        refreshFixedChrome();
       }
 
       function syncMainMenuByRole() {
@@ -4153,7 +4143,6 @@
             }
             await loadApproverQueue();
             startApproverAutoRefresh();
-            refreshFixedChrome();
           } catch (err) {
             setFeedback(err.message, "error");
           }
@@ -4203,7 +4192,6 @@
             }
             await loadApproverQueue();
             startApproverAutoRefresh();
-            refreshFixedChrome();
           } catch (err) {
             setFeedback(err.message, "error");
           }
