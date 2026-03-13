@@ -4,16 +4,17 @@ fieldset.collapse > h2,
 .inline-group.collapse > h2 {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
 }
 
 fieldset.collapse > h2 .collapse-toggle,
 .inline-group.collapse > h2 .collapse-toggle {
-  margin-left: auto;
+  order: -1;
   font-size: 0;
   line-height: 1;
   text-decoration: none;
   color: transparent;
+  flex: 0 0 auto;
 }
 
 fieldset.collapse > h2 .collapse-toggle::after,
@@ -35,6 +36,7 @@ fieldset.collapse > h2 .agile-collapse-label,
 .inline-group.collapse > h2 .agile-collapse-label {
   display: inline-block;
   min-width: 0;
+  flex: 1 1 auto;
   color: inherit;
   font: inherit;
   line-height: inherit;
