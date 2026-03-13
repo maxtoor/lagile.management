@@ -1,5 +1,36 @@
 /* Keep Django admin collapsible sections on their native markup/behavior. */
 
+fieldset.collapse > h2,
+.inline-group.collapse > h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+fieldset.collapse > h2 .collapse-toggle,
+.inline-group.collapse > h2 .collapse-toggle {
+  margin-left: auto;
+  font-size: 0;
+  line-height: 1;
+  text-decoration: none;
+  color: transparent;
+}
+
+fieldset.collapse > h2 .collapse-toggle::after,
+.inline-group.collapse > h2 .collapse-toggle::after {
+  content: "▸";
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--agile-accent, #0e6b55);
+  transition: transform 0.16s ease;
+}
+
+fieldset.collapse:not(.collapsed) > h2 .collapse-toggle::after,
+.inline-group.collapse:not(.collapsed) > h2 .collapse-toggle::after {
+  transform: rotate(90deg);
+}
+
 /* Campo utente "Referente amministrativo": nasconde icone relazionali (+, matita, lente, cestino). */
 .field-manager .related-widget-wrapper-link,
 .form-row.field-manager .related-widget-wrapper-link {
