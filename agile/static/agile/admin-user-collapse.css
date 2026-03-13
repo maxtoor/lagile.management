@@ -33,7 +33,13 @@ fieldset.collapse:not(.collapsed) > h2 .collapse-toggle::after,
 
 fieldset.collapse > h2 .agile-collapse-label,
 .inline-group.collapse > h2 .agile-collapse-label {
+  display: inline-block;
   min-width: 0;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Campo utente "Referente amministrativo": nasconde icone relazionali (+, matita, lente, cestino). */
