@@ -248,7 +248,7 @@ div.breadcrumbs a {
   border: 1px solid var(--agile-line);
   border-radius: var(--agile-radius-md);
   background: var(--agile-panel);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .module h2,
@@ -257,6 +257,57 @@ div.breadcrumbs a {
   background: #eef4f1;
   color: var(--agile-ink);
   border-bottom: 1px solid var(--agile-line);
+}
+
+fieldset.module {
+  overflow: visible;
+}
+
+fieldset.module.collapse > h2,
+.inline-group.collapse > h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+fieldset.module.collapse > h2 .collapse-toggle,
+.inline-group.collapse > h2 .collapse-toggle {
+  margin-left: auto;
+}
+
+fieldset.module details {
+  border: 0;
+}
+
+fieldset.module details > summary {
+  display: block;
+  margin: 0;
+  padding: 12px 16px;
+  background: #eef4f1;
+  color: var(--agile-ink);
+  border-bottom: 1px solid var(--agile-line);
+  cursor: pointer;
+  list-style: none;
+}
+
+fieldset.module details > summary::-webkit-details-marker {
+  display: none;
+}
+
+fieldset.module details > summary::after {
+  content: "▾";
+  float: right;
+  font-size: 0.95rem;
+  line-height: 1;
+  transition: transform 0.16s ease;
+}
+
+fieldset.module details:not([open]) > summary::after {
+  transform: rotate(-90deg);
+}
+
+fieldset.module details > summary + * {
+  margin-top: 0;
 }
 
 .module table th,
