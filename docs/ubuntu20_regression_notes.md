@@ -135,6 +135,8 @@ Nota importante:
 - in questo fork `settings.py` legge `.env` direttamente
 - non serve `source .env`
 - anzi, conviene evitare di esportare manualmente variabili `POSTGRES_*`, perche possono sporcare la shell
+- i path log corretti per installazione nativa sono sotto `/opt/containers/lagile-management/logs/`
+- se nel `.env` erano rimasti vecchi path Docker `/app/logs/...`, il fork li normalizza automaticamente verso la directory `logs/` del progetto
 
 ### 7. Inizializza Django
 

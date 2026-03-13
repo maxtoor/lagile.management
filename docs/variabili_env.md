@@ -65,10 +65,10 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 
 | Variabile | Obbligatoria | Default | Descrizione |
 |---|---|---|---|
-| `AGILE_LOG_FILE` | No | `/app/logs/agile.log` | File log applicazione. |
+| `AGILE_LOG_FILE` | No | `<repo>/logs/agile.log` | File log applicazione. Nel fork Ubuntu 20, eventuali valori legacy `/app/logs/...` vengono ricondotti automaticamente a `<repo>/logs/...`. |
 | `AGILE_LOG_LEVEL` | No | `INFO` | Livello log (`DEBUG`, `INFO`, ...). |
 | `AGILE_LOG_MONITOR_FILE` | No | uguale a `AGILE_LOG_FILE` | File principale mostrato nel monitor admin. |
-| `AGILE_LOG_MONITOR_SOURCES` | No | `app:/app/logs/agile.log;scheduler:/app/logs/scheduler.log` | Sorgenti selezionabili nel monitor (`chiave:percorso;...`). |
+| `AGILE_LOG_MONITOR_SOURCES` | No | `app:<repo>/logs/agile.log;scheduler:<repo>/logs/scheduler.log` | Sorgenti selezionabili nel monitor (`chiave:percorso;...`). Nel fork Ubuntu 20, eventuali path legacy `/app/logs/...` vengono normalizzati automaticamente. |
 | `AGILE_LOG_MONITOR_REFRESH_SECONDS` | No | `8` | Intervallo refresh monitor log admin. |
 
 ## Scheduler reminder/sommari

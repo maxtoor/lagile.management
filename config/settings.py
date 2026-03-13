@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+NATIVE_LOGS_DIR = BASE_DIR / 'logs'
 
 
 def load_env_file(path: Path) -> None:
@@ -32,6 +33,37 @@ def csv_env(name: str, default: str) -> list[str]:
         return values
     return [v.strip() for v in default.split(',') if v.strip()]
 
+
+def normalize_log_path(raw_value: str, *, default_name: str) -> str:
+    value = (raw_value or '').strip()
+    if not value:
+        return str(NATIVE_LOGS_DIR / default_name)
+
+    legacy_prefix = '/app/logs/'
+    if value.startswith(legacy_prefix):
+        return str(NATIVE_LOGS_DIR / value[len(legacy_prefix):])
+
+    return value
+
+
+def normalize_log_sources(raw_value: str) -> str:
+    default_sources = f'app:{NATIVE_LOGS_DIR / "agile.log"};scheduler:{NATIVE_LOGS_DIR / "scheduler.log"}'
+    value = (raw_value or '').strip()
+    if not value:
+        return default_sources
+
+    normalized_sources = []
+    for item in value.split(';'):
+        chunk = item.strip()
+        if not chunk:
+            continue
+        if ':' not in chunk:
+            normalized_sources.append(chunk)
+            continue
+        label, path = chunk.split(':', 1)
+        normalized_sources.append(f'{label}:{normalize_log_path(path, default_name=Path(path).name or "agile.log")}')
+    return ';'.join(normalized_sources) if normalized_sources else default_sources
+
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-change-me')
 DEBUG = os.getenv('DEBUG', '0') == '1'
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
@@ -41,18 +73,18 @@ AGILE_LOGIN_LOGO_URL = os.getenv('AGILE_LOGIN_LOGO_URL', '').strip()
 AGILE_FAVICON_URL = os.getenv('AGILE_FAVICON_URL', '').strip()
 AGILE_COMPANY_NAME = os.getenv('AGILE_COMPANY_NAME', 'LAgile.Management').strip()
 AGILE_COPYRIGHT_YEAR = int(os.getenv('AGILE_COPYRIGHT_YEAR', '2026'))
-AGILE_LOG_FILE = os.getenv('AGILE_LOG_FILE', str(BASE_DIR / 'logs' / 'agile.log')).strip()
+AGILE_LOG_FILE = normalize_log_path(os.getenv('AGILE_LOG_FILE', ''), default_name='agile.log')
 AGILE_LOG_LEVEL = os.getenv('AGILE_LOG_LEVEL', 'INFO').strip().upper() or 'INFO'
-AGILE_LOG_MONITOR_FILE = os.getenv('AGILE_LOG_MONITOR_FILE', AGILE_LOG_FILE).strip()
-AGILE_LOG_MONITOR_SOURCES = os.getenv(
-    'AGILE_LOG_MONITOR_SOURCES',
-    f'app:{AGILE_LOG_MONITOR_FILE};scheduler:{BASE_DIR / "logs" / "scheduler.log"}',
-).strip()
+AGILE_LOG_MONITOR_FILE = normalize_log_path(os.getenv('AGILE_LOG_MONITOR_FILE', AGILE_LOG_FILE), default_name='agile.log')
+AGILE_LOG_MONITOR_SOURCES = normalize_log_sources(os.getenv('AGILE_LOG_MONITOR_SOURCES', ''))
 AGILE_LOG_MONITOR_REFRESH_SECONDS = int(os.getenv('AGILE_LOG_MONITOR_REFRESH_SECONDS', '8'))
 ICB_LEGACY = os.getenv('ICB_LEGACY', '0') == '1'
 
 try:
     Path(AGILE_LOG_FILE).parent.mkdir(parents=True, exist_ok=True)
+    Path(AGILE_LOG_FILE).touch(exist_ok=True)
+    NATIVE_LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    (NATIVE_LOGS_DIR / 'scheduler.log').touch(exist_ok=True)
 except OSError:
     pass
 
