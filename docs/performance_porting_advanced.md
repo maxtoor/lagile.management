@@ -1,6 +1,6 @@
 # Porting performance UI verso versione advanced
 
-Questo documento riassume le ottimizzazioni applicate nel fork Ubuntu 20 per ridurre la lentezza percepita nelle pagine:
+Questo documento riassume le ottimizzazioni applicate nella branch Ubuntu 20 per ridurre la lentezza percepita nelle pagine:
 - `Quadro generale`
 - `Richieste approvazione`
 - `Richieste variazioni`
@@ -14,8 +14,8 @@ Obiettivo:
 
 ## Stato di riferimento
 
-Branch fork:
-- `codex/ubuntu20-regression`
+Branch release:
+- `release/ubuntu20-regression`
 
 Commit di riferimento:
 - `ea23217` `Reduce admin queue and overview latency`
@@ -23,9 +23,9 @@ Commit di riferimento:
 - `f15bff0` `Filter approval queues server-side`
 
 File sorgente principali:
-- [`agile/views.py`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/agile/views.py)
-- [`agile/serializers.py`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/agile/serializers.py)
-- [`templates/employee_app.html`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/templates/employee_app.html)
+- [`agile/views.py`](/Users/master/Documents/projects/lagile.new/agile_work/agile/views.py)
+- [`agile/serializers.py`](/Users/master/Documents/projects/lagile.new/agile_work/agile/serializers.py)
+- [`templates/employee_app.html`](/Users/master/Documents/projects/lagile.new/agile_work/templates/employee_app.html)
 
 ## Problemi individuati
 

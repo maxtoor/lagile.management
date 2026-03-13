@@ -1,6 +1,6 @@
 # Porting colori UI verso versione advanced
 
-Questo documento riassume le modifiche colore stabilizzate nel fork Ubuntu 20 e puo essere usato come checklist per riportarle, in tutto o in parte, nella versione "advanced".
+Questo documento riassume le modifiche colore stabilizzate nella branch Ubuntu 20 e puo essere usato come checklist per riportarle, in tutto o in parte, nella versione "advanced".
 
 Obiettivo:
 - mantenere la palette piu sobria e leggibile
@@ -9,12 +9,12 @@ Obiettivo:
 
 ## Stato di riferimento
 
-Branch fork:
-- `codex/ubuntu20-regression`
+Branch release:
+- `release/ubuntu20-regression`
 
 File sorgente principali:
-- [`templates/employee_app.html`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/templates/employee_app.html)
-- [`agile/static/agile/admin-theme.css`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/agile/static/agile/admin-theme.css)
+- [`templates/employee_app.html`](/Users/master/Documents/projects/lagile.new/agile_work/templates/employee_app.html)
+- [`agile/static/agile/admin-theme.css`](/Users/master/Documents/projects/lagile.new/agile_work/agile/static/agile/admin-theme.css)
 
 ## Principi visivi da mantenere
 

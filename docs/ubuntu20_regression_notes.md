@@ -8,14 +8,14 @@ Questa linea di lavoro serve a verificare se l'app puo girare in modo transitori
 
 L'obiettivo non e creare una nuova linea di prodotto, ma isolare un setup ponte senza sporcare `main`.
 
-## Stato attuale del fork
+## Stato attuale della branch
 
 Differenze principali rispetto a `main`:
 - `Django==4.2.29`
 - `django-auth-ldap==5.0.0`
 - `whitenoise==6.7.0`
 - riduzione della sintassi Python `3.10+` piu evidente
-- caricamento interno di `.env` da [`config/settings.py`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/config/settings.py)
+- caricamento interno di `.env` da [`config/settings.py`](/Users/master/Documents/projects/lagile.new/agile_work/config/settings.py)
 - static serviti con WhiteNoise
 
 Commit rilevanti:
@@ -41,13 +41,13 @@ Restano da rifinire alcuni dettagli UI dell'admin, ma il nucleo applicativo gira
 
 ## Installazione da zero su Ubuntu 20
 
-### 1. Clona il fork
+### 1. Clona il repository principale e usa la branch release
 
 ```bash
 mkdir -p /opt/containers
-git clone https://github.com/maxtoor/agile_work_ubuntu20.git /opt/containers/lagile-management
+git clone https://github.com/maxtoor/lagile.management.git /opt/containers/lagile-management
 cd /opt/containers/lagile-management
-git checkout codex/ubuntu20-regression
+git checkout release/ubuntu20-regression
 ```
 
 ### 2. Installa i pacchetti di sistema
@@ -296,7 +296,7 @@ Nel ramo principale alcune righe del file `.env` si prestano male a `source .env
 - `LDAP_USER_FILTER=(uid=%(user)s)`
 - `AGILE_LOG_MONITOR_SOURCES=...;...`
 
-Per questo il fork carica `.env` da Python in [`config/settings.py`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/config/settings.py).
+Per questo la branch carica `.env` da Python in [`config/settings.py`](/Users/master/Documents/projects/lagile.new/agile_work/config/settings.py).
 
 ### Vecchie variabili `POSTGRES_*` esportate nella shell
 
@@ -325,7 +325,7 @@ unset POSTGRES_HOST POSTGRES_PORT POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
 
 Con `gunicorn` puro gli static non vengono serviti correttamente senza supporto aggiuntivo.
 
-Per questo il fork usa:
+Per questo la branch usa:
 - `whitenoise==6.7.0`
 - `whitenoise.middleware.WhiteNoiseMiddleware`
 - `STATIC_ROOT = BASE_DIR / 'staticfiles'`
@@ -389,7 +389,7 @@ Verifiche applicative:
 
 ## Conclusione
 
-Il fork Ubuntu 20 non e solo teorico: nel target reale ha gia dimostrato di reggere almeno questi punti:
+La branch Ubuntu 20 non e solo teorica: nel target reale ha gia dimostrato di reggere almeno questi punti:
 - installazione requirements
 - migrazioni
 - superuser
@@ -442,7 +442,7 @@ Regola pratica:
 
 ## Stato transitional-ready
 
-Alla data di venerdi 13 marzo 2026 il fork `codex/ubuntu20-regression` puo essere considerato pronto per uso transitorio su Ubuntu 20 senza Docker, con i seguenti punti gia verificati sul target reale:
+Alla data di venerdi 13 marzo 2026 la branch `release/ubuntu20-regression` puo essere considerata pronta per uso transitorio su Ubuntu 20 senza Docker, con i seguenti punti gia verificati sul target reale:
 
 - Python `3.8`
 - PostgreSQL `12`
@@ -482,6 +482,6 @@ Alla data di venerdi 13 marzo 2026 il fork `codex/ubuntu20-regression` puo esser
 - esecuzione completa import legacy ICB su database UTF8 appena inizializzato
 
 Documenti collegati:
-- [`ui_color_porting_advanced.md`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/docs/ui_color_porting_advanced.md)
-- [`performance_porting_advanced.md`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/docs/performance_porting_advanced.md)
-- [`import_legacy_icb.md`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/docs/import_legacy_icb.md)
+- [`ui_color_porting_advanced.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/ui_color_porting_advanced.md)
+- [`performance_porting_advanced.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/performance_porting_advanced.md)
+- [`import_legacy_icb.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/import_legacy_icb.md)
