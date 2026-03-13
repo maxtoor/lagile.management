@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Exists, OuterRef, Q, Subquery
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
@@ -351,12 +351,25 @@ class AdminOverviewView(APIView):
         else:
             users_qs = User.objects.filter(is_active=True, manager=request.user).order_by('last_name', 'first_name', 'username')
 
-        users = list(users_qs.only('id', 'username', 'first_name', 'last_name', 'department', 'aila_subscribed'))
+        users = list(
+            users_qs.only(
+                'id',
+                'username',
+                'first_name',
+                'last_name',
+                'department',
+                'aila_subscribed',
+                'auto_approve',
+            )
+        )
         visible_users = [user for user in users if bool(getattr(user, 'aila_subscribed', False))]
         plans = list(
             MonthlyPlan.objects.filter(user__in=users_qs, year=year, month=month)
-            .prefetch_related('days')
             .select_related('user')
+            .annotate(
+                remote_days_count=Count('days', filter=Q(days__work_type='REMOTE')),
+                on_site_days_count=Count('days', filter=Q(days__work_type='ON_SITE')),
+            )
         )
         plans_by_user_id = {plan.user_id: plan for plan in plans}
 
@@ -390,8 +403,8 @@ class AdminOverviewView(APIView):
                 status_totals['MISSING'] += 1
                 continue
 
-            remote_days = sum(1 for day in plan.days.all() if day.work_type == 'REMOTE')
-            on_site_days = sum(1 for day in plan.days.all() if day.work_type == 'ON_SITE')
+            remote_days = int(getattr(plan, 'remote_days_count', 0) or 0)
+            on_site_days = int(getattr(plan, 'on_site_days_count', 0) or 0)
             total_days = remote_days + on_site_days
             status_totals[plan.status] = status_totals.get(plan.status, 0) + 1
             rows.append(
@@ -534,6 +547,10 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
     def _has_aila_subscription(user) -> bool:
         return bool(getattr(user, 'aila_subscribed', False))
 
+    @staticmethod
+    def _as_bool_query_param(value) -> bool:
+        return str(value or '').strip().lower() in {'1', 'true', 'yes', 'si', 'on'}
+
     def _assert_programming_enabled(self, *, plan_owner_id: int | None = None) -> None:
         if plan_owner_id is not None and plan_owner_id != self.request.user.id:
             return
@@ -552,12 +569,49 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        base = MonthlyPlan.objects.select_related('user', 'approved_by').prefetch_related('days')
-        if self._is_superadmin_user(user):
-            return base
-        if self._is_admin_user(user):
-            return base.filter(Q(user=user) | Q(user__manager=user))
-        return base.filter(user=user)
+        latest_change_request = ChangeRequest.objects.filter(plan=OuterRef('pk')).order_by('-created_at')
+        base = (
+            MonthlyPlan.objects.select_related('user', 'user__manager', 'approved_by')
+            .prefetch_related('days')
+            .annotate(
+                has_pending_change_request_db=Exists(
+                    ChangeRequest.objects.filter(plan=OuterRef('pk'), status=ChangeRequest.Status.PENDING)
+                ),
+                latest_change_request_status_db=Subquery(latest_change_request.values('status')[:1]),
+                latest_change_request_response_reason_db=Subquery(latest_change_request.values('response_reason')[:1]),
+            )
+        )
+        if self._as_bool_query_param(self.request.query_params.get('mine')):
+            queryset = base.filter(user=user)
+        elif self._is_superadmin_user(user):
+            queryset = base
+        elif self._is_admin_user(user):
+            queryset = base.filter(Q(user=user) | Q(user__manager=user))
+        else:
+            queryset = base.filter(user=user)
+
+        year_raw = self.request.query_params.get('year')
+        month_raw = self.request.query_params.get('month')
+        if year_raw:
+            try:
+                queryset = queryset.filter(year=int(year_raw))
+            except (TypeError, ValueError):
+                raise ValidationError('Parametro year non valido')
+        if month_raw:
+            try:
+                month = int(month_raw)
+            except (TypeError, ValueError):
+                raise ValidationError('Parametro month non valido')
+            if month < 1 or month > 12:
+                raise ValidationError('Parametro month non valido')
+            queryset = queryset.filter(month=month)
+        status_raw = (self.request.query_params.get('status') or '').strip().upper()
+        if status_raw:
+            valid_statuses = {choice[0] for choice in MonthlyPlan.Status.choices}
+            if status_raw not in valid_statuses:
+                raise ValidationError('Parametro status non valido')
+            queryset = queryset.filter(status=status_raw)
+        return queryset
 
     def perform_create(self, serializer):
         self._assert_programming_enabled()
@@ -866,8 +920,17 @@ class ChangeRequestViewSet(viewsets.ReadOnlyModelViewSet):
         base = ChangeRequest.objects.select_related('user', 'plan', 'plan__user', 'processed_by').order_by('-created_at')
         user = self.request.user
         if MonthlyPlanViewSet._is_superadmin_user(user):
-            return base
-        return base.filter(Q(plan__user=user) | Q(plan__user__manager=user))
+            queryset = base
+        else:
+            queryset = base.filter(Q(plan__user=user) | Q(plan__user__manager=user))
+
+        status_raw = (self.request.query_params.get('status') or '').strip().upper()
+        if status_raw:
+            valid_statuses = {choice[0] for choice in ChangeRequest.Status.choices}
+            if status_raw not in valid_statuses:
+                raise ValidationError('Parametro status non valido')
+            queryset = queryset.filter(status=status_raw)
+        return queryset
 
     @action(detail=True, methods=['post'])
     def review(self, request, pk=None):

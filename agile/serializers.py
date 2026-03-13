@@ -239,6 +239,8 @@ class MonthlyPlanSerializer(serializers.ModelSerializer):
         read_only_fields = ('status', 'submitted_at', 'approved_by', 'approved_at', 'created_at', 'updated_at')
 
     def get_has_pending_change_request(self, obj):
+        if hasattr(obj, 'has_pending_change_request_db'):
+            return bool(obj.has_pending_change_request_db)
         return obj.change_requests.filter(status=ChangeRequest.Status.PENDING).exists()
 
     def _get_latest_change_request(self, obj):
@@ -248,10 +250,17 @@ class MonthlyPlanSerializer(serializers.ModelSerializer):
         return bool(obj.approved_days_snapshot)
 
     def get_latest_change_request_status(self, obj):
+        if hasattr(obj, 'latest_change_request_status_db'):
+            return obj.latest_change_request_status_db
         latest = self._get_latest_change_request(obj)
         return latest.status if latest else None
 
     def get_latest_change_request_response_reason(self, obj):
+        if hasattr(obj, 'latest_change_request_response_reason_db'):
+            latest_status = self.get_latest_change_request_status(obj)
+            if latest_status != ChangeRequest.Status.REJECTED:
+                return ''
+            return obj.latest_change_request_response_reason_db or ''
         latest = self._get_latest_change_request(obj)
         if not latest or latest.status != ChangeRequest.Status.REJECTED:
             return ''
