@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from copy import deepcopy
-
 from django.conf import settings
 from django.core.mail import get_connection
+from django.core.mail.message import EmailMultiAlternatives
 from django.core.mail.backends.base import BaseEmailBackend
 
 
@@ -26,6 +25,26 @@ class RedirectEmailBackend(BaseEmailBackend):
     def close(self):
         return self.connection.close()
 
+    @staticmethod
+    def _clone_message(message):
+        cloned = message.__class__(
+            subject=message.subject,
+            body=message.body,
+            from_email=message.from_email,
+            to=list(getattr(message, 'to', []) or []),
+            bcc=list(getattr(message, 'bcc', []) or []),
+            connection=None,
+            attachments=list(getattr(message, 'attachments', []) or []),
+            headers=dict(getattr(message, 'extra_headers', {}) or {}),
+            cc=list(getattr(message, 'cc', []) or []),
+            reply_to=list(getattr(message, 'reply_to', []) or []),
+        )
+        if isinstance(cloned, EmailMultiAlternatives):
+            for alternative in getattr(message, 'alternatives', []) or []:
+                if isinstance(alternative, (list, tuple)) and len(alternative) == 2:
+                    cloned.attach_alternative(alternative[0], alternative[1])
+        return cloned
+
     def send_messages(self, email_messages):
         if not email_messages:
             return 0
@@ -34,7 +53,7 @@ class RedirectEmailBackend(BaseEmailBackend):
 
         redirected_messages = []
         for message in email_messages:
-            redirected = deepcopy(message)
+            redirected = self._clone_message(message)
             original_to = list(getattr(message, 'to', []) or [])
             original_cc = list(getattr(message, 'cc', []) or [])
             original_bcc = list(getattr(message, 'bcc', []) or [])
