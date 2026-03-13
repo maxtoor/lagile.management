@@ -61,52 +61,7 @@
   </script>
   <script src="{% static 'agile/admin-messages.js' %}" defer></script>
   <script>
-    (function () {
-      function normalizeCollapseHeading(heading) {
-        var toggle = heading.querySelector(".collapse-toggle");
-        if (!toggle) return;
-
-        var labelText = (heading.textContent || "")
-          .replace(/\b(Mostra|Nascondi|Show|Hide)\b/gi, "")
-          .replace(/[()]/g, "")
-          .replace(/\s+/g, " ")
-          .trim();
-        var label = document.createElement("span");
-        label.className = "agile-collapse-label";
-        label.textContent = labelText;
-        var cleanToggle = toggle.cloneNode(true);
-        cleanToggle.textContent = "";
-
-        heading.textContent = "";
-        heading.appendChild(label);
-        heading.appendChild(cleanToggle);
-        cleanToggle.setAttribute("aria-label", labelText || "Apri sezione");
-      }
-
-      function normalizeAllCollapseHeadings() {
-        document.querySelectorAll("fieldset.collapse > h2, .inline-group.collapse > h2").forEach(normalizeCollapseHeading);
-      }
-
-      window.addEventListener("load", function () {
-        normalizeAllCollapseHeadings();
-
-        var observer = new MutationObserver(function (mutations) {
-          mutations.forEach(function (mutation) {
-            if (mutation.type !== "childList") return;
-            if (mutation.target && mutation.target.matches && mutation.target.matches("fieldset.collapse > h2, .inline-group.collapse > h2")) {
-              normalizeCollapseHeading(mutation.target);
-            }
-          });
-        });
-
-        document.querySelectorAll("fieldset.collapse > h2, .inline-group.collapse > h2").forEach(function (heading) {
-          observer.observe(heading, { childList: true, subtree: false });
-        });
-      });
-    })();
-
     document.addEventListener("DOMContentLoaded", function () {
-
       var softwareInfoLink = document.getElementById("adminSoftwareInfoLink");
       var softwareInfoModal = document.getElementById("adminSoftwareInfoModal");
       var closeSoftwareInfoBtn = document.getElementById("closeAdminSoftwareInfoBtn");
@@ -143,4 +98,46 @@
     <a href="#" id="adminSoftwareInfoLink" class="admin-page-footer-link">Informazioni software</a>
   </footer>
   {% include "includes/software_info_modal.html" with modal_id="adminSoftwareInfoModal" backdrop_class="admin-modal-backdrop" box_class="admin-modal-box" head_class="admin-modal-head" title_class="admin-modal-title" close_button_id="closeAdminSoftwareInfoBtn" close_button_class="admin-modal-ghost" content_class="admin-modal-content" %}
+  <script>
+    (function () {
+      function normalizeCollapseHeading(heading) {
+        var toggle = heading.querySelector("a.collapse-toggle");
+        if (!toggle) return;
+
+        var labelText = "";
+        Array.prototype.slice.call(heading.childNodes).forEach(function (node) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            labelText += node.textContent || "";
+          }
+        });
+        labelText = labelText.replace(/[()]/g, "").replace(/\s+/g, " ").trim();
+        if (!labelText) return;
+
+        var label = document.createElement("span");
+        label.className = "agile-collapse-label";
+        label.textContent = labelText;
+
+        toggle.textContent = "";
+        toggle.setAttribute("aria-label", labelText);
+
+        heading.textContent = "";
+        heading.appendChild(label);
+        heading.appendChild(toggle);
+      }
+
+      function normalizeAllCollapseHeadings() {
+        document.querySelectorAll("fieldset.collapse > h2, .inline-group.collapse > h2").forEach(normalizeCollapseHeading);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", normalizeAllCollapseHeadings);
+      } else {
+        normalizeAllCollapseHeadings();
+      }
+
+      window.setTimeout(normalizeAllCollapseHeadings, 0);
+      window.setTimeout(normalizeAllCollapseHeadings, 150);
+      window.setTimeout(normalizeAllCollapseHeadings, 500);
+    })();
+  </script>
 {% endblock %}
