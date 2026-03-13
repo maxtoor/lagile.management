@@ -439,3 +439,49 @@ Regola pratica:
 - cambiare una dipendenza alla volta
 - verificare subito `pip install`
 - non toccare logica applicativa finche non emerge un errore concreto
+
+## Stato transitional-ready
+
+Alla data di venerdi 13 marzo 2026 il fork `codex/ubuntu20-regression` puo essere considerato pronto per uso transitorio su Ubuntu 20 senza Docker, con i seguenti punti gia verificati sul target reale:
+
+- Python `3.8`
+- PostgreSQL `12`
+- installazione `requirements`
+- `migrate`
+- `createsuperuser`
+- `python manage.py check`
+- `runserver`
+- `gunicorn`
+- `collectstatic`
+- `systemd`
+- `cron`
+- comandi amministrativi principali in `--dry-run`
+- logging nativo su `logs/agile.log` e `logs/scheduler.log`
+- UI admin compatibile con Django `4.2` sui blocchi collassabili
+- portale utente e admin con palette semplificata e superfici bianche
+- ottimizzazioni performance per:
+  - `Programmazione`
+  - `Quadro generale`
+  - `Richieste approvazione`
+  - `Richieste variazioni`
+  - apertura `Dettaglio`
+
+### Vincoli noti da ricordare
+
+- il cluster PostgreSQL deve essere creato in `UTF8`
+- se `it_IT.UTF-8` non e disponibile sulla macchina, usare `C.UTF-8`
+- un cluster inizializzato in `SQL_ASCII` non e adatto agli import legacy con testi accentati
+- dopo modifiche a static/admin theme, eseguire sempre `collectstatic --noinput`
+- i vecchi path Docker `/app/logs/...` sono tollerati dal codice, ma nei deploy nativi e preferibile usare path reali sotto `/opt/containers/lagile-management/logs/`
+
+### Rifiniture opzionali rimaste fuori dal perimetro minimo
+
+- porting delle stesse scelte UI nella versione "advanced"
+- porting delle ottimizzazioni performance nella versione "advanced"
+- ulteriore profiling su pagine admin se il dataset cresce molto
+- esecuzione completa import legacy ICB su database UTF8 appena inizializzato
+
+Documenti collegati:
+- [`ui_color_porting_advanced.md`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/docs/ui_color_porting_advanced.md)
+- [`performance_porting_advanced.md`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/docs/performance_porting_advanced.md)
+- [`import_legacy_icb.md`](/Users/master/Documents/projects/lagile.new/agile_work_ubuntu20/docs/import_legacy_icb.md)
