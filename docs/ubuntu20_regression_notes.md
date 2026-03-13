@@ -72,12 +72,35 @@ Atteso:
 - Python `3.8.x`
 - PostgreSQL `12.x`
 - cluster `12 main` online su `5432`
+- cluster/template in `UTF8` e non in `SQL_ASCII`
 
 Se il cluster non e online:
 
 ```bash
 pg_ctlcluster 12 main start
 pg_lsclusters
+```
+
+Verifica encoding cluster/template:
+
+```bash
+sudo -u postgres psql -c "\l"
+```
+
+Atteso:
+- `postgres`, `template0`, `template1` in `UTF8`
+
+Se il cluster e stato inizializzato in `SQL_ASCII`, ricrearlo prima di procedere.
+
+Esempio rapido se il cluster e ancora vuoto:
+
+```bash
+systemctl stop postgresql
+pg_dropcluster --stop 12 main
+pg_createcluster --locale it_IT.UTF-8 --encoding UTF8 12 main
+systemctl start postgresql
+pg_lsclusters
+sudo -u postgres psql -c "\l"
 ```
 
 ### 4. Crea database e utente
@@ -89,8 +112,8 @@ sudo -u postgres psql
 Poi:
 
 ```sql
-CREATE DATABASE agile_work;
 CREATE USER agile WITH PASSWORD 'agile';
+CREATE DATABASE agile_work OWNER agile ENCODING 'UTF8' TEMPLATE template0;
 GRANT ALL PRIVILEGES ON DATABASE agile_work TO agile;
 \q
 ```
@@ -228,6 +251,29 @@ python manage.py check_ldap_user_presence --dry-run
 ```
 
 ## Problemi incontrati e correzioni
+
+### PostgreSQL in `SQL_ASCII`
+
+Se PostgreSQL viene inizializzato in `SQL_ASCII`, l'app puo sembrare funzionare ma gli import legacy possono fallire su JSON e testi accentati.
+
+Sintomo tipico:
+
+```text
+unsupported Unicode escape sequence
+... server encoding is not UTF8
+```
+
+Controlli rapidi:
+
+```bash
+sudo -u postgres psql -d agile_work -c "SHOW server_encoding;"
+sudo -u postgres psql -c "\l"
+```
+
+Atteso:
+- database e template in `UTF8`
+
+Se il cluster e ancora vuoto, conviene ricrearlo direttamente in `UTF8` invece di tentare workaround applicativi.
 
 ### `.env` non source-friendly
 
