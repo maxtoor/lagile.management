@@ -100,11 +100,13 @@ body:not(.login) {
 }
 
 #user-tools {
-  color: #2f4a41;
+  color: var(--agile-muted);
   font-size: 0.82rem;
 }
 
 #user-tools a,
+#user-tools a:link,
+#user-tools a:visited,
 #user-tools button {
   color: var(--agile-accent);
   font-weight: 600;
@@ -112,8 +114,16 @@ body:not(.login) {
 }
 
 #user-tools a:hover,
-#user-tools button:hover {
+#user-tools a:focus,
+#user-tools a:active,
+#user-tools button:hover,
+#user-tools button:focus {
   color: #0b5a47;
+}
+
+#logout-form button,
+#logout-form button:visited {
+  color: var(--agile-accent);
 }
 
 #user-tools .theme-toggle {
