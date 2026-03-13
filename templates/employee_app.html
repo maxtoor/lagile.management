@@ -2089,6 +2089,8 @@
       let changeRequestQueueItems = [];
       let selectedChangeRequestIds = new Set();
       let overviewRows = [];
+      let approverPlanById = new Map();
+      let changeRequestById = new Map();
       let overviewMonthValue = 1;
       let overviewStatusValue = "";
       let overviewSiteValue = "";
@@ -3322,6 +3324,7 @@
 
       function renderApproverQueue(plans) {
         approverQueuePlans = [...plans];
+        approverPlanById = new Map(approverQueuePlans.map((plan) => [String(plan.id), plan]));
         const validIds = new Set(approverQueuePlans.map((plan) => String(plan.id)));
         selectedApproverPlanIds = new Set(
           [...selectedApproverPlanIds].filter((id) => validIds.has(String(id)))
@@ -3393,6 +3396,7 @@
 
       function renderChangeRequests(items) {
         changeRequestQueueItems = [...items];
+        changeRequestById = new Map(changeRequestQueueItems.map((item) => [String(item.id), item]));
         const validIds = new Set(changeRequestQueueItems.map((item) => String(item.id)));
         selectedChangeRequestIds = new Set(
           [...selectedChangeRequestIds].filter((id) => validIds.has(String(id)))
@@ -4330,10 +4334,12 @@
         if (!button) return;
         const planId = button.dataset.id;
         const action = button.dataset.action;
-        let selectedPlan = approverQueuePlans.find((p) => String(p.id) === String(planId));
+        let selectedPlan = approverPlanById.get(String(planId)) || null;
         if (!selectedPlan) {
-          const planRows = await api("/plans/");
-          selectedPlan = planRows.find((p) => String(p.id) === String(planId));
+          selectedPlan = await api(`/plans/${planId}/`);
+          if (selectedPlan?.id != null) {
+            approverPlanById.set(String(selectedPlan.id), selectedPlan);
+          }
         }
         if (!selectedPlan) {
           setReviewFeedback("Piano non trovato", "error");
@@ -4400,14 +4406,18 @@
         const action = button.dataset.changeAction;
         try {
           if (action === "details") {
-            const rows = await api("/change-requests/");
-            const item = rows.find((r) => String(r.id) === String(changeId));
+            const item = changeRequestById.get(String(changeId)) || (await api(`/change-requests/${changeId}/`));
+            if (item?.id != null) {
+              changeRequestById.set(String(item.id), item);
+            }
             if (!item) {
               setReviewFeedback("Richiesta variazione non trovata", "error");
               return;
             }
-            const planRows = await api("/plans/");
-            const selectedPlan = planRows.find((p) => String(p.id) === String(item.plan));
+            const selectedPlan = approverPlanById.get(String(item.plan)) || (await api(`/plans/${item.plan}/`));
+            if (selectedPlan?.id != null) {
+              approverPlanById.set(String(selectedPlan.id), selectedPlan);
+            }
             if (!selectedPlan) {
               setReviewFeedback("Piano collegato non trovato", "error");
               return;
@@ -4545,8 +4555,10 @@
         const planId = button.dataset.overviewPlanId;
         if (!planId) return;
         try {
-          const planRows = await api("/plans/");
-          const selectedPlan = planRows.find((p) => String(p.id) === String(planId));
+          const selectedPlan = await api(`/plans/${planId}/`);
+          if (selectedPlan?.id != null) {
+            approverPlanById.set(String(selectedPlan.id), selectedPlan);
+          }
           if (!selectedPlan) {
             setReviewFeedback("Piano non trovato", "error");
             return;

@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Exists, OuterRef, Q, Subquery
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
@@ -351,12 +351,25 @@ class AdminOverviewView(APIView):
         else:
             users_qs = User.objects.filter(is_active=True, manager=request.user).order_by('last_name', 'first_name', 'username')
 
-        users = list(users_qs.only('id', 'username', 'first_name', 'last_name', 'department', 'aila_subscribed'))
+        users = list(
+            users_qs.only(
+                'id',
+                'username',
+                'first_name',
+                'last_name',
+                'department',
+                'aila_subscribed',
+                'auto_approve',
+            )
+        )
         visible_users = [user for user in users if bool(getattr(user, 'aila_subscribed', False))]
         plans = list(
             MonthlyPlan.objects.filter(user__in=users_qs, year=year, month=month)
-            .prefetch_related('days')
             .select_related('user')
+            .annotate(
+                remote_days_count=Count('days', filter=Q(days__work_type='REMOTE')),
+                on_site_days_count=Count('days', filter=Q(days__work_type='ON_SITE')),
+            )
         )
         plans_by_user_id = {plan.user_id: plan for plan in plans}
 
@@ -390,8 +403,8 @@ class AdminOverviewView(APIView):
                 status_totals['MISSING'] += 1
                 continue
 
-            remote_days = sum(1 for day in plan.days.all() if day.work_type == 'REMOTE')
-            on_site_days = sum(1 for day in plan.days.all() if day.work_type == 'ON_SITE')
+            remote_days = int(getattr(plan, 'remote_days_count', 0) or 0)
+            on_site_days = int(getattr(plan, 'on_site_days_count', 0) or 0)
             total_days = remote_days + on_site_days
             status_totals[plan.status] = status_totals.get(plan.status, 0) + 1
             rows.append(
@@ -552,7 +565,18 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        base = MonthlyPlan.objects.select_related('user', 'approved_by').prefetch_related('days')
+        latest_change_request = ChangeRequest.objects.filter(plan=OuterRef('pk')).order_by('-created_at')
+        base = (
+            MonthlyPlan.objects.select_related('user', 'user__manager', 'approved_by')
+            .prefetch_related('days')
+            .annotate(
+                has_pending_change_request_db=Exists(
+                    ChangeRequest.objects.filter(plan=OuterRef('pk'), status=ChangeRequest.Status.PENDING)
+                ),
+                latest_change_request_status_db=Subquery(latest_change_request.values('status')[:1]),
+                latest_change_request_response_reason_db=Subquery(latest_change_request.values('response_reason')[:1]),
+            )
+        )
         if self._is_superadmin_user(user):
             return base
         if self._is_admin_user(user):
