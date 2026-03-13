@@ -1,12 +1,12 @@
 :root {
-  --agile-bg: #f6f8f4;
-  --agile-panel: #fffdf8;
-  --agile-ink: #10241d;
-  --agile-muted: #556b64;
+  --agile-bg: #ffffff;
+  --agile-panel: #ffffff;
+  --agile-ink: #545d68;
+  --agile-muted: #737d88;
   --agile-accent: #0e6b55;
   --agile-accent-strong: #0b5a47;
   --agile-accent-soft: #dceee8;
-  --agile-line: #dce4df;
+  --agile-line: #d7dde6;
   --agile-admin-header-height: 48px;
   --agile-admin-breadcrumbs-height: 36px;
   --agile-footer-height: 44px;
@@ -25,7 +25,7 @@
 
 html,
 body {
-  background: linear-gradient(160deg, #eef7f2 0%, #f9f2e6 45%, #f6f8f4 100%);
+  background: #ffffff;
   color: var(--agile-ink);
   font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
 }
@@ -139,7 +139,7 @@ div.breadcrumbs {
   top: var(--agile-admin-header-height);
   left: 0;
   right: 0;
-  background: #f3f8f5;
+  background: #ffffff;
   color: var(--agile-muted);
   border-bottom: 1px solid var(--agile-line);
   z-index: 70;
@@ -169,7 +169,7 @@ div.breadcrumbs a {
   gap: var(--agile-space-md);
   font-size: 0.78rem;
   color: var(--agile-muted);
-  background: rgba(255, 253, 248, 0.96);
+  background: rgba(255, 255, 255, 0.98);
   border-top: 1px solid var(--agile-line);
   box-shadow: var(--agile-shadow-footer);
   z-index: 40;
@@ -254,7 +254,7 @@ div.breadcrumbs a {
 .module h2,
 .module caption,
 .inline-group h2 {
-  background: #eef4f1;
+  background: #ffffff;
   color: var(--agile-ink);
   border-bottom: 1px solid var(--agile-line);
 }
@@ -283,7 +283,7 @@ fieldset.module details > summary {
   display: block;
   margin: 0;
   padding: 12px 16px;
-  background: #eef4f1;
+  background: #ffffff;
   color: var(--agile-ink);
   border-bottom: 1px solid var(--agile-line);
   cursor: pointer;
@@ -357,7 +357,7 @@ textarea:focus {
 
 /* Login admin */
 body.login {
-  background: linear-gradient(160deg, #eef7f2 0%, #f9f2e6 45%, #f6f8f4 100%);
+  background: #ffffff;
   font-size: 1em;
   padding-bottom: 0;
 }
