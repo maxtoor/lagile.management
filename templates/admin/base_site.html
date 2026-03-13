@@ -61,8 +61,8 @@
   </script>
   <script src="{% static 'agile/admin-messages.js' %}" defer></script>
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      document.querySelectorAll("fieldset.collapse > h2, .inline-group.collapse > h2").forEach(function (heading) {
+    (function () {
+      function normalizeCollapseHeading(heading) {
         var toggle = heading.querySelector(".collapse-toggle");
         if (!toggle) return;
 
@@ -81,7 +81,31 @@
         heading.appendChild(label);
         heading.appendChild(cleanToggle);
         cleanToggle.setAttribute("aria-label", labelText || "Apri sezione");
+      }
+
+      function normalizeAllCollapseHeadings() {
+        document.querySelectorAll("fieldset.collapse > h2, .inline-group.collapse > h2").forEach(normalizeCollapseHeading);
+      }
+
+      window.addEventListener("load", function () {
+        normalizeAllCollapseHeadings();
+
+        var observer = new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+            if (mutation.type !== "childList") return;
+            if (mutation.target && mutation.target.matches && mutation.target.matches("fieldset.collapse > h2, .inline-group.collapse > h2")) {
+              normalizeCollapseHeading(mutation.target);
+            }
+          });
+        });
+
+        document.querySelectorAll("fieldset.collapse > h2, .inline-group.collapse > h2").forEach(function (heading) {
+          observer.observe(heading, { childList: true, subtree: false });
+        });
       });
+    })();
+
+    document.addEventListener("DOMContentLoaded", function () {
 
       var softwareInfoLink = document.getElementById("adminSoftwareInfoLink");
       var softwareInfoModal = document.getElementById("adminSoftwareInfoModal");
