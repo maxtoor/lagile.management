@@ -31,6 +31,11 @@ fieldset.collapse:not(.collapsed) > h2 .collapse-toggle::after,
   transform: rotate(90deg);
 }
 
+fieldset.collapse > h2 .agile-collapse-label,
+.inline-group.collapse > h2 .agile-collapse-label {
+  min-width: 0;
+}
+
 /* Campo utente "Referente amministrativo": nasconde icone relazionali (+, matita, lente, cestino). */
 .field-manager .related-widget-wrapper-link,
 .form-row.field-manager .related-widget-wrapper-link {
