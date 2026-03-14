@@ -287,6 +287,54 @@ Esempi di comandi:
 (.venv) python manage.py check_ldap_user_presence --dry-run
 ```
 
+### Esempio file `/etc/cron.d/lagile-management`
+
+Esempio pratico:
+
+```cron
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Promemoria ultimo giorno del mese: controllo ogni ora
+0 * * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py send_submission_reminders >> /opt/containers/lagile-management/logs/scheduler.log 2>&1
+
+# Riepilogo responsabili: controllo ogni ora
+10 * * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py send_manager_monthly_summary >> /opt/containers/lagile-management/logs/scheduler.log 2>&1
+
+# Preparazione festivita anno successivo: controllo giornaliero
+20 6 * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py prepare_next_year_holidays >> /opt/containers/lagile-management/logs/scheduler.log 2>&1
+
+# Verifica utenti LDAP: controllo giornaliero
+30 6 * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py check_ldap_user_presence >> /opt/containers/lagile-management/logs/scheduler.log 2>&1
+```
+
+Creazione file:
+
+```bash
+nano /etc/cron.d/lagile-management
+```
+
+Poi:
+
+```bash
+chmod 644 /etc/cron.d/lagile-management
+systemctl restart cron
+systemctl status cron
+```
+
+Verifica rapida:
+
+```bash
+cat /etc/cron.d/lagile-management
+tail -n 50 /opt/containers/lagile-management/logs/scheduler.log
+```
+
+Nota:
+
+- i comandi possono essere lanciati anche piu spesso del necessario
+- la logica temporale vera resta dentro i management command
+- fuori finestra temporale i job non inviano nulla, salvo uso esplicito di `--force`
+
 ## Import legacy
 
 In questa branch gli import legacy sono stati adattati e verificati anche in ambiente Ubuntu 20.
