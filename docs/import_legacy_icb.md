@@ -18,6 +18,7 @@ Per il flusso completo servono:
 Procedura unica per:
 - aggiornare o creare utenti dal backup CSV
 - applicare afferenza territoriale e referente
+- importare anche i gruppi Django a partire dalla colonna `Gruppo`
 - importare lo storico `Programmazione` in `MonthlyPlan` e `PlanDay`
 - opzionalmente riallineare nome, cognome ed email da LDAP
 
@@ -105,6 +106,7 @@ Leaves report CSV:
 ## Note pratiche
 
 - `ICB_backup.csv` resta la sorgente principale per utenti, afferenze territoriali e storico giorni
+- la colonna `Gruppo` del backup viene usata sia per derivare l'afferenza territoriale sia per assegnare i gruppi Django
 - il `Leaves report` completa stati e descrizioni attivita
 - il bundle usa un matching utenti prudente:
   - match email

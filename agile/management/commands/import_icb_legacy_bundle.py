@@ -98,6 +98,7 @@ class Command(BaseCommand):
                         email_column='Email',
                         site_column='Gruppo',
                         site_mode='last-word',
+                        import_groups=True,
                         lastname_column='Cognome',
                         firstname_column='Nome',
                         enrich_managers_from_csv=True,
