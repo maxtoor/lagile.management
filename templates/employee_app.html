@@ -1230,6 +1230,11 @@
         bottom: calc(100% + 6px);
       }
 
+      .overview-select-panel {
+        max-height: 132px;
+        overscroll-behavior: contain;
+      }
+
       .custom-select-item {
         width: 100%;
         text-align: left;
@@ -1938,7 +1943,7 @@
                     <span id="overviewMonthLabel">01</span>
                     <span aria-hidden="true">▾</span>
                   </button>
-                  <div id="overviewMonthPanel" class="custom-select-panel hidden"></div>
+                  <div id="overviewMonthPanel" class="custom-select-panel overview-select-panel hidden"></div>
                 </div>
               </div>
               <div class="toolbar-field">
@@ -1948,7 +1953,7 @@
                     <span id="overviewStatusLabel">Tutti</span>
                     <span aria-hidden="true">▾</span>
                   </button>
-                  <div id="overviewStatusPanel" class="custom-select-panel hidden">
+                  <div id="overviewStatusPanel" class="custom-select-panel overview-select-panel hidden">
                     <button type="button" class="custom-select-item" data-value="">Tutti</button>
                     <button type="button" class="custom-select-item" data-value="MISSING">Non compilato</button>
                     <button type="button" class="custom-select-item" data-value="DRAFT">Bozza</button>
@@ -1965,7 +1970,7 @@
                     <span id="overviewSiteLabel">Tutte</span>
                     <span aria-hidden="true">▾</span>
                   </button>
-                  <div id="overviewSitePanel" class="custom-select-panel hidden">
+                  <div id="overviewSitePanel" class="custom-select-panel overview-select-panel hidden">
                     <button type="button" class="custom-select-item" data-value="">Tutte</button>
                   </div>
                 </div>
