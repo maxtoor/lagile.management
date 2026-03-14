@@ -1225,7 +1225,8 @@
         z-index: 130;
       }
 
-      .custom-select.open-up .custom-select-panel {
+      .custom-select.open-up .custom-select-panel,
+      .custom-select.prefer-open-up .custom-select-panel {
         top: auto;
         bottom: calc(100% + 6px);
       }
@@ -1933,7 +1934,7 @@
               </div>
               <div class="toolbar-field">
                 <label class="toolbar-status-label" for="overviewMonthToggle">Mese</label>
-                <div id="overviewMonthDropdown" class="custom-select" style="min-width:86px">
+                <div id="overviewMonthDropdown" class="custom-select prefer-open-up" style="min-width:86px">
                   <button id="overviewMonthToggle" type="button" class="custom-select-toggle">
                     <span id="overviewMonthLabel">01</span>
                     <span aria-hidden="true">▾</span>
@@ -1943,7 +1944,7 @@
               </div>
               <div class="toolbar-field">
                 <label class="toolbar-status-label" for="overviewStatusToggle">Stato</label>
-                <div id="overviewStatusDropdown" class="custom-select" style="min-width:170px">
+                <div id="overviewStatusDropdown" class="custom-select prefer-open-up" style="min-width:170px">
                   <button id="overviewStatusToggle" type="button" class="custom-select-toggle">
                     <span id="overviewStatusLabel">Tutti</span>
                     <span aria-hidden="true">▾</span>
@@ -1960,7 +1961,7 @@
               </div>
               <div class="toolbar-field">
                 <label class="toolbar-status-label" for="overviewSiteToggle">Afferenza territoriale</label>
-                <div id="overviewSiteDropdown" class="custom-select" style="min-width:150px">
+                <div id="overviewSiteDropdown" class="custom-select prefer-open-up" style="min-width:150px">
                   <button id="overviewSiteToggle" type="button" class="custom-select-toggle">
                     <span id="overviewSiteLabel">Tutte</span>
                     <span aria-hidden="true">▾</span>
@@ -2545,6 +2546,10 @@
         if (!dropdown || !panel) return;
         dropdown.classList.remove("open-up");
         if (panel.classList.contains("hidden")) return;
+        if (dropdown.classList.contains("prefer-open-up")) {
+          dropdown.classList.add("open-up");
+          return;
+        }
         const rect = dropdown.getBoundingClientRect();
         const panelHeight = Math.min(panel.scrollHeight || 0, 240) + 12;
         const spaceBelow = window.innerHeight - rect.bottom;
