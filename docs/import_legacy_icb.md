@@ -18,6 +18,7 @@ Per il flusso completo servono:
 Procedura unica per:
 - aggiornare o creare utenti dal backup CSV
 - applicare afferenza territoriale e referente
+- importare anche i gruppi utenti dal campo `Gruppo` del CSV
 - importare lo storico `Programmazione` in `MonthlyPlan` e `PlanDay`
 - opzionalmente riallineare nome, cognome ed email da LDAP
 

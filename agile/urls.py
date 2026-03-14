@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     AdminOverviewView,
+    AdminSharedCalendarView,
     AdminUserAutoApproveView,
     ChangeRequestViewSet,
     LoginView,
@@ -21,6 +22,7 @@ urlpatterns = [
     path('auth/me/', MeView.as_view(), name='me'),
     path('auth/server-date/', ServerDateView.as_view(), name='server-date'),
     path('admin/overview/', AdminOverviewView.as_view(), name='admin-overview'),
+    path('admin/shared-calendar/', AdminSharedCalendarView.as_view(), name='admin-shared-calendar'),
     path('admin/users/<int:user_id>/auto-approve/', AdminUserAutoApproveView.as_view(), name='admin-user-auto-approve'),
     path('holidays/month/', MonthHolidaysView.as_view(), name='month-holidays'),
     path('', include(router.urls)),

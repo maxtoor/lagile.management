@@ -33,3 +33,7 @@ class AdminChangeRequestsView(BasePortalView):
 
 class AdminOverviewPageView(BasePortalView):
     app_page = 'overview'
+
+
+class AdminSharedCalendarPageView(BasePortalView):
+    app_page = 'shared-calendar'
