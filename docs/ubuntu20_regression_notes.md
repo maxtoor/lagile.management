@@ -490,12 +490,10 @@ Alla data di venerdi 13 marzo 2026 la branch `release/ubuntu20-regression` puo e
 
 ### Rifiniture opzionali rimaste fuori dal perimetro minimo
 
-- porting delle stesse scelte UI nella versione "advanced"
 - porting delle ottimizzazioni performance nella versione "advanced"
 - ulteriore profiling su pagine admin se il dataset cresce molto
 - esecuzione completa import legacy ICB su database UTF8 appena inizializzato
 
 Documenti collegati:
-- [`ui_color_porting_advanced.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/ui_color_porting_advanced.md)
 - [`performance_porting_advanced.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/performance_porting_advanced.md)
 - [`import_legacy_icb.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/import_legacy_icb.md)
