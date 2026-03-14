@@ -67,8 +67,12 @@ def build_runtime_ui_context() -> dict:
     login_logo_url = (get_runtime_setting('AGILE_LOGIN_LOGO_URL', '') or '').strip()
     if not login_logo_url:
         login_logo_url = static('agile/informatici_cnr.png')
+    favicon_url = (get_runtime_setting('AGILE_FAVICON_URL', '') or '').strip()
+    if not favicon_url:
+        favicon_url = static('agile/default-favicon.svg')
     return {
         'login_logo_url': login_logo_url,
+        'favicon_url': favicon_url,
         'company_name': get_runtime_setting('AGILE_COMPANY_NAME', 'LAgile.Management'),
         'copyright_year': get_runtime_setting('AGILE_COPYRIGHT_YEAR', 2026),
     }
