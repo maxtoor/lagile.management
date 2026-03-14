@@ -1225,6 +1225,11 @@
         z-index: 130;
       }
 
+      .custom-select.open-up .custom-select-panel {
+        top: auto;
+        bottom: calc(100% + 6px);
+      }
+
       .custom-select-item {
         width: 100%;
         text-align: left;
@@ -2535,6 +2540,36 @@
       let sharedCalendarScrollAnimationFrame = null;
       let sharedCalendarScrollHoldState = null;
       let sharedCalendarDragState = null;
+
+      function updateCustomSelectPlacement(dropdown, panel) {
+        if (!dropdown || !panel) return;
+        dropdown.classList.remove("open-up");
+        if (panel.classList.contains("hidden")) return;
+        const rect = dropdown.getBoundingClientRect();
+        const panelHeight = Math.min(panel.scrollHeight || 0, 240) + 12;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        if (spaceBelow < panelHeight && spaceAbove > spaceBelow) {
+          dropdown.classList.add("open-up");
+        }
+      }
+
+      function closeCustomSelect(dropdown, panel) {
+        if (!panel) return;
+        panel.classList.add("hidden");
+        dropdown?.classList.remove("open-up");
+      }
+
+      function toggleCustomSelect(dropdown, panel) {
+        if (!dropdown || !panel) return;
+        const willOpen = panel.classList.contains("hidden");
+        if (!willOpen) {
+          closeCustomSelect(dropdown, panel);
+          return;
+        }
+        panel.classList.remove("hidden");
+        updateCustomSelectPlacement(dropdown, panel);
+      }
       let serverToday = null;
       let currentMonthContext = {
         isCurrentMonth: false,
@@ -5007,13 +5042,13 @@
       });
 
       monthToggle.addEventListener("click", () => {
-        monthPanel.classList.toggle("hidden");
+        toggleCustomSelect(monthDropdown, monthPanel);
       });
 
       monthPanel.addEventListener("click", async (event) => {
         const item = event.target.closest(".custom-select-item[data-value]");
         if (!item) return;
-        monthPanel.classList.add("hidden");
+        closeCustomSelect(monthDropdown, monthPanel);
         const nextMonth = Number(item.dataset.value);
         const previousMonth = Number(selectedMonth);
         if (nextMonth === previousMonth) return;
@@ -5260,21 +5295,21 @@
       });
 
       overviewMonthToggle?.addEventListener("click", () => {
-        overviewMonthPanel?.classList.toggle("hidden");
+        toggleCustomSelect(overviewMonthDropdown, overviewMonthPanel);
       });
 
       overviewStatusToggle?.addEventListener("click", () => {
-        overviewStatusPanel?.classList.toggle("hidden");
+        toggleCustomSelect(overviewStatusDropdown, overviewStatusPanel);
       });
 
       overviewSiteToggle?.addEventListener("click", () => {
-        overviewSitePanel?.classList.toggle("hidden");
+        toggleCustomSelect(overviewSiteDropdown, overviewSitePanel);
       });
 
       overviewMonthPanel?.addEventListener("click", async (event) => {
         const item = event.target.closest(".custom-select-item[data-value]");
         if (!item) return;
-        overviewMonthPanel.classList.add("hidden");
+        closeCustomSelect(overviewMonthDropdown, overviewMonthPanel);
         const previous = overviewMonthValue;
         setOverviewMonthValue(item.dataset.value || previous);
         if (overviewMonthValue === previous) return;
@@ -5289,7 +5324,7 @@
       overviewStatusPanel?.addEventListener("click", (event) => {
         const item = event.target.closest(".custom-select-item[data-value]");
         if (!item) return;
-        overviewStatusPanel.classList.add("hidden");
+        closeCustomSelect(overviewStatusDropdown, overviewStatusPanel);
         setOverviewStatusValue(item.dataset.value || "");
         renderOverviewRows();
       });
@@ -5297,7 +5332,7 @@
       overviewSitePanel?.addEventListener("click", (event) => {
         const item = event.target.closest(".custom-select-item[data-value]");
         if (!item) return;
-        overviewSitePanel.classList.add("hidden");
+        closeCustomSelect(overviewSiteDropdown, overviewSitePanel);
         setOverviewSiteValue(item.dataset.value || "");
         renderOverviewRows();
       });
@@ -5311,21 +5346,21 @@
       });
 
       sharedCalendarMonthToggle?.addEventListener("click", () => {
-        sharedCalendarMonthPanel?.classList.toggle("hidden");
+        toggleCustomSelect(sharedCalendarMonthDropdown, sharedCalendarMonthPanel);
       });
 
       sharedCalendarSiteToggle?.addEventListener("click", () => {
-        sharedCalendarSitePanel?.classList.toggle("hidden");
+        toggleCustomSelect(sharedCalendarSiteDropdown, sharedCalendarSitePanel);
       });
 
       sharedCalendarGroupToggle?.addEventListener("click", () => {
-        sharedCalendarGroupPanel?.classList.toggle("hidden");
+        toggleCustomSelect(sharedCalendarGroupDropdown, sharedCalendarGroupPanel);
       });
 
       sharedCalendarMonthPanel?.addEventListener("click", async (event) => {
         const item = event.target.closest(".custom-select-item[data-value]");
         if (!item) return;
-        sharedCalendarMonthPanel.classList.add("hidden");
+        closeCustomSelect(sharedCalendarMonthDropdown, sharedCalendarMonthPanel);
         const previous = sharedCalendarMonthValue;
         setSharedCalendarMonthValue(item.dataset.value || previous);
         if (sharedCalendarMonthValue === previous) return;
@@ -5340,7 +5375,7 @@
       sharedCalendarSitePanel?.addEventListener("click", async (event) => {
         const item = event.target.closest(".custom-select-item[data-value]");
         if (!item) return;
-        sharedCalendarSitePanel.classList.add("hidden");
+        closeCustomSelect(sharedCalendarSiteDropdown, sharedCalendarSitePanel);
         setSharedCalendarSiteValue(item.dataset.value || "");
         try {
           await loadSharedCalendar({ resetPage: true });
@@ -5352,7 +5387,7 @@
       sharedCalendarGroupPanel?.addEventListener("click", async (event) => {
         const item = event.target.closest(".custom-select-item[data-value]");
         if (!item) return;
-        sharedCalendarGroupPanel.classList.add("hidden");
+        closeCustomSelect(sharedCalendarGroupDropdown, sharedCalendarGroupPanel);
         setSharedCalendarGroupValue(item.dataset.value || "");
         try {
           await loadSharedCalendar({ resetPage: true });
@@ -5555,6 +5590,16 @@
         if (shouldRerenderSharedCalendar && sharedCalendarRows.length) {
           renderSharedCalendar();
         }
+        [
+          [monthDropdown, monthPanel],
+          [overviewMonthDropdown, overviewMonthPanel],
+          [overviewStatusDropdown, overviewStatusPanel],
+          [overviewSiteDropdown, overviewSitePanel],
+          [sharedCalendarMonthDropdown, sharedCalendarMonthPanel],
+          [sharedCalendarSiteDropdown, sharedCalendarSitePanel],
+          [sharedCalendarGroupDropdown, sharedCalendarGroupPanel],
+          [noteModalWorkTypeDropdown, noteModalWorkTypePanel],
+        ].forEach(([dropdown, panel]) => updateCustomSelectPlacement(dropdown, panel));
       });
 
       window.addEventListener("scroll", syncTopStripHorizontalPosition, { passive: true });
@@ -5656,7 +5701,7 @@
 
       noteModalWorkTypeToggle.addEventListener("click", () => {
         if (noteModalMode === "view") return;
-        noteModalWorkTypePanel.classList.toggle("hidden");
+        toggleCustomSelect(noteModalWorkTypeDropdown, noteModalWorkTypePanel);
       });
 
       noteModalWorkTypePanel.addEventListener("click", (event) => {
@@ -5665,7 +5710,7 @@
         if (noteModalMode === "view") return;
         if (item.disabled) return;
         setNoteModalWorkType(item.dataset.value || "ON_SITE");
-        noteModalWorkTypePanel.classList.add("hidden");
+        closeCustomSelect(noteModalWorkTypeDropdown, noteModalWorkTypePanel);
         const onSite = noteModalWorkTypeValue === "ON_SITE";
         noteModalText.disabled = false;
         noteModalText.readOnly = onSite;
@@ -5833,25 +5878,25 @@
           closeMainMenuPanel();
         }
         if (monthDropdown && !monthDropdown.contains(event.target)) {
-          monthPanel.classList.add("hidden");
+          closeCustomSelect(monthDropdown, monthPanel);
         }
         if (overviewMonthDropdown && !overviewMonthDropdown.contains(event.target)) {
-          overviewMonthPanel?.classList.add("hidden");
+          closeCustomSelect(overviewMonthDropdown, overviewMonthPanel);
         }
         if (overviewStatusDropdown && !overviewStatusDropdown.contains(event.target)) {
-          overviewStatusPanel?.classList.add("hidden");
+          closeCustomSelect(overviewStatusDropdown, overviewStatusPanel);
         }
         if (overviewSiteDropdown && !overviewSiteDropdown.contains(event.target)) {
-          overviewSitePanel?.classList.add("hidden");
+          closeCustomSelect(overviewSiteDropdown, overviewSitePanel);
         }
         if (sharedCalendarMonthDropdown && !sharedCalendarMonthDropdown.contains(event.target)) {
-          sharedCalendarMonthPanel?.classList.add("hidden");
+          closeCustomSelect(sharedCalendarMonthDropdown, sharedCalendarMonthPanel);
         }
         if (sharedCalendarSiteDropdown && !sharedCalendarSiteDropdown.contains(event.target)) {
-          sharedCalendarSitePanel?.classList.add("hidden");
+          closeCustomSelect(sharedCalendarSiteDropdown, sharedCalendarSitePanel);
         }
         if (sharedCalendarGroupDropdown && !sharedCalendarGroupDropdown.contains(event.target)) {
-          sharedCalendarGroupPanel?.classList.add("hidden");
+          closeCustomSelect(sharedCalendarGroupDropdown, sharedCalendarGroupPanel);
         }
         if (
           noteModal &&
@@ -5859,7 +5904,7 @@
           noteModalWorkTypeDropdown &&
           !noteModalWorkTypeDropdown.contains(event.target)
         ) {
-          noteModalWorkTypePanel.classList.add("hidden");
+          closeCustomSelect(noteModalWorkTypeDropdown, noteModalWorkTypePanel);
         }
       });
 
