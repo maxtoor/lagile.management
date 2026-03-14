@@ -23,7 +23,7 @@ class PlanImportBucket:
 
 class Command(BaseCommand):
     help = (
-        'Importa lo storico Programmazione dal CSV legacy ICB in MonthlyPlan/PlanDay. '
+        'Importa lo storico Programmazione/Variazione dal CSV legacy ICB in MonthlyPlan/PlanDay. '
         'Importa solo mesi passati, filtra weekend/festivita e salta i piani gia esistenti.'
     )
 
@@ -122,7 +122,7 @@ class Command(BaseCommand):
 
             for row in rows:
                 leave_type = self._norm(row.get('Leave Type'))
-                if leave_type != 'Programmazione':
+                if leave_type not in {'Programmazione', 'Variazione'}:
                     continue
                 employee = self._fold(self._norm(row.get('Employee')))
                 department = self._norm(row.get('Department')).split()[-1].strip().lower() if self._norm(row.get('Department')) else ''
@@ -240,7 +240,7 @@ class Command(BaseCommand):
         counters = {
             'rows_total': len(data_rows),
             'rows_programmazione': 0,
-            'rows_variazione_ignored': 0,
+            'rows_variazione': 0,
             'rows_other_ignored': 0,
             'rows_email_filtered': 0,
             'rows_invalid': 0,
@@ -282,14 +282,13 @@ class Command(BaseCommand):
                 counters['rows_email_filtered'] += 1
                 continue
 
-            if leave_type == 'Variazione':
-                counters['rows_variazione_ignored'] += 1
-                continue
-            if leave_type != 'Programmazione':
+            if leave_type == 'Programmazione':
+                counters['rows_programmazione'] += 1
+            elif leave_type == 'Variazione':
+                counters['rows_variazione'] += 1
+            else:
                 counters['rows_other_ignored'] += 1
                 continue
-
-            counters['rows_programmazione'] += 1
             user, match_kind = self._resolve_user(
                 raw_email=email,
                 raw_firstname=raw_firstname,
@@ -485,6 +484,7 @@ class Command(BaseCommand):
                 'Import storico ICB completato'
                 f'{suffix}: righe={counters["rows_total"]}, '
                 f'programmazione={counters["rows_programmazione"]}, '
+                f'variazione={counters["rows_variazione"]}, '
                 f'piani creati={counters["plans_created"]}, '
                 f'piani sovrascritti={counters["plans_overwritten"]}, '
                 f'piani esistenti saltati={counters["plans_existing_skipped"]}, '
@@ -496,7 +496,6 @@ class Command(BaseCommand):
         )
         self.stdout.write(
             'Dettaglio skip: '
-            f'variazioni ignorate={counters["rows_variazione_ignored"]}, '
             f'altro ignorato={counters["rows_other_ignored"]}, '
             f'utente mancante={counters["users_missing"]}, '
             f'righe non valide={counters["rows_invalid"]}, '
