@@ -280,6 +280,7 @@ class MonthlyPlan(models.Model):
         month: int,
         department: str,
         day_payloads: list[dict],
+        enforce_business_rules: bool = True,
     ) -> None:
         seen_days: set[date] = set()
         holidays = cls.holiday_days_for_month(year=year, month=month, department=department)
@@ -306,13 +307,14 @@ class MonthlyPlan(models.Model):
             elif work_type == PlanDay.WorkType.ON_SITE:
                 on_site_days += 1
 
-        policy = cls.get_department_policy(department)
-        cls.validate_business_rules(
-            month=month,
-            remote_days=remote_days,
-            on_site_days=on_site_days,
-            policy=policy,
-        )
+        if enforce_business_rules:
+            policy = cls.get_department_policy(department)
+            cls.validate_business_rules(
+                month=month,
+                remote_days=remote_days,
+                on_site_days=on_site_days,
+                policy=policy,
+            )
 
     def validate_existing_days(self) -> None:
         day_payloads = list(self.days.values('day', 'work_type'))
@@ -382,6 +384,7 @@ class MonthlyPlan(models.Model):
             month=self.month,
             department=self.user.department,
             day_payloads=parsed,
+            enforce_business_rules=False,
         )
 
         self.days.all().delete()
