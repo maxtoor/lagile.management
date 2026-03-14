@@ -82,6 +82,12 @@
         overflow: hidden;
       }
 
+      body[data-app-page="overview"] .wrap {
+        height: 100dvh;
+        padding-bottom: calc(var(--page-footer-height) + 12px);
+        overflow: hidden;
+      }
+
       .subtitle {
         margin: 4px 0 0;
         color: var(--muted);
@@ -109,6 +115,14 @@
         min-width: 0;
         margin: 0 auto;
         overflow-x: auto;
+      }
+
+      body[data-app-page="overview"] #approverCard {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        height: calc(100dvh - var(--top-strip-height) - var(--page-footer-height) - 28px);
+        overflow: hidden;
       }
 
       body[data-app-page="shared-calendar"] #approverCard {
@@ -544,6 +558,30 @@
       .overview-table td.overview-short-cell {
         text-align: center;
         white-space: nowrap;
+      }
+
+      body[data-app-page="overview"] #overviewPanel {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .overview-table-wrap {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .overview-table {
+        height: 100%;
+      }
+
+      .overview-empty-row td {
+        height: 100%;
+        vertical-align: top;
+        padding-top: 14px;
       }
 
       .shared-calendar-controls {
@@ -1972,29 +2010,31 @@
               </div>
               <div id="overviewSummary" class="review-batch-info" style="margin-left:auto">Utenti: 0</div>
             </div>
-            <table class="overview-table">
-              <colgroup>
-                <col />
-                <col />
-                <col />
-                <col class="overview-col-onsite" />
-                <col class="overview-col-remote" />
-                <col class="overview-col-auto" />
-                <col class="overview-col-actions" />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>Utente</th>
-                  <th>Afferenza territoriale</th>
-                  <th>Stato</th>
-                  <th class="overview-short-head" title="Giorni in sede">In sede</th>
-                  <th class="overview-short-head" title="Giorni in lavoro agile">Agile</th>
-                  <th class="overview-short-head" title="Approvazione automatica">Auto appr.</th>
-                  <th class="overview-short-head">Azioni</th>
-                </tr>
-              </thead>
-              <tbody id="overviewBody"></tbody>
-            </table>
+            <div class="overview-table-wrap">
+              <table class="overview-table">
+                <colgroup>
+                  <col />
+                  <col />
+                  <col />
+                  <col class="overview-col-onsite" />
+                  <col class="overview-col-remote" />
+                  <col class="overview-col-auto" />
+                  <col class="overview-col-actions" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Utente</th>
+                    <th>Afferenza territoriale</th>
+                    <th>Stato</th>
+                    <th class="overview-short-head" title="Giorni in sede">In sede</th>
+                    <th class="overview-short-head" title="Giorni in lavoro agile">Agile</th>
+                    <th class="overview-short-head" title="Approvazione automatica">Auto appr.</th>
+                    <th class="overview-short-head">Azioni</th>
+                  </tr>
+                </thead>
+                <tbody id="overviewBody"></tbody>
+              </table>
+            </div>
           </div>
           <div id="sharedCalendarPanel">
             <h3 style="margin-top:0">Calendario condiviso</h3>
@@ -4487,6 +4527,7 @@
         overviewBody.innerHTML = "";
         if (!filtered.length) {
           const tr = document.createElement("tr");
+          tr.className = "overview-empty-row";
           tr.innerHTML = `<td colspan="7">Nessun risultato per i filtri selezionati</td>`;
           overviewBody.appendChild(tr);
           return;
