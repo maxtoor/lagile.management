@@ -111,6 +111,10 @@
         overflow-x: auto;
       }
 
+      body[data-app-page="overview"] #approverCard {
+        min-height: calc(100dvh - var(--top-strip-height) - var(--page-footer-height) - 28px);
+      }
+
       body[data-app-page="shared-calendar"] #approverCard {
         display: flex;
         flex-direction: column;
