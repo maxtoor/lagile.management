@@ -71,8 +71,15 @@
       body[data-app-page="profile"] .wrap,
       body[data-app-page="overview"] .wrap,
       body[data-app-page="approvals"] .wrap,
-      body[data-app-page="changes"] .wrap {
+      body[data-app-page="changes"] .wrap,
+      body[data-app-page="shared-calendar"] .wrap {
         padding-top: calc(12px + var(--top-strip-height));
+      }
+
+      body[data-app-page="shared-calendar"] .wrap {
+        height: 100dvh;
+        padding-bottom: calc(var(--page-footer-height) + 12px);
+        overflow: hidden;
       }
 
       .subtitle {
@@ -102,6 +109,14 @@
         min-width: 0;
         margin: 0 auto;
         overflow-x: auto;
+      }
+
+      body[data-app-page="shared-calendar"] #approverCard {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        height: calc(100dvh - var(--top-strip-height) - var(--page-footer-height) - 28px);
+        overflow: hidden;
       }
 
       .grid.programming-grid {
@@ -529,6 +544,300 @@
       .overview-table td.overview-short-cell {
         text-align: center;
         white-space: nowrap;
+      }
+
+      .shared-calendar-controls {
+        align-items: flex-end;
+      }
+
+      .shared-calendar-controls .toolbar-field label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 600;
+      }
+
+      .shared-calendar-controls input,
+      .shared-calendar-controls select {
+        min-width: 110px;
+      }
+
+      .shared-calendar-search-wrap {
+        position: relative;
+      }
+
+      .shared-calendar-search-wrap input {
+        padding-right: 34px;
+      }
+
+      .shared-calendar-search-clear {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 24px;
+        height: 24px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+      }
+
+      .shared-calendar-search-clear:hover {
+        background: #eef2f6;
+        color: var(--ink);
+      }
+
+      .shared-calendar-search-clear.hidden {
+        display: none;
+      }
+
+      .shared-calendar-wrap {
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fff;
+        flex: 1;
+        min-height: 0;
+        scrollbar-width: none;
+      }
+
+      .shared-calendar-wrap.is-dragging {
+        cursor: grabbing;
+        user-select: none;
+      }
+
+      .shared-calendar-wrap::-webkit-scrollbar:horizontal {
+        display: none;
+      }
+
+      #sharedCalendarPanel {
+        min-height: 0;
+      }
+
+      body[data-app-page="shared-calendar"] #sharedCalendarPanel {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .shared-calendar-table {
+        width: max-content;
+        min-width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+      }
+
+      .shared-calendar-table th,
+      .shared-calendar-table td {
+        padding: 0;
+        border-bottom: 1px solid var(--line);
+        border-right: 1px solid #edf1f5;
+      }
+
+      .shared-calendar-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #fff;
+      }
+
+      .shared-calendar-table th.shared-calendar-name-head {
+        left: 0;
+        z-index: 4;
+        min-width: 230px;
+        text-align: left;
+        padding: 10px 12px;
+        background: #fff;
+      }
+
+      .shared-calendar-table td.shared-calendar-name-cell {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        min-width: 230px;
+        padding: 6px 12px;
+        background: #fff;
+      }
+
+      .shared-calendar-name-cell.is-muted {
+        background: #f6f7f8;
+      }
+
+      .shared-calendar-control-head,
+      .shared-calendar-control-cell {
+        width: 30px;
+        min-width: 30px;
+        max-width: 30px;
+        padding: 0;
+        text-align: center;
+        background: #fff;
+      }
+
+      .shared-calendar-control-head.left,
+      .shared-calendar-control-cell.left {
+        position: sticky;
+        left: 230px;
+        z-index: 4;
+        border-right: 1px solid var(--line);
+      }
+
+      .shared-calendar-control-head.right,
+      .shared-calendar-control-cell.right {
+        position: sticky;
+        right: 0;
+        z-index: 4;
+        border-left: 1px solid var(--line);
+      }
+
+      .shared-calendar-control-cell {
+        z-index: 3;
+        vertical-align: middle;
+        border-bottom: 0;
+      }
+
+      .shared-calendar-scroll-btn {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #fff;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+
+      .shared-calendar-scroll-btn:hover {
+        background: #f5f8fb;
+        color: var(--ink);
+      }
+
+      .shared-calendar-user-name {
+        font-weight: 600;
+        color: var(--ink);
+        line-height: 1.15;
+      }
+
+      .shared-calendar-user-name.is-muted {
+        color: #a6afb8;
+      }
+
+      .shared-calendar-day-head {
+        width: 34px;
+        min-width: 34px;
+        text-align: center;
+        font-size: 0.72rem;
+        line-height: 1.1;
+        color: var(--muted);
+        padding: 8px 2px;
+        cursor: grab;
+      }
+
+      .shared-calendar-day-head.is-weekend,
+      .shared-calendar-cell.is-weekend {
+        background: #f4f8f6;
+      }
+
+      .shared-calendar-day-head.is-holiday,
+      .shared-calendar-cell.is-holiday {
+        background: #f4f8f6;
+      }
+
+      .shared-calendar-cell {
+        width: 34px;
+        min-width: 34px;
+        height: 34px;
+        text-align: center;
+        vertical-align: middle;
+        cursor: grab;
+      }
+
+      .shared-calendar-cell-inner {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        color: var(--ink);
+      }
+
+      .shared-calendar-cell.mode-remote .shared-calendar-cell-inner {
+        background: transparent;
+        font-weight: 700;
+      }
+
+      .shared-calendar-cell.mode-onsite .shared-calendar-cell-inner {
+        background: transparent;
+      }
+
+      .shared-calendar-cell.mode-remote {
+        background: #ecfaf2;
+      }
+
+      .shared-calendar-empty-state {
+        padding: 18px;
+        color: var(--muted);
+      }
+
+      .shared-calendar-footer {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .shared-calendar-pager {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .shared-calendar-pager button {
+        min-width: 40px;
+      }
+
+      .shared-calendar-legend {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .shared-calendar-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .shared-calendar-legend-swatch {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .shared-calendar-legend-swatch.remote {
+        background: #ecfaf2;
+        border-color: #b8e4cb;
+      }
+
+      .shared-calendar-legend-swatch.non-working {
+        background: #f4f8f6;
       }
 
       #approvalsPanel input[type="checkbox"],
@@ -1422,10 +1731,11 @@
         <div id="mainMenuPanel" class="main-menu-panel hidden">
           <button id="menuProgramming" type="button" class="main-menu-item" data-target="/">Programmazione</button>
           <button id="menuProfile" type="button" class="main-menu-item" data-target="/profilo/">Profilo</button>
-          <button id="menuOverview" type="button" class="main-menu-item" data-target="/admin/overview/">Quadro generale</button>
+          <button id="menuSharedCalendar" type="button" class="main-menu-item" data-target="/admin/shared-calendar/">Calendario condiviso</button>
           <button id="menuApprovals" type="button" class="main-menu-item" data-target="/admin/approvals/">Richieste approvazione</button>
           <button id="menuChanges" type="button" class="main-menu-item" data-target="/admin/change-requests/">Richieste variazioni</button>
-          <button id="menuLogout" type="button" class="main-menu-item" data-target="__logout__">Logout</button>
+          <button id="menuOverview" type="button" class="main-menu-item" data-target="/admin/overview/">Quadro generale</button>
+          <button id="menuLogout" type="button" class="main-menu-item" data-target="__logout__">Esci</button>
         </div>
       </div>
     </div>
@@ -1680,6 +1990,80 @@
               </thead>
               <tbody id="overviewBody"></tbody>
             </table>
+          </div>
+          <div id="sharedCalendarPanel">
+            <h3 style="margin-top:0">Calendario condiviso</h3>
+            <p class="subtitle" style="margin-top:0">Vista mensile sintetica della programmazione dei colleghi (non vengono esposti dati sensibili)</p>
+            <div class="review-batch-bar shared-calendar-controls">
+              <div class="toolbar-field">
+                <label for="sharedCalendarYearInput">Anno</label>
+                <input id="sharedCalendarYearInput" type="number" min="2024" max="2100" style="width:100px" />
+              </div>
+              <div class="toolbar-field">
+                <label for="sharedCalendarMonthToggle">Mese</label>
+                <div id="sharedCalendarMonthDropdown" class="custom-select" style="min-width:86px">
+                  <button id="sharedCalendarMonthToggle" type="button" class="custom-select-toggle">
+                    <span id="sharedCalendarMonthLabel">01</span>
+                    <span aria-hidden="true">▾</span>
+                  </button>
+                  <div id="sharedCalendarMonthPanel" class="custom-select-panel hidden"></div>
+                </div>
+              </div>
+              <div class="toolbar-field">
+                <label for="sharedCalendarSiteToggle">Afferenza territoriale</label>
+                <div id="sharedCalendarSiteDropdown" class="custom-select" style="min-width:180px">
+                  <button id="sharedCalendarSiteToggle" type="button" class="custom-select-toggle">
+                    <span id="sharedCalendarSiteLabel">Tutte</span>
+                    <span aria-hidden="true">▾</span>
+                  </button>
+                  <div id="sharedCalendarSitePanel" class="custom-select-panel hidden">
+                    <button type="button" class="custom-select-item" data-value="">Tutte</button>
+                  </div>
+                </div>
+              </div>
+              <div class="toolbar-field">
+                <label for="sharedCalendarGroupToggle">Gruppo</label>
+                <div id="sharedCalendarGroupDropdown" class="custom-select" style="min-width:180px">
+                  <button id="sharedCalendarGroupToggle" type="button" class="custom-select-toggle">
+                    <span id="sharedCalendarGroupLabel">Tutti</span>
+                    <span aria-hidden="true">▾</span>
+                  </button>
+                  <div id="sharedCalendarGroupPanel" class="custom-select-panel hidden">
+                    <button type="button" class="custom-select-item" data-value="">Tutti</button>
+                  </div>
+                </div>
+              </div>
+              <div class="toolbar-field">
+                <label for="sharedCalendarSearchInput">Nome</label>
+                <div class="shared-calendar-search-wrap">
+                  <input id="sharedCalendarSearchInput" type="text" placeholder="Cerca utente" style="min-width:180px" />
+                  <button id="sharedCalendarSearchClearBtn" type="button" class="shared-calendar-search-clear hidden" aria-label="Cancella ricerca">×</button>
+                </div>
+              </div>
+              <div id="sharedCalendarSummary" class="review-batch-info" style="margin-left:auto">Utenti: 0</div>
+            </div>
+            <div id="sharedCalendarGrid" class="shared-calendar-wrap"></div>
+            <div class="shared-calendar-footer">
+              <div class="shared-calendar-legend" aria-label="Legenda calendario condiviso">
+                <span class="shared-calendar-legend-item">
+                  <span class="shared-calendar-legend-swatch remote"></span>
+                  <span>Lavoro agile (LA)</span>
+                </span>
+                <span class="shared-calendar-legend-item">
+                  <span class="shared-calendar-legend-swatch non-working"></span>
+                  <span>Weekend e festività</span>
+                </span>
+                <span class="shared-calendar-legend-item">
+                  <span class="shared-calendar-legend-swatch"></span>
+                  <span>In sede o Nessun piano approvato</span>
+                </span>
+              </div>
+              <div class="shared-calendar-pager">
+                <button id="sharedCalendarPrevBtn" type="button">◀</button>
+                <span id="sharedCalendarPageInfo">Pagina 1 di 1</span>
+                <button id="sharedCalendarNextBtn" type="button">▶</button>
+              </div>
+            </div>
           </div>
         </section>
       </div>
@@ -1974,6 +2358,7 @@
       const pageTopStrip = document.querySelector(".page-top-strip");
       const menuProfile = document.getElementById("menuProfile");
       const menuProgramming = document.getElementById("menuProgramming");
+      const menuSharedCalendar = document.getElementById("menuSharedCalendar");
       const menuOverview = document.getElementById("menuOverview");
       const menuApprovals = document.getElementById("menuApprovals");
       const menuChanges = document.getElementById("menuChanges");
@@ -2003,6 +2388,7 @@
       const approvalsPanel = document.getElementById("approvalsPanel");
       const changesPanel = document.getElementById("changesPanel");
       const overviewPanel = document.getElementById("overviewPanel");
+      const sharedCalendarPanel = document.getElementById("sharedCalendarPanel");
       const approvalsBatchBar = document.getElementById("approvalsBatchBar");
       const approvalsBatchInfo = document.getElementById("approvalsBatchInfo");
       const approverSelectAll = document.getElementById("approverSelectAll");
@@ -2032,6 +2418,26 @@
       const overviewSitePanel = document.getElementById("overviewSitePanel");
       const overviewSummary = document.getElementById("overviewSummary");
       const overviewBody = document.getElementById("overviewBody");
+      const sharedCalendarYearInput = document.getElementById("sharedCalendarYearInput");
+      const sharedCalendarMonthDropdown = document.getElementById("sharedCalendarMonthDropdown");
+      const sharedCalendarMonthToggle = document.getElementById("sharedCalendarMonthToggle");
+      const sharedCalendarMonthLabel = document.getElementById("sharedCalendarMonthLabel");
+      const sharedCalendarMonthPanel = document.getElementById("sharedCalendarMonthPanel");
+      const sharedCalendarSiteDropdown = document.getElementById("sharedCalendarSiteDropdown");
+      const sharedCalendarSiteToggle = document.getElementById("sharedCalendarSiteToggle");
+      const sharedCalendarSiteLabel = document.getElementById("sharedCalendarSiteLabel");
+      const sharedCalendarSitePanel = document.getElementById("sharedCalendarSitePanel");
+      const sharedCalendarGroupDropdown = document.getElementById("sharedCalendarGroupDropdown");
+      const sharedCalendarGroupToggle = document.getElementById("sharedCalendarGroupToggle");
+      const sharedCalendarGroupLabel = document.getElementById("sharedCalendarGroupLabel");
+      const sharedCalendarGroupPanel = document.getElementById("sharedCalendarGroupPanel");
+      const sharedCalendarSearchInput = document.getElementById("sharedCalendarSearchInput");
+      const sharedCalendarSearchClearBtn = document.getElementById("sharedCalendarSearchClearBtn");
+      const sharedCalendarSummary = document.getElementById("sharedCalendarSummary");
+      const sharedCalendarGrid = document.getElementById("sharedCalendarGrid");
+      const sharedCalendarPrevBtn = document.getElementById("sharedCalendarPrevBtn");
+      const sharedCalendarNextBtn = document.getElementById("sharedCalendarNextBtn");
+      const sharedCalendarPageInfo = document.getElementById("sharedCalendarPageInfo");
       const detailsModal = document.getElementById("detailsModal");
       const detailsTitle = document.getElementById("detailsTitle");
       const detailsSummary = document.getElementById("detailsSummary");
@@ -2118,6 +2524,17 @@
       let overviewMonthValue = 1;
       let overviewStatusValue = "";
       let overviewSiteValue = "";
+      let sharedCalendarRows = [];
+      let sharedCalendarDays = [];
+      let sharedCalendarSearchValue = "";
+      let sharedCalendarPage = 1;
+      let sharedCalendarPageSize = 16;
+      let sharedCalendarMonthValue = 1;
+      let sharedCalendarSiteValue = "";
+      let sharedCalendarGroupValue = "";
+      let sharedCalendarScrollAnimationFrame = null;
+      let sharedCalendarScrollHoldState = null;
+      let sharedCalendarDragState = null;
       let serverToday = null;
       let currentMonthContext = {
         isCurrentMonth: false,
@@ -2164,6 +2581,15 @@
           opt.textContent = String(m).padStart(2, "0");
           overviewMonthPanel.appendChild(opt);
         }
+
+        if (sharedCalendarMonthPanel) {
+          const option = document.createElement("button");
+          option.type = "button";
+          option.className = "custom-select-item";
+          option.dataset.value = String(m);
+          option.textContent = String(m).padStart(2, "0");
+          sharedCalendarMonthPanel.appendChild(option);
+        }
       }
 
       function localTodayParts() {
@@ -2182,8 +2608,17 @@
         overviewMonthValue = initialToday.month;
         overviewMonthLabel.textContent = String(initialToday.month).padStart(2, "0");
       }
+      if (sharedCalendarYearInput) {
+        sharedCalendarYearInput.value = String(initialToday.year);
+      }
+      if (sharedCalendarMonthLabel) {
+        sharedCalendarMonthValue = initialToday.month;
+        sharedCalendarMonthLabel.textContent = String(initialToday.month).padStart(2, "0");
+      }
       setOverviewStatusValue("");
       setOverviewSiteValue("");
+      if (sharedCalendarSiteLabel) sharedCalendarSiteLabel.textContent = "Tutte";
+      if (sharedCalendarGroupLabel) sharedCalendarGroupLabel.textContent = "Tutti";
 
       async function syncServerToday() {
         const data = await api("/auth/server-date/");
@@ -2735,11 +3170,14 @@
         const isProfilePage = APP_PAGE === "profile";
         const isProgramming = APP_PAGE === "programming";
         const isOverviewPage = APP_PAGE === "overview";
+        const isSharedCalendarPage = APP_PAGE === "shared-calendar";
         const isApprovalsPage = APP_PAGE === "approvals";
         const isChangesPage = APP_PAGE === "changes";
         if (mainMenuLabel) {
           mainMenuLabel.textContent = isProfilePage
             ? "Profilo"
+            : isSharedCalendarPage
+              ? "Calendario condiviso"
             : isOverviewPage
               ? "Quadro generale"
               : isApprovalsPage
@@ -2761,6 +3199,7 @@
         calendarCard.classList.toggle("hidden", !isProgramming);
         actionsCard.classList.toggle("hidden", !isProgramming);
         overviewPanel.classList.toggle("hidden", !isOverviewPage);
+        sharedCalendarPanel.classList.toggle("hidden", !isSharedCalendarPage);
         approvalsPanel.classList.toggle("hidden", !isApprovalsPage);
         changesPanel.classList.toggle("hidden", !isChangesPage);
       }
@@ -2768,6 +3207,7 @@
       function syncMainMenuByRole() {
         const approver = isApprover();
         if (menuOverview) menuOverview.hidden = !approver;
+        if (menuSharedCalendar) menuSharedCalendar.hidden = false;
         if (menuApprovals) menuApprovals.hidden = !approver;
         if (menuChanges) menuChanges.hidden = !approver;
       }
@@ -3681,6 +4121,320 @@
         }
       }
 
+      function sharedCalendarYearMonth() {
+        const year = Number(sharedCalendarYearInput?.value || yearInput?.value || currentYearMonth().year);
+        const month = Number(sharedCalendarMonthValue || selectedMonth || currentYearMonth().month);
+        return { year, month };
+      }
+
+      function setSharedCalendarMonthValue(value) {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed < 1 || parsed > 12) return;
+        sharedCalendarMonthValue = parsed;
+        if (sharedCalendarMonthLabel) {
+          sharedCalendarMonthLabel.textContent = String(parsed).padStart(2, "0");
+        }
+      }
+
+      function setSharedCalendarSiteValue(value) {
+        sharedCalendarSiteValue = (value || "").trim();
+        if (sharedCalendarSiteLabel) {
+          sharedCalendarSiteLabel.textContent = sharedCalendarSiteValue || "Tutte";
+        }
+      }
+
+      function setSharedCalendarGroupValue(value) {
+        sharedCalendarGroupValue = (value || "").trim();
+        if (sharedCalendarGroupLabel) {
+          sharedCalendarGroupLabel.textContent = sharedCalendarGroupValue || "Tutti";
+        }
+      }
+
+      function syncSharedCalendarSiteOptions(sites) {
+        if (!sharedCalendarSitePanel) return;
+        const prev = sharedCalendarSiteValue;
+        sharedCalendarSitePanel.innerHTML = '<button type="button" class="custom-select-item" data-value="">Tutte</button>';
+        (sites || []).forEach((site) => {
+          const option = document.createElement("button");
+          option.type = "button";
+          option.className = "custom-select-item";
+          option.dataset.value = site;
+          option.textContent = site;
+          sharedCalendarSitePanel.appendChild(option);
+        });
+        if (prev && (sites || []).includes(prev)) {
+          setSharedCalendarSiteValue(prev);
+          return;
+        }
+        setSharedCalendarSiteValue("");
+      }
+
+      function syncSharedCalendarGroupOptions(groups) {
+        if (!sharedCalendarGroupPanel) return;
+        const prev = sharedCalendarGroupValue;
+        sharedCalendarGroupPanel.innerHTML = '<button type="button" class="custom-select-item" data-value="">Tutti</button>';
+        (groups || []).forEach((group) => {
+          const option = document.createElement("button");
+          option.type = "button";
+          option.className = "custom-select-item";
+          option.dataset.value = group;
+          option.textContent = group;
+          sharedCalendarGroupPanel.appendChild(option);
+        });
+        if (prev && (groups || []).includes(prev)) {
+          setSharedCalendarGroupValue(prev);
+          return;
+        }
+        setSharedCalendarGroupValue("");
+      }
+
+      function measureSharedCalendarPageSize() {
+        if (!sharedCalendarGrid) return sharedCalendarPageSize || 16;
+        const containerHeight = Math.floor(sharedCalendarGrid.getBoundingClientRect().height || 0);
+        if (containerHeight <= 0) return sharedCalendarPageSize || 16;
+        const headerRow = sharedCalendarGrid.querySelector("thead tr");
+        const bodyRow = sharedCalendarGrid.querySelector("tbody tr");
+        const headerHeight = Math.ceil(headerRow?.getBoundingClientRect().height || 56);
+        const rowHeight = Math.ceil(bodyRow?.getBoundingClientRect().height || 104);
+        const availableHeight = Math.max(0, containerHeight - headerHeight - 4);
+        return Math.max(1, Math.floor(availableHeight / Math.max(1, rowHeight)));
+      }
+
+      function renderSharedCalendar({ allowRemeasure = true } = {}) {
+        if (!sharedCalendarGrid) return;
+        const { year, month } = sharedCalendarYearMonth();
+        if (sharedCalendarGrid.querySelector("table")) {
+          sharedCalendarPageSize = measureSharedCalendarPageSize();
+        }
+        if (sharedCalendarSearchClearBtn) {
+          sharedCalendarSearchClearBtn.classList.toggle("hidden", !sharedCalendarSearchValue.trim());
+        }
+        const normalizedQuery = (sharedCalendarSearchValue || "").trim().toLocaleLowerCase("it");
+        const filteredRows = !normalizedQuery
+          ? sharedCalendarRows
+          : sharedCalendarRows.filter((row) => {
+              const haystack = [row.name, row.username, row.department, row.manager_name, ...(row.groups || [])]
+                .filter(Boolean)
+                .join(" ")
+                .toLocaleLowerCase("it");
+              return haystack.includes(normalizedQuery);
+            });
+        if (sharedCalendarSummary) {
+          sharedCalendarSummary.textContent = `Utenti: ${filteredRows.length} / ${sharedCalendarRows.length}`;
+        }
+        if (!filteredRows.length) {
+          sharedCalendarGrid.innerHTML = '<div class="shared-calendar-empty-state">Nessun utente trovato per i filtri selezionati.</div>';
+          if (sharedCalendarPageInfo) sharedCalendarPageInfo.textContent = "Pagina 1 di 1";
+          if (sharedCalendarPrevBtn) sharedCalendarPrevBtn.disabled = true;
+          if (sharedCalendarNextBtn) sharedCalendarNextBtn.disabled = true;
+          return;
+        }
+
+        const pageSize = Math.max(1, sharedCalendarPageSize || 1);
+        const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+        if (sharedCalendarPage > totalPages) sharedCalendarPage = totalPages;
+        if (sharedCalendarPage < 1) sharedCalendarPage = 1;
+        const startIndex = (sharedCalendarPage - 1) * pageSize;
+        const visibleRows = filteredRows.slice(startIndex, startIndex + pageSize);
+        if (sharedCalendarPageInfo) {
+          sharedCalendarPageInfo.textContent = `Pagina ${sharedCalendarPage} di ${totalPages} · ${pageSize} utenti`;
+        }
+        if (sharedCalendarPrevBtn) sharedCalendarPrevBtn.disabled = sharedCalendarPage <= 1;
+        if (sharedCalendarNextBtn) sharedCalendarNextBtn.disabled = sharedCalendarPage >= totalPages;
+
+        const weekdayLabels = ["Lu", "Ma", "Me", "Gi", "Ve", "Sa", "Do"];
+        const table = document.createElement("table");
+        table.className = "shared-calendar-table";
+
+        const thead = document.createElement("thead");
+        const headRow = document.createElement("tr");
+        const nameHead = document.createElement("th");
+        nameHead.className = "shared-calendar-name-head";
+        nameHead.textContent = "Utente";
+        headRow.appendChild(nameHead);
+        const leftControlHead = document.createElement("th");
+        leftControlHead.className = "shared-calendar-control-head left";
+        headRow.appendChild(leftControlHead);
+        sharedCalendarDays.forEach((day) => {
+          const th = document.createElement("th");
+          th.className = "shared-calendar-day-head";
+          if (day.is_weekend) th.classList.add("is-weekend");
+          if (day.is_holiday) th.classList.add("is-holiday");
+          th.title = day.holiday_name || "";
+          th.innerHTML = `<div>${weekdayLabels[day.weekday] || ""}</div><div>${String(day.day).padStart(2, "0")}</div>`;
+          headRow.appendChild(th);
+        });
+        const rightControlHead = document.createElement("th");
+        rightControlHead.className = "shared-calendar-control-head right";
+        headRow.appendChild(rightControlHead);
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        visibleRows.forEach((row) => {
+          const tr = document.createElement("tr");
+          const nameCell = document.createElement("td");
+          nameCell.className = "shared-calendar-name-cell";
+          if (!row.has_approved_plan) nameCell.classList.add("is-muted");
+          nameCell.innerHTML = `<div><div class="shared-calendar-user-name${row.has_approved_plan ? "" : " is-muted"}">${row.name}</div></div>`;
+          tr.appendChild(nameCell);
+          if (tbody.children.length === 0) {
+            const leftControlCell = document.createElement("td");
+            leftControlCell.className = "shared-calendar-control-cell left";
+            leftControlCell.rowSpan = visibleRows.length;
+            leftControlCell.innerHTML = '<button type="button" class="shared-calendar-scroll-btn" data-shared-scroll="left" aria-label="Scorri a sinistra">◀</button>';
+            tr.appendChild(leftControlCell);
+          }
+
+          sharedCalendarDays.forEach((day) => {
+            const explicitWorkType = row.cells?.[day.date] || "";
+            const workType = row.has_approved_plan && !day.is_weekend && !day.is_holiday
+              ? (explicitWorkType || "ON_SITE")
+              : explicitWorkType;
+            const td = document.createElement("td");
+            td.className = "shared-calendar-cell";
+            if (day.is_weekend) td.classList.add("is-weekend");
+            if (day.is_holiday) td.classList.add("is-holiday");
+            if (row.has_approved_plan) {
+              if (workType === "REMOTE") td.classList.add("mode-remote");
+              if (workType === "ON_SITE") td.classList.add("mode-onsite");
+            }
+            const label = workType === "REMOTE" ? "LA" : "";
+            td.title = !row.has_approved_plan
+              ? `${row.name} - nessun piano approvato per ${String(month).padStart(2, "0")}/${year}`
+              : workType === "REMOTE"
+                ? `${row.name} - lavoro agile ${day.date}`
+                : workType === "ON_SITE"
+                  ? `${row.name} - in sede ${day.date}`
+                  : (day.holiday_name || "");
+            td.innerHTML = `<div class="shared-calendar-cell-inner">${label}</div>`;
+            tr.appendChild(td);
+          });
+
+          if (tbody.children.length === 0) {
+            const rightControlCell = document.createElement("td");
+            rightControlCell.className = "shared-calendar-control-cell right";
+            rightControlCell.rowSpan = visibleRows.length;
+            rightControlCell.innerHTML = '<button type="button" class="shared-calendar-scroll-btn" data-shared-scroll="right" aria-label="Scorri a destra">▶</button>';
+            tr.appendChild(rightControlCell);
+          }
+
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        sharedCalendarGrid.innerHTML = "";
+        sharedCalendarGrid.appendChild(table);
+        if (allowRemeasure) {
+          const measuredPageSize = measureSharedCalendarPageSize();
+          if (measuredPageSize !== pageSize) {
+            sharedCalendarPageSize = measuredPageSize;
+            renderSharedCalendar({ allowRemeasure: false });
+          }
+        }
+      }
+
+      async function loadSharedCalendar({ resetPage = false } = {}) {
+        const { year, month } = sharedCalendarYearMonth();
+        const site = String(sharedCalendarSiteValue || "").trim();
+        const group = String(sharedCalendarGroupValue || "").trim();
+        const params = new URLSearchParams({ year: String(year), month: String(month) });
+        if (site) params.set("site", site);
+        if (group) params.set("group", group);
+        const data = await api(`/admin/shared-calendar/?${params.toString()}`);
+        sharedCalendarRows = data?.rows || [];
+        sharedCalendarDays = data?.days || [];
+        if (resetPage) sharedCalendarPage = 1;
+        syncSharedCalendarSiteOptions(data?.sites || []);
+        syncSharedCalendarGroupOptions(data?.groups || []);
+        renderSharedCalendar();
+      }
+
+      function scrollSharedCalendar(direction) {
+        if (!sharedCalendarGrid) return;
+        const currentLeft = sharedCalendarGrid.scrollLeft;
+        const viewportWidth = sharedCalendarGrid.clientWidth || 0;
+        const maxLeft = Math.max(0, sharedCalendarGrid.scrollWidth - viewportWidth);
+        const delta = Math.max(140, Math.min(220, viewportWidth * 0.24));
+        const targetLeft = Math.max(0, Math.min(maxLeft, currentLeft + (direction === "left" ? -delta : delta)));
+        if (Math.abs(targetLeft - currentLeft) < 1) return;
+        if (sharedCalendarScrollAnimationFrame) {
+          cancelAnimationFrame(sharedCalendarScrollAnimationFrame);
+          sharedCalendarScrollAnimationFrame = null;
+        }
+        const duration = 240;
+        const startedAt = performance.now();
+        const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+        const tick = (now) => {
+          const progress = Math.min(1, (now - startedAt) / duration);
+          const eased = easeInOutCubic(progress);
+          sharedCalendarGrid.scrollLeft = currentLeft + (targetLeft - currentLeft) * eased;
+          if (progress < 1) {
+            sharedCalendarScrollAnimationFrame = requestAnimationFrame(tick);
+            return;
+          }
+          sharedCalendarScrollAnimationFrame = null;
+        };
+
+        sharedCalendarScrollAnimationFrame = requestAnimationFrame(tick);
+      }
+
+      function stopSharedCalendarContinuousScroll() {
+        if (!sharedCalendarScrollHoldState) return;
+        if (sharedCalendarScrollHoldState.frameId) {
+          cancelAnimationFrame(sharedCalendarScrollHoldState.frameId);
+        }
+        sharedCalendarScrollHoldState = null;
+      }
+
+      function startSharedCalendarContinuousScroll(direction) {
+        if (!sharedCalendarGrid) return;
+        stopSharedCalendarContinuousScroll();
+        if (sharedCalendarScrollAnimationFrame) {
+          cancelAnimationFrame(sharedCalendarScrollAnimationFrame);
+          sharedCalendarScrollAnimationFrame = null;
+        }
+        const velocity = direction === "left" ? -10 : 10;
+        const state = {
+          direction,
+          velocity,
+          lastTs: null,
+          frameId: null,
+        };
+        const tick = (ts) => {
+          if (!sharedCalendarGrid || sharedCalendarScrollHoldState !== state) return;
+          if (state.lastTs == null) {
+            state.lastTs = ts;
+          }
+          const dt = Math.min(32, ts - state.lastTs || 16);
+          state.lastTs = ts;
+          const currentLeft = sharedCalendarGrid.scrollLeft;
+          const viewportWidth = sharedCalendarGrid.clientWidth || 0;
+          const maxLeft = Math.max(0, sharedCalendarGrid.scrollWidth - viewportWidth);
+          const nextLeft = Math.max(0, Math.min(maxLeft, currentLeft + state.velocity * (dt / 16)));
+          sharedCalendarGrid.scrollLeft = nextLeft;
+          if (nextLeft <= 0 || nextLeft >= maxLeft) {
+            stopSharedCalendarContinuousScroll();
+            return;
+          }
+          state.frameId = requestAnimationFrame(tick);
+        };
+        sharedCalendarScrollHoldState = state;
+        state.frameId = requestAnimationFrame(tick);
+      }
+
+      function stopSharedCalendarDrag(event) {
+        if (!sharedCalendarDragState) return;
+        if (event?.pointerId != null && sharedCalendarDragState.pointerId !== event.pointerId) return;
+        if (sharedCalendarGrid) {
+          sharedCalendarGrid.classList.remove("is-dragging");
+          try {
+            sharedCalendarGrid.releasePointerCapture?.(sharedCalendarDragState.pointerId);
+          } catch (_) {}
+        }
+        sharedCalendarDragState = null;
+      }
+
       function isOverviewRowVisible(row) {
         return Boolean(row?.aila_subscribed);
       }
@@ -3776,6 +4530,13 @@
       }
 
       async function loadApproverQueue({ clearFeedback = true } = {}) {
+        if (APP_PAGE === "shared-calendar") {
+          approverCard.classList.remove("hidden");
+          selectedApproverPlanIds.clear();
+          selectedChangeRequestIds.clear();
+          await loadSharedCalendar();
+          return;
+        }
         if (!isApprover()) {
           approverCard.classList.add("hidden");
           selectedApproverPlanIds.clear();
@@ -3794,6 +4555,10 @@
         }
         if (APP_PAGE === "overview") {
           await loadOverviewDashboard();
+          return;
+        }
+        if (APP_PAGE === "shared-calendar") {
+          await loadSharedCalendar();
           return;
         }
         if (APP_PAGE === "approvals") {
@@ -4537,6 +5302,104 @@
         renderOverviewRows();
       });
 
+      sharedCalendarYearInput?.addEventListener("change", async () => {
+        try {
+          await loadSharedCalendar({ resetPage: true });
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      sharedCalendarMonthToggle?.addEventListener("click", () => {
+        sharedCalendarMonthPanel?.classList.toggle("hidden");
+      });
+
+      sharedCalendarSiteToggle?.addEventListener("click", () => {
+        sharedCalendarSitePanel?.classList.toggle("hidden");
+      });
+
+      sharedCalendarGroupToggle?.addEventListener("click", () => {
+        sharedCalendarGroupPanel?.classList.toggle("hidden");
+      });
+
+      sharedCalendarMonthPanel?.addEventListener("click", async (event) => {
+        const item = event.target.closest(".custom-select-item[data-value]");
+        if (!item) return;
+        sharedCalendarMonthPanel.classList.add("hidden");
+        const previous = sharedCalendarMonthValue;
+        setSharedCalendarMonthValue(item.dataset.value || previous);
+        if (sharedCalendarMonthValue === previous) return;
+        try {
+          await loadSharedCalendar({ resetPage: true });
+        } catch (err) {
+          setSharedCalendarMonthValue(previous);
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      sharedCalendarSitePanel?.addEventListener("click", async (event) => {
+        const item = event.target.closest(".custom-select-item[data-value]");
+        if (!item) return;
+        sharedCalendarSitePanel.classList.add("hidden");
+        setSharedCalendarSiteValue(item.dataset.value || "");
+        try {
+          await loadSharedCalendar({ resetPage: true });
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      sharedCalendarGroupPanel?.addEventListener("click", async (event) => {
+        const item = event.target.closest(".custom-select-item[data-value]");
+        if (!item) return;
+        sharedCalendarGroupPanel.classList.add("hidden");
+        setSharedCalendarGroupValue(item.dataset.value || "");
+        try {
+          await loadSharedCalendar({ resetPage: true });
+        } catch (err) {
+          setReviewFeedback(err.message, "error");
+        }
+      });
+
+      sharedCalendarSearchInput?.addEventListener("input", () => {
+        sharedCalendarSearchValue = sharedCalendarSearchInput.value || "";
+        sharedCalendarPage = 1;
+        renderSharedCalendar();
+      });
+
+      sharedCalendarSearchClearBtn?.addEventListener("click", () => {
+        sharedCalendarSearchValue = "";
+        if (sharedCalendarSearchInput) {
+          sharedCalendarSearchInput.value = "";
+          sharedCalendarSearchInput.focus();
+        }
+        sharedCalendarPage = 1;
+        renderSharedCalendar();
+      });
+
+      sharedCalendarPrevBtn?.addEventListener("click", () => {
+        if (sharedCalendarPage <= 1) return;
+        sharedCalendarPage -= 1;
+        renderSharedCalendar();
+      });
+
+      sharedCalendarNextBtn?.addEventListener("click", () => {
+        const normalizedQuery = (sharedCalendarSearchValue || "").trim().toLocaleLowerCase("it");
+        const filteredRows = !normalizedQuery
+          ? sharedCalendarRows
+          : sharedCalendarRows.filter((row) => {
+              const haystack = [row.name, row.username, row.department, row.manager_name, ...(row.groups || [])]
+                .filter(Boolean)
+                .join(" ")
+                .toLocaleLowerCase("it");
+              return haystack.includes(normalizedQuery);
+            });
+        const totalPages = Math.max(1, Math.ceil(filteredRows.length / Math.max(1, sharedCalendarPageSize || 1)));
+        if (sharedCalendarPage >= totalPages) return;
+        sharedCalendarPage += 1;
+        renderSharedCalendar();
+      });
+
       overviewBody?.addEventListener("click", async (event) => {
         const autoCheckbox = event.target.closest("input[data-overview-auto-checkbox]");
         if (autoCheckbox) {
@@ -4597,6 +5460,53 @@
         }
       });
 
+      sharedCalendarGrid?.addEventListener("pointerdown", (event) => {
+        const scrollButton = event.target.closest("button[data-shared-scroll]");
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        if (scrollButton) {
+          startSharedCalendarContinuousScroll(scrollButton.dataset.sharedScroll);
+          return;
+        }
+        const dragTarget = event.target.closest(".shared-calendar-cell, .shared-calendar-day-head");
+        if (!dragTarget || !sharedCalendarGrid) return;
+        if (sharedCalendarScrollAnimationFrame) {
+          cancelAnimationFrame(sharedCalendarScrollAnimationFrame);
+          sharedCalendarScrollAnimationFrame = null;
+        }
+        stopSharedCalendarContinuousScroll();
+        sharedCalendarDragState = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startScrollLeft: sharedCalendarGrid.scrollLeft,
+        };
+        sharedCalendarGrid.classList.add("is-dragging");
+        sharedCalendarGrid.setPointerCapture?.(event.pointerId);
+      });
+
+      sharedCalendarGrid?.addEventListener("pointermove", (event) => {
+        if (!sharedCalendarDragState || !sharedCalendarGrid) return;
+        if (sharedCalendarDragState.pointerId !== event.pointerId) return;
+        const deltaX = event.clientX - sharedCalendarDragState.startX;
+        sharedCalendarGrid.scrollLeft = sharedCalendarDragState.startScrollLeft - deltaX;
+      });
+
+      sharedCalendarGrid?.addEventListener("pointerup", (event) => {
+        stopSharedCalendarContinuousScroll();
+        stopSharedCalendarDrag(event);
+      });
+
+      sharedCalendarGrid?.addEventListener("pointercancel", (event) => {
+        stopSharedCalendarContinuousScroll();
+        stopSharedCalendarDrag(event);
+      });
+
+      sharedCalendarGrid?.addEventListener("pointerleave", (event) => {
+        if (event.buttons === 0) {
+          stopSharedCalendarContinuousScroll();
+          stopSharedCalendarDrag(event);
+        }
+      });
+
       approveChangeSelectedBtn.addEventListener("click", async () => {
         if (approveChangeSelectedBtn.disabled) return;
         try {
@@ -4635,10 +5545,16 @@
 
       window.addEventListener("resize", () => {
         const nextMode = shouldHideWeekends();
-        if (nextMode === weekendHiddenMode) return;
-        weekendHiddenMode = nextMode;
-        if (APP_PAGE !== "programming" || calendarCard.classList.contains("hidden")) return;
-        renderCalendar(dayValues);
+        const shouldRerenderSharedCalendar = APP_PAGE === "shared-calendar" && !sharedCalendarPanel?.classList.contains("hidden");
+        if (nextMode !== weekendHiddenMode) {
+          weekendHiddenMode = nextMode;
+          if (APP_PAGE === "programming" && !calendarCard.classList.contains("hidden")) {
+            renderCalendar(dayValues);
+          }
+        }
+        if (shouldRerenderSharedCalendar && sharedCalendarRows.length) {
+          renderSharedCalendar();
+        }
       });
 
       window.addEventListener("scroll", syncTopStripHorizontalPosition, { passive: true });
@@ -4893,7 +5809,7 @@
         toggleLegendBtn.setAttribute("aria-expanded", showLegend ? "true" : "false");
       });
 
-      [menuProfile, menuProgramming, menuOverview, menuApprovals, menuChanges, menuLogout].forEach((item) => {
+      [menuProfile, menuProgramming, menuOverview, menuSharedCalendar, menuApprovals, menuChanges, menuLogout].forEach((item) => {
         if (!item) return;
         item.addEventListener("click", () => {
           navigateFromMenu(item.dataset.target || "");
@@ -4927,6 +5843,15 @@
         }
         if (overviewSiteDropdown && !overviewSiteDropdown.contains(event.target)) {
           overviewSitePanel?.classList.add("hidden");
+        }
+        if (sharedCalendarMonthDropdown && !sharedCalendarMonthDropdown.contains(event.target)) {
+          sharedCalendarMonthPanel?.classList.add("hidden");
+        }
+        if (sharedCalendarSiteDropdown && !sharedCalendarSiteDropdown.contains(event.target)) {
+          sharedCalendarSitePanel?.classList.add("hidden");
+        }
+        if (sharedCalendarGroupDropdown && !sharedCalendarGroupDropdown.contains(event.target)) {
+          sharedCalendarGroupPanel?.classList.add("hidden");
         }
         if (
           noteModal &&
