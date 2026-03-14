@@ -31,6 +31,11 @@ Django offre un livello di sicurezza superiore out-of-the-box, grazie a protezio
 
 ## Avvio rapido (Docker)
 
+Nota importante:
+- il percorso standard del progetto resta il deploy Docker
+- esiste anche la branch `release/ubuntu20-regression`, studiata per deploy applicativo nativo dentro un container LXC con Ubuntu, in contesti dove Docker non puo essere avviato
+- per quel caso d'uso vedi [`docs/ubuntu20_lxc_deploy.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/ubuntu20_lxc_deploy.md)
+
 1. Crea la directory applicazione, scarica il progetto ed entra nella cartella:
 
 ```bash
@@ -111,6 +116,7 @@ Requisiti minimi:
 Nota:
 - il percorso consigliato e l'avvio rapido con Docker
 - l'avvio locale senza Docker e adatto soprattutto a sviluppo o troubleshooting su host gia predisposti
+- per il deploy operativo senza Docker in ambiente Ubuntu 20/LXC vedi la branch e le note dedicate in [`docs/ubuntu20_lxc_deploy.md`](/Users/master/Documents/projects/lagile.new/agile_work/docs/ubuntu20_lxc_deploy.md)
 
 ```bash
 python3.12 -m venv .venv
