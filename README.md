@@ -439,7 +439,7 @@ Esempio risposta profilo utente:
 Questo progetto e distribuito con licenza **GNU GPL v3.0 o successiva (GPL-3.0-or-later)**.
 Per i dettagli completi, vedi il file [`LICENSE`](LICENSE).
 
-## Nota su Codex
+## Nota di trasparenza
 
-Durante lo sviluppo e la manutenzione puo essere utilizzato **Codex** come strumento di supporto tecnico (analisi, proposta modifiche, automazione operativa).
+Durante lo sviluppo e la manutenzione puo essere utilizzato **Codex** come strumento di supporto tecnico.
 Le decisioni progettuali e la validazione finale del codice restano comunque in carico ai responsabili del progetto.
