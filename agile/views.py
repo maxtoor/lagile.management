@@ -1,3 +1,5 @@
+from calendar import monthrange
+from datetime import date
 import logging
 from email.utils import formataddr
 
@@ -12,11 +14,11 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import AuditLog, ChangeRequest, MonthlyPlan, SystemEmailTemplate, User
+from .models import AuditLog, ChangeRequest, Holiday, MonthlyPlan, SystemEmailTemplate, User
 from .permissions import IsAdminOrSuperAdmin
 from .runtime_settings import build_email_link_context, get_runtime_setting
 from .serializers import (
@@ -315,6 +317,148 @@ class MonthHolidaysView(APIView):
                 'days': [day.isoformat() for day in holiday_days],
                 'items': items,
                 'count': len(holiday_days),
+            }
+        )
+
+
+class AdminSharedCalendarView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def _current_year_month() -> tuple[int, int]:
+        today = timezone.localdate()
+        return today.year, today.month
+
+    @staticmethod
+    def _is_superadmin_user(user) -> bool:
+        return bool(user.is_superuser or user.role == 'SUPERADMIN')
+
+    def get(self, request):
+        year_raw = request.query_params.get('year')
+        month_raw = request.query_params.get('month')
+        site_filter = (request.query_params.get('site') or '').strip()
+        group_filter = (request.query_params.get('group') or '').strip()
+        if year_raw and month_raw:
+            try:
+                year = int(year_raw)
+                month = int(month_raw)
+            except (TypeError, ValueError):
+                return Response({'detail': 'Parametri year e month non validi'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            year, month = self._current_year_month()
+
+        if month < 1 or month > 12:
+            return Response({'detail': 'Mese non valido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        users_scope_qs = User.objects.filter(is_active=True, aila_subscribed=True)
+
+        users_qs = users_scope_qs
+
+        if site_filter:
+            users_qs = users_qs.filter(department=site_filter)
+        if group_filter:
+            users_qs = users_qs.filter(groups__name=group_filter).distinct()
+
+        users = list(
+            users_qs.order_by('last_name', 'first_name', 'username').only(
+                'id',
+                'username',
+                'first_name',
+                'last_name',
+                'department',
+                'manager_id',
+                'manager__first_name',
+                'manager__last_name',
+                'manager__username',
+            ).select_related('manager').prefetch_related('groups')
+        )
+
+        plans = list(
+            MonthlyPlan.objects.filter(user__in=users_qs, year=year, month=month, status='APPROVED')
+            .select_related('user')
+            .prefetch_related('days')
+        )
+        plans_by_user_id = {plan.user_id: plan for plan in plans}
+
+        global_holiday_labels = MonthlyPlan.italian_national_holidays_for_month(year=year, month=month)
+        for holiday_day, holiday_name in Holiday.objects.filter(
+            day__year=year,
+            day__month=month,
+            department='',
+        ).values_list('day', 'name'):
+            global_holiday_labels[holiday_day] = (holiday_name or '').strip() or 'Festivita'
+
+        days_in_month = monthrange(year, month)[1]
+        days = []
+        for day_number in range(1, days_in_month + 1):
+            current_day = date(year, month, day_number)
+            weekday = current_day.weekday()
+            days.append(
+                {
+                    'date': current_day.isoformat(),
+                    'day': day_number,
+                    'weekday': weekday,
+                    'is_weekend': weekday >= 5,
+                    'is_holiday': current_day in global_holiday_labels,
+                    'holiday_name': global_holiday_labels.get(current_day, ''),
+                }
+            )
+
+        rows = []
+        for user in users:
+            plan = plans_by_user_id.get(user.id)
+            day_cells = {}
+            if plan:
+                for item in (plan.approved_days_snapshot or []):
+                    day_raw = item.get('day')
+                    work_type = item.get('work_type')
+                    if not day_raw or work_type not in {'ON_SITE', 'REMOTE'}:
+                        continue
+                    day_cells[str(day_raw)] = work_type
+            rows.append(
+                {
+                    'user_id': user.id,
+                    'name': f'{(user.first_name or "").strip()} {(user.last_name or "").strip()}'.strip() or user.username,
+                    'username': user.username,
+                    'department': user.department or '',
+                    'groups': sorted(group.name for group in user.groups.all()),
+                    'manager_name': '',
+                    'has_approved_plan': bool(plan),
+                    'cells': day_cells,
+                }
+            )
+
+        available_sites = sorted(
+            {
+                value
+                for value in users_scope_qs
+                .exclude(department__isnull=True)
+                .exclude(department__exact='')
+                .values_list('department', flat=True)
+            },
+            key=lambda value: value.lower(),
+        )
+        available_groups = sorted(
+            {
+                value
+                for value in users_scope_qs
+                .exclude(groups__name__isnull=True)
+                .exclude(groups__name__exact='')
+                .values_list('groups__name', flat=True)
+            },
+            key=lambda value: value.lower(),
+        )
+
+        return Response(
+            {
+                'year': year,
+                'month': month,
+                'site': site_filter,
+                'group': group_filter,
+                'days': days,
+                'rows': rows,
+                'sites': available_sites,
+                'groups': available_groups,
             }
         )
 
