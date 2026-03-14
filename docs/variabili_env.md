@@ -13,7 +13,7 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 | `AGILE_SITES` | No | `Sede principale` | Elenco afferenze territoriali ammesse (CSV). Esempio multi-sede: `Napoli,Catania,Sassari,Padova`. |
 | `AGILE_DATE_DISPLAY_FORMAT` | No | `IT` | Formato data nel portale (`IT` o `ISO`). |
 | `AGILE_LOGIN_LOGO_URL` | No | vuoto | URL assoluto logo schermata login. |
-| `AGILE_FAVICON_URL` | No | vuoto | URL assoluto favicon applicazione. |
+| `AGILE_FAVICON_URL` | No | vuoto | URL assoluto favicon applicazione. Se vuoto usa la favicon statica di default inclusa nel progetto. |
 | `AGILE_COMPANY_NAME` | No | `LAgile.Management` | Nome compagnia mostrato nel footer. |
 | `AGILE_COPYRIGHT_YEAR` | No | `2026` | Anno mostrato nel footer. |
 | `ICB_LEGACY` | No | `0` | `1` mostra negli Strumenti admin la sezione legacy CSV ICB; `0` la nasconde e blocca le azioni CSV ICB. |
@@ -100,7 +100,6 @@ Alcune variabili possono essere sovrascritte dalla Pagina di Amministrazione in 
 Se valorizzate in pagina admin, prevalgono sui valori `.env` per:
 - `AGILE_DATE_DISPLAY_FORMAT`
 - `AGILE_LOGIN_LOGO_URL`
-- `AGILE_FAVICON_URL`
 - `AGILE_COMPANY_NAME`
 - `AGILE_COPYRIGHT_YEAR`
 - `DEFAULT_FROM_EMAIL`
