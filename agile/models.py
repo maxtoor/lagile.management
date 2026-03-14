@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from calendar import monthrange
 from datetime import date
 from typing import Optional
 
@@ -342,19 +342,41 @@ class MonthlyPlan(models.Model):
         if not payload:
             raise ValidationError('Nessuno snapshot approvato disponibile')
 
-        parsed = []
+        parsed_by_day: dict[date, dict] = {}
         for item in payload:
             day_raw = item.get('day')
             work_type = item.get('work_type')
             notes = item.get('notes', '') or ''
             if not day_raw or work_type not in {PlanDay.WorkType.ON_SITE, PlanDay.WorkType.REMOTE}:
                 raise ValidationError('Snapshot approvato non valido')
+
+            day_value = date.fromisoformat(str(day_raw))
+            parsed_by_day[day_value] = {
+                'day': day_value,
+                'work_type': work_type,
+                'notes': notes if work_type == PlanDay.WorkType.REMOTE else '',
+            }
+
+        holidays = self.holiday_days_for_month(
+            year=self.year,
+            month=self.month,
+            department=self.user.department,
+        )
+        parsed: list[dict] = []
+        total_days = monthrange(self.year, self.month)[1]
+        for day_number in range(1, total_days + 1):
+            day_value = date(self.year, self.month, day_number)
+            if day_value.weekday() >= 5 or day_value in holidays:
+                continue
             parsed.append(
-                {
-                    'day': date.fromisoformat(str(day_raw)),
-                    'work_type': work_type,
-                    'notes': notes if work_type == PlanDay.WorkType.REMOTE else '',
-                }
+                parsed_by_day.get(
+                    day_value,
+                    {
+                        'day': day_value,
+                        'work_type': PlanDay.WorkType.ON_SITE,
+                        'notes': '',
+                    },
+                )
             )
 
         self.validate_day_payloads(
