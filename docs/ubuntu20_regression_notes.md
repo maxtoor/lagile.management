@@ -39,6 +39,20 @@ Sul target reale Ubuntu 20 sono gia stati verificati questi punti:
 
 Restano da rifinire alcuni dettagli UI dell'admin, ma il nucleo applicativo gira.
 
+## Feature integrate nella release Ubuntu 20
+
+Ad oggi `release/ubuntu20-regression` include anche il `Calendario condiviso`.
+
+Caratteristiche operative della vista:
+- accessibile a tutti gli utenti autenticati
+- basata solo su piani `APPROVED`
+- nessun dettaglio apribile cliccando il nome del collega
+- evidenza principale sulle giornate `LA`
+- weekend e festivita con lo stesso sfondo tenue
+- colleghi senza piano approvato mostrati con nome attenuato
+
+La vista e stata verificata anche nel contesto reale Ubuntu 20 come estensione compatibile della shell transitoria.
+
 ## Installazione da zero su Ubuntu 20
 
 ### 1. Clona il repository principale e usa la branch release
