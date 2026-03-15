@@ -1079,7 +1079,7 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
             'Test',
             {
                 'classes': ('collapse',),
-                'fields': ('test_email_tools',),
+                'fields': ('template_tools',),
             },
         ),
         (
@@ -1090,7 +1090,7 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
             },
         ),
     )
-    readonly_fields = ('updated_at', 'variable_legend', 'test_email_tools')
+    readonly_fields = ('updated_at', 'variable_legend', 'template_tools')
     list_display = ('key', 'updated_at')
     search_fields = ('key', 'subject_template', 'body_template')
 
@@ -1120,6 +1120,115 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
             )
             return redirect('admin:agile_systememailtemplate_changelist')
         return super().add_view(request, form_url=form_url, extra_context=extra_context)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def delete_view(self, request, object_id, extra_context=None):
+        messages.warning(
+            request,
+            'I template email di sistema non vengono eliminati. Usa "Ripristina predefinito" per tornare al testo standard.',
+        )
+        return redirect('admin:agile_systememailtemplate_change', object_id)
+
+    @staticmethod
+    def _default_template_content(key: str) -> tuple[str, str]:
+        defaults = {
+            SystemEmailTemplate.Key.LDAP_USER_IMPORTED: (
+                'Nuovo utente LDAP importato: {username}',
+                (
+                    'E stato importato automaticamente un nuovo utente al primo login LDAP.\n\n'
+                    'Username: {username}\n'
+                    'Nome completo: {full_name}\n'
+                    'Email: {email}\n'
+                    'Data import: {import_timestamp}\n\n'
+                    'Pannello amministrativo: {admin_url}\n'
+                    'Portale applicazione: {portal_url}\n\n'
+                    'Completare la configurazione nel pannello amministrativo: Attivo, Afferenza territoriale, '
+                    'Responsabile approvazione, Sottoscrizione AILA e altre impostazioni applicative.'
+                ),
+            ),
+            SystemEmailTemplate.Key.CHANGE_REQUEST_SUBMITTED: (
+                'Nuova richiesta variazione da approvare - {month_name_year}',
+                (
+                    'Gentile {manager_name},\n\n'
+                    "L'utente {employee_name} ha inviato una richiesta variazione per il mese {month_name_year}.\n"
+                    'Motivazione richiesta: {change_reason}\n\n'
+                    '{portal_line}'
+                    'Puoi accedere al portale per approvare o rifiutare la richiesta.'
+                ),
+            ),
+            SystemEmailTemplate.Key.REMINDER_PENDING_SUBMISSION: (
+                'Promemoria invio piano lavoro agile - {month_name_year}',
+                (
+                    'Gentile {full_name},\n\n'
+                    'ti ricordiamo di inviare in approvazione il piano di lavoro agile per {month_name_year}.\n'
+                    'Stato attuale: {plan_status_label}.\n\n'
+                    '{portal_line}'
+                    "Puoi accedere al portale per completare l'invio."
+                ),
+            ),
+            SystemEmailTemplate.Key.MANAGER_MONTHLY_SUMMARY: (
+                'Riepilogo richieste e piani - {month_name_year}',
+                (
+                    'Gentile {manager_name},\n\n'
+                    'Riepilogo per {month_name_year}.\n\n'
+                    'Piani in attesa di approvazione ({pending_count}):\n'
+                    '{pending_lines}\n\n'
+                    'Piani approvati ({approved_count}):\n'
+                    '{approved_lines}\n\n'
+                    'Utenti senza piano del mese ({missing_count}):\n'
+                    '{missing_lines}\n\n'
+                    'Utenti in auto-approvazione ({auto_approve_count}):\n'
+                    '{auto_approve_lines}\n\n'
+                    '{portal_line}'
+                    'Puoi accedere al portale per gestire le richieste.'
+                ),
+            ),
+            SystemEmailTemplate.Key.PLAN_APPROVED: (
+                'Esito piano lavoro agile {month_name_year}: {status_label}',
+                (
+                    'Ciao {first_name_or_username},\n\n'
+                    'Il tuo piano di lavoro agile per {month_name_year} e stato {status_label_lower}.\n'
+                    '{final_line}\n\n'
+                    '{portal_line}'
+                    'Puoi accedere al portale per vedere il dettaglio.'
+                ),
+            ),
+            SystemEmailTemplate.Key.PLAN_REJECTED: (
+                'Esito piano lavoro agile {month_name_year}: {status_label}',
+                (
+                    'Ciao {first_name_or_username},\n\n'
+                    'Il tuo piano di lavoro agile per {month_name_year} e stato {status_label_lower}.\n'
+                    '{final_line}\n\n'
+                    '{portal_line}'
+                    'Puoi accedere al portale per vedere il dettaglio.'
+                ),
+            ),
+            SystemEmailTemplate.Key.CHANGE_APPROVED: (
+                'Esito richiesta variazione {month_name_year}: {status_label}',
+                (
+                    'Gentile {full_name},\n'
+                    'La tua richiesta variazione per {month_name_year} e stata {status_label_lower}.\n'
+                    '{final_line}\n'
+                    '\n'
+                    '{portal_line}'
+                    'Puoi accedere al portale per vedere il dettaglio.'
+                ),
+            ),
+            SystemEmailTemplate.Key.CHANGE_REJECTED: (
+                'Esito richiesta variazione {month_name_year}: {status_label}',
+                (
+                    'Gentile {full_name},\n'
+                    'La tua richiesta variazione per {month_name_year} e stata {status_label_lower}.\n'
+                    '{final_line}\n'
+                    '\n'
+                    '{portal_line}'
+                    'Puoi accedere al portale per vedere il dettaglio.'
+                ),
+            ),
+        }
+        return defaults.get(key, ('', ''))
 
     @admin.display(description='Variabili disponibili')
     def variable_legend(self, obj):
@@ -1220,6 +1329,11 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
         urls = super().get_urls()
         custom_urls = [
             path(
+                '<path:object_id>/reset-defaults/',
+                self.admin_site.admin_view(self.reset_defaults_view),
+                name='agile_systememailtemplate_reset_defaults',
+            ),
+            path(
                 '<path:object_id>/send-test/',
                 self.admin_site.admin_view(self.send_test_email_view),
                 name='agile_systememailtemplate_send_test',
@@ -1227,12 +1341,41 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-    @admin.display(description='Invio test')
-    def test_email_tools(self, obj):
+    @admin.display(description='Azioni')
+    def template_tools(self, obj):
         if not obj or not obj.pk:
-            return 'Salva il template per abilitare il test email.'
-        url = reverse('admin:agile_systememailtemplate_send_test', args=[obj.pk])
-        return format_html('<a class="button" href="{}">Invia email di test</a>', url)
+            return 'Salva il template per abilitare le azioni.'
+        test_url = reverse('admin:agile_systememailtemplate_send_test', args=[obj.pk])
+        reset_url = reverse('admin:agile_systememailtemplate_reset_defaults', args=[obj.pk])
+        return format_html(
+            '<a class="button" href="{}">Invia email di test</a>&nbsp;'
+            '<a class="button" href="{}">Ripristina predefinito</a>',
+            test_url,
+            reset_url,
+        )
+
+    def reset_defaults_view(self, request, object_id):
+        template_obj = get_object_or_404(SystemEmailTemplate, pk=object_id)
+        if request.method != 'POST':
+            change_url = reverse('admin:agile_systememailtemplate_change', args=[template_obj.pk])
+            subject_default, body_default = self._default_template_content(template_obj.key)
+            context = {
+                **self.admin_site.each_context(request),
+                'opts': self.model._meta,
+                'original': template_obj,
+                'title': 'Ripristina template predefinito',
+                'subject_default': subject_default,
+                'body_default': body_default,
+                'change_url': change_url,
+            }
+            return TemplateResponse(request, 'admin/agile/system_email_template_reset.html', context)
+
+        subject_default, body_default = self._default_template_content(template_obj.key)
+        template_obj.subject_template = subject_default
+        template_obj.body_template = body_default
+        template_obj.save(update_fields=['subject_template', 'body_template', 'updated_at'])
+        messages.success(request, 'Template ripristinato al testo predefinito.')
+        return redirect('admin:agile_systememailtemplate_change', template_obj.pk)
 
     def send_test_email_view(self, request, object_id):
         template_obj = get_object_or_404(SystemEmailTemplate, pk=object_id)

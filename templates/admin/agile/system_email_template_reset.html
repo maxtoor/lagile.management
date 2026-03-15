@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <div class="app-agile module">
+    <h1>Ripristina template predefinito</h1>
+    <p>
+      Stai per ripristinare il template <strong>{{ original.get_key_display }}</strong> al testo standard dell'applicazione.
+      L'operazione sovrascrive oggetto e corpo attuali.
+    </p>
+
+    <h2>Oggetto predefinito</h2>
+    <pre style="white-space: pre-wrap;">{{ subject_default }}</pre>
+
+    <h2>Corpo predefinito</h2>
+    <pre style="white-space: pre-wrap;">{{ body_default }}</pre>
+
+    <form method="post" style="margin-top: 1.5rem;">
+      {% csrf_token %}
+      <input type="submit" value="Ripristina predefinito" class="default">
+      <a href="{{ change_url }}" class="button" style="margin-left: 0.75rem;">Annulla</a>
+    </form>
+  </div>
+{% endblock %}
