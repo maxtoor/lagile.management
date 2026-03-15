@@ -17,7 +17,7 @@ class _SafeDict(dict):
 class Command(BaseCommand):
     help = (
         'Invia ai referenti un riepilogo con piani in attesa e utenti assegnati senza piano del mese corrente, '
-        "includendo anche approvati e auto-approvazione, dal primo del mese per N giorni e al massimo una volta al giorno."
+        "includendo anche approvati e auto-approvazione, fino a N invii giornalieri nei primi giorni del mese."
     )
 
     def add_arguments(self, parser):
@@ -47,10 +47,10 @@ class Command(BaseCommand):
         return f'{month:02d}/{year}'
 
     @staticmethod
-    def _scheduled_run_window(*, target_year: int, target_month: int, last_allowed_day: int) -> tuple[date, date]:
+    def _scheduled_run_window(*, target_year: int, target_month: int, reminder_count: int) -> tuple[date, date]:
         start_date = MonthlyPlan.month_start_date(target_year, target_month)
-        safe_last_day = max(1, int(last_allowed_day))
-        end_date = start_date + timedelta(days=safe_last_day - 1)
+        safe_count = max(1, int(reminder_count))
+        end_date = start_date + timedelta(days=safe_count - 1)
         return start_date, end_date
 
     @staticmethod
@@ -83,13 +83,13 @@ class Command(BaseCommand):
         force = bool(options.get('force'))
         dry_run = bool(options.get('dry_run'))
 
-        last_allowed_day = int(get_runtime_setting('MANAGER_MONTHLY_SUMMARY_OFFSET_DAYS', 1) or 1)
+        reminder_count = int(get_runtime_setting('MANAGER_MONTHLY_SUMMARY_OFFSET_DAYS', 1) or 1)
         target_year = today.year
         target_month = today.month
         start_date, end_date = self._scheduled_run_window(
             target_year=target_year,
             target_month=target_month,
-            last_allowed_day=last_allowed_day,
+            reminder_count=reminder_count,
         )
 
         if not force and not (start_date <= today <= end_date):
