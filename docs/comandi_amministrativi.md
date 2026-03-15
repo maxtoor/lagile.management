@@ -100,6 +100,23 @@ python manage.py send_manager_monthly_summary --force
 python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run
 ```
 
+## Audit log
+
+### `purge_audit_logs`
+
+Elimina gli audit log piu vecchi di una certa soglia temporale.
+
+Default consigliato:
+- `90 giorni`
+
+Esempi:
+
+```bash
+python manage.py purge_audit_logs --dry-run
+python manage.py purge_audit_logs --days 90
+python manage.py purge_audit_logs --days 120 --dry-run
+```
+
 ## Festivita
 
 ### `sync_holidays`
