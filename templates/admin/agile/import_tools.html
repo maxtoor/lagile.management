@@ -105,31 +105,29 @@
       <details>
         <summary class="icb-collapsible-summary" style="cursor:pointer;list-style:none;padding:14px 16px;font-weight:600;background:#f8fbf9;border-bottom:1px solid #e3ebe6">
           <span class="icb-collapsible-arrow" aria-hidden="true">▸</span>
-          <span>Strumenti ICB (import CSV legacy)</span>
+          <span>Import bundle ICB legacy</span>
         </summary>
         <div style="padding:14px">
           <p style="margin:0 0 12px 0;padding:10px 12px;border:1px solid #e4dcb1;background:#fffbe7;border-radius:8px">
-            <strong>Nota:</strong> Questa procedura e valida solo per l'import dalla versione 1.0.0 e unicamente per l'Istituto di Chimica Biomolecorare del CNR (ICB).
+            <strong>Nota:</strong> Questa procedura e valida solo per l'import dalla versione 1.0.0 e unicamente per l'Istituto di Chimica Biomolecolare del CNR (ICB).
           </p>
           <form method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
             {{ csv_form.as_p }}
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="submit" name="action" value="csv_preview">Anteprima impatti</button>
-              <button type="submit" name="action" value="csv" class="default">Esegui import CSV ICB</button>
+              <button type="submit" name="action" value="csv_preview">Anteprima bundle</button>
+              <button type="submit" name="action" value="csv" class="default">Esegui import bundle ICB</button>
             </div>
           </form>
 
           <h3 style="margin:14px 0 8px 0">Note ICB</h3>
           <ul>
-            <li>CSV atteso nel formato legacy ICB, con colonne <code>Email</code>, <code>Cognome</code>, <code>Nome</code>, <code>Gruppo</code>.</li>
-            <li>L'afferenza territoriale viene ricavata automaticamente come ultima parola del campo <code>Gruppo</code>.</li>
-            <li>Il separatore CSV e fisso a <code>,</code> per aderire al formato legacy supportato.</li>
-            <li>Con <code>Importa anche i gruppi</code>, la prima parola di <code>Gruppo</code> viene usata come nome gruppo (creato se mancante).</li>
-            <li>Con <code>Aggiorna anche i referenti dalle righe Default del CSV</code>, i referenti di sede vengono allineati dalle righe legacy dedicate prima dell'eventuale sync LDAP.</li>
-            <li>Con <code>Esegui anche sync LDAP inline</code>, a fine import aggiorna anche anagrafica LDAP (nome, cognome, email).</li>
-            <li>Se <code>Gruppo</code> contiene <code>Default</code>, la riga non viene trattata come utente standard.</li>
-            <li>Se l'afferenza territoriale e valida, viene impostata anche <code>Sottoscrizione AILA = Si</code>.</li>
+            <li>Il flusso bundle usa i due file realmente necessari alla migrazione legacy: <code>ICB_backup.csv</code> e il <code>Leaves report CSV</code>.</li>
+            <li>Il backup CSV viene usato per utenti, gruppi, afferenze territoriali, referenti e storico Programmazione.</li>
+            <li>Il leaves report viene usato per stato mese corrente/prossimo e, se richiesto, per importare anche le note attivita.</li>
+            <li>L'import utenti usa il formato legacy ICB fisso: colonne <code>Email</code>, <code>Cognome</code>, <code>Nome</code>, <code>Gruppo</code>, separatore <code>,</code>, afferenza da ultima parola di <code>Gruppo</code>.</li>
+            <li>Con <code>Sovrascrivi eventuali piani gia presenti</code>, la fase storica riscrive i mesi gia presenti nel database.</li>
+            <li>Con <code>Esegui anche sync LDAP inline</code>, a fine bundle viene riallineata anche l'anagrafica LDAP.</li>
           </ul>
         </div>
       </details>
