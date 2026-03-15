@@ -30,6 +30,8 @@ def _load_db_settings() -> dict:
     return {
         'AGILE_DATE_DISPLAY_FORMAT': (row.date_display_format or '').strip(),
         'AGILE_LOGIN_LOGO_URL': (row.login_logo_url or '').strip(),
+        'AGILE_FAVICON_URL': (row.favicon_url or '').strip(),
+        'AGILE_PUBLIC_BASE_URL': (row.public_base_url or '').strip(),
         'AGILE_COMPANY_NAME': (row.company_name or '').strip(),
         'AGILE_COPYRIGHT_YEAR': row.copyright_year,
         'DEFAULT_FROM_EMAIL': (row.default_from_email or '').strip(),

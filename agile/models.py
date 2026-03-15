@@ -529,6 +529,14 @@ class AppSetting(models.Model):
         blank=True,
         help_text='Se vuoto usa AGILE_LOGIN_LOGO_URL da .env',
     )
+    favicon_url = models.URLField(
+        blank=True,
+        help_text='Se vuoto usa AGILE_FAVICON_URL da .env o la favicon statica di default',
+    )
+    public_base_url = models.URLField(
+        blank=True,
+        help_text='Se vuoto usa AGILE_PUBLIC_BASE_URL da .env',
+    )
     company_name = models.CharField(
         max_length=120,
         blank=True,

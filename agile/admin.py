@@ -379,7 +379,7 @@ class AppSettingAdmin(CollapseMediaMixin, admin.ModelAdmin):
         (
             'Portale',
             {
-                'fields': ('date_display_format', 'login_logo_url', 'company_name', 'copyright_year'),
+                'fields': ('date_display_format', 'login_logo_url', 'favicon_url', 'public_base_url', 'company_name', 'copyright_year'),
             },
         ),
         (
