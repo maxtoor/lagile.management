@@ -555,11 +555,11 @@ class AppSetting(models.Model):
         ),
     )
     manager_monthly_summary_offset_days = models.PositiveSmallIntegerField(
-        default=0,
-        verbose_name='Riepilogo referenti: giorni dal primo del mese',
+        default=1,
+        verbose_name='Riepilogo referenti: fino al giorno del mese',
         help_text=(
-            "Numero di giorni, a partire dal primo del mese, in cui il riepilogo puo essere inviato. "
-            "0 = solo primo giorno del mese, 3 = dal giorno 1 al giorno 4."
+            "Ultimo giorno del mese, incluso, entro cui il riepilogo puo essere inviato. "
+            "1 = solo primo giorno del mese, 3 = dal giorno 1 al giorno 3."
         ),
     )
     updated_at = models.DateTimeField(auto_now=True)

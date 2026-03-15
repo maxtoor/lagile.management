@@ -47,10 +47,10 @@ class Command(BaseCommand):
         return f'{month:02d}/{year}'
 
     @staticmethod
-    def _scheduled_run_window(*, target_year: int, target_month: int, days_from_month_start: int) -> tuple[date, date]:
+    def _scheduled_run_window(*, target_year: int, target_month: int, last_allowed_day: int) -> tuple[date, date]:
         start_date = MonthlyPlan.month_start_date(target_year, target_month)
-        safe_days = max(0, int(days_from_month_start))
-        end_date = start_date + timedelta(days=safe_days)
+        safe_last_day = max(1, int(last_allowed_day))
+        end_date = start_date + timedelta(days=safe_last_day - 1)
         return start_date, end_date
 
     @staticmethod
@@ -83,13 +83,13 @@ class Command(BaseCommand):
         force = bool(options.get('force'))
         dry_run = bool(options.get('dry_run'))
 
-        days_from_month_start = int(get_runtime_setting('MANAGER_MONTHLY_SUMMARY_OFFSET_DAYS', 0) or 0)
+        last_allowed_day = int(get_runtime_setting('MANAGER_MONTHLY_SUMMARY_OFFSET_DAYS', 1) or 1)
         target_year = today.year
         target_month = today.month
         start_date, end_date = self._scheduled_run_window(
             target_year=target_year,
             target_month=target_month,
-            days_from_month_start=days_from_month_start,
+            last_allowed_day=last_allowed_day,
         )
 
         if not force and not (start_date <= today <= end_date):
