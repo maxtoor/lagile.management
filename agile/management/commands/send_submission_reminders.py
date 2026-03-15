@@ -1,3 +1,4 @@
+import calendar
 from datetime import date, timedelta
 from email.utils import formataddr
 
@@ -17,7 +18,8 @@ class _SafeDict(dict):
 class Command(BaseCommand):
     help = (
         "Invia promemoria agli utenti attivi senza auto-approvazione che non hanno ancora "
-        "inviato/approvato il piano del mese successivo, secondo l'offset configurato."
+        "inviato/approvato il piano del mese successivo, a partire da N giorni prima "
+        "della fine del mese corrente e al massimo una volta al giorno."
     )
 
     def add_arguments(self, parser):
@@ -54,8 +56,12 @@ class Command(BaseCommand):
         return today.year, today.month + 1
 
     @staticmethod
-    def _scheduled_run_date(*, target_year: int, target_month: int, offset_days: int) -> date:
-        return MonthlyPlan.month_start_date(target_year, target_month) + timedelta(days=offset_days)
+    def _scheduled_run_window(today: date, days_before_month_end: int) -> tuple[date, date]:
+        _, last_day = calendar.monthrange(today.year, today.month)
+        end_date = date(today.year, today.month, last_day)
+        safe_days = max(0, int(days_before_month_end))
+        start_date = end_date - timedelta(days=safe_days)
+        return start_date, end_date
 
     @staticmethod
     def _month_name_year_it(year: int, month: int) -> str:
@@ -107,20 +113,16 @@ class Command(BaseCommand):
 
         force = bool(options.get('force'))
         dry_run = bool(options.get('dry_run'))
-        offset_days = int(get_runtime_setting('SUBMISSION_REMINDER_OFFSET_DAYS', -1) or -1)
+        days_before_month_end = int(get_runtime_setting('SUBMISSION_REMINDER_OFFSET_DAYS', 0) or 0)
         target_year, target_month = self._next_year_month(today)
-        scheduled_date = self._scheduled_run_date(
-            target_year=target_year,
-            target_month=target_month,
-            offset_days=offset_days,
-        )
+        start_date, end_date = self._scheduled_run_window(today, days_before_month_end)
 
-        if not force and today != scheduled_date:
+        if not force and not (start_date <= today <= end_date):
             self.stdout.write(
                 self.style.WARNING(
                     "Oggi "
-                    f"{today.isoformat()} non coincide con la data configurata "
-                    f"({scheduled_date.isoformat()}), nessuna email inviata"
+                    f"{today.isoformat()} non rientra nella finestra configurata "
+                    f"({start_date.isoformat()} - {end_date.isoformat()}), nessuna email inviata"
                 )
             )
             return
@@ -158,10 +160,11 @@ class Command(BaseCommand):
                 target_id=user.id,
                 metadata__year=target_year,
                 metadata__month=target_month,
+                metadata__sent_on=today.isoformat(),
             ).exists()
             if already_sent:
                 skipped += 1
-                self.stdout.write(f'Promemoria gia inviato a {user.email} per {month_label}, salto')
+                self.stdout.write(f'Promemoria gia inviato oggi a {user.email} per {month_label}, salto')
                 continue
 
             full_name = f'{(user.first_name or "").strip()} {(user.last_name or "").strip()}'.strip() or user.username
@@ -215,6 +218,7 @@ class Command(BaseCommand):
                         'year': target_year,
                         'month': target_month,
                         'email': user.email,
+                        'sent_on': today.isoformat(),
                     },
                 )
                 sent += 1
