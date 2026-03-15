@@ -1094,6 +1094,33 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
     list_display = ('key', 'updated_at')
     search_fields = ('key', 'subject_template', 'body_template')
 
+    @staticmethod
+    def _available_template_keys(instance=None):
+        used_keys = set(SystemEmailTemplate.objects.values_list('key', flat=True))
+        if instance and instance.pk and instance.key:
+            used_keys.discard(instance.key)
+        return [choice for choice in SystemEmailTemplate.Key.choices if choice[0] not in used_keys]
+
+    def has_add_permission(self, request):
+        if not self._available_template_keys():
+            return False
+        return super().has_add_permission(request)
+
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super().get_form(request, obj=obj, change=change, **kwargs)
+        if 'key' in form.base_fields:
+            form.base_fields['key'].choices = self._available_template_keys(obj)
+        return form
+
+    def add_view(self, request, form_url='', extra_context=None):
+        if not self._available_template_keys():
+            messages.warning(
+                request,
+                'Tutti i template email di sistema sono gia presenti. Modifica quelli esistenti invece di crearne di nuovi.',
+            )
+            return redirect('admin:agile_systememailtemplate_changelist')
+        return super().add_view(request, form_url=form_url, extra_context=extra_context)
+
     @admin.display(description='Variabili disponibili')
     def variable_legend(self, obj):
         return format_html(
