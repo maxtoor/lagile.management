@@ -103,3 +103,7 @@ Se valorizzate in pagina admin, prevalgono sui valori `.env` per:
 - `AGILE_COPYRIGHT_YEAR`
 - `DEFAULT_FROM_EMAIL`
 - `AGILE_EMAIL_FROM_NAME`
+
+Inoltre, dalla stessa pagina admin puoi configurare direttamente anche:
+- offset giorni per il promemoria invio piani
+- offset giorni per il riepilogo mensile ai referenti

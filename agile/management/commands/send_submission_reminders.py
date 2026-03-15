@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import calendar
-from datetime import date
+from datetime import date, timedelta
 from email.utils import formataddr
 from typing import Optional
 
@@ -20,15 +19,15 @@ class _SafeDict(dict):
 
 class Command(BaseCommand):
     help = (
-        "Invia promemoria l'ultimo giorno del mese agli utenti attivi "
-        'senza auto-approvazione che non hanno ancora inviato/approvato il piano del mese successivo.'
+        "Invia promemoria agli utenti attivi senza auto-approvazione che non hanno ancora "
+        "inviato/approvato il piano del mese successivo, secondo l'offset configurato."
     )
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--force',
             action='store_true',
-            help='Esegue anche se oggi non e il penultimo giorno del mese',
+            help='Esegue anche se oggi non coincide con la data configurata',
         )
         parser.add_argument(
             '--dry-run',
@@ -56,6 +55,10 @@ class Command(BaseCommand):
         if today.month == 12:
             return today.year + 1, 1
         return today.year, today.month + 1
+
+    @staticmethod
+    def _scheduled_run_date(*, target_year: int, target_month: int, offset_days: int) -> date:
+        return MonthlyPlan.month_start_date(target_year, target_month) + timedelta(days=offset_days)
 
     @staticmethod
     def _month_name_year_it(year: int, month: int) -> str:
@@ -107,17 +110,24 @@ class Command(BaseCommand):
 
         force = bool(options.get('force'))
         dry_run = bool(options.get('dry_run'))
-        _, last_day = calendar.monthrange(today.year, today.month)
+        offset_days = int(get_runtime_setting('SUBMISSION_REMINDER_OFFSET_DAYS', -1) or -1)
+        target_year, target_month = self._next_year_month(today)
+        scheduled_date = self._scheduled_run_date(
+            target_year=target_year,
+            target_month=target_month,
+            offset_days=offset_days,
+        )
 
-        if not force and today.day != last_day:
+        if not force and today != scheduled_date:
             self.stdout.write(
                 self.style.WARNING(
-                    f"Oggi {today.isoformat()} non e l'ultimo giorno ({last_day}), nessuna email inviata"
+                    "Oggi "
+                    f"{today.isoformat()} non coincide con la data configurata "
+                    f"({scheduled_date.isoformat()}), nessuna email inviata"
                 )
             )
             return
 
-        target_year, target_month = self._next_year_month(today)
         month_label = f'{target_month:02d}/{target_year}'
         month_name_year = self._month_name_year_it(target_year, target_month)
 

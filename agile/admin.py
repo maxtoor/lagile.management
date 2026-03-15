@@ -390,6 +390,13 @@ class AppSettingAdmin(CollapseMediaMixin, admin.ModelAdmin):
             },
         ),
         (
+            'Reminder e sommari',
+            {
+                'classes': ('collapse',),
+                'fields': ('submission_reminder_offset_days', 'manager_monthly_summary_offset_days'),
+            },
+        ),
+        (
             'Aggiornamento',
             {
                 'classes': ('collapse',),
