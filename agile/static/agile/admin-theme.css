@@ -261,6 +261,10 @@ div.breadcrumbs a {
   overflow: visible;
 }
 
+body.dashboard .module {
+  overflow: hidden;
+}
+
 .module h2,
 .module caption,
 .inline-group h2 {
