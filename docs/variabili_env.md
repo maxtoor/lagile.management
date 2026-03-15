@@ -99,6 +99,8 @@ Alcune variabili possono essere sovrascritte dalla Pagina di Amministrazione in 
 Se valorizzate in pagina admin, prevalgono sui valori `.env` per:
 - `AGILE_DATE_DISPLAY_FORMAT`
 - `AGILE_LOGIN_LOGO_URL`
+- `AGILE_FAVICON_URL`
+- `AGILE_PUBLIC_BASE_URL`
 - `AGILE_COMPANY_NAME`
 - `AGILE_COPYRIGHT_YEAR`
 - `DEFAULT_FROM_EMAIL`
