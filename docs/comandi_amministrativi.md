@@ -124,6 +124,8 @@ python manage.py check_ldap_user_presence --dry-run
 - scorre gli utenti eleggibili
 - salta chi ha gia un piano `SUBMITTED` o `APPROVED`
 - evita doppi invii usando un audit log tecnico per lo stesso `anno/mese`
+- usa la data configurata in `Impostazioni applicazione -> Reminder e sommari`
+  - default: `-1`, quindi ultimo giorno del mese precedente rispetto al mese da pianificare
 
 **Quando fare attenzione**
 
@@ -154,6 +156,8 @@ python manage.py send_submission_reminders --date 2026-03-30 --dry-run
 **Cosa fa internamente**
 
 - evita doppi invii per lo stesso `anno/mese` usando un audit log tecnico
+- usa la data configurata in `Impostazioni applicazione -> Reminder e sommari`
+  - default: `0`, quindi primo giorno del mese riepilogato
 
 **Esempi**
 

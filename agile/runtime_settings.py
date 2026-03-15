@@ -34,6 +34,8 @@ def _load_db_settings() -> dict:
         'AGILE_COPYRIGHT_YEAR': row.copyright_year,
         'DEFAULT_FROM_EMAIL': (row.default_from_email or '').strip(),
         'AGILE_EMAIL_FROM_NAME': (row.email_from_name or '').strip(),
+        'SUBMISSION_REMINDER_OFFSET_DAYS': row.submission_reminder_offset_days,
+        'MANAGER_MONTHLY_SUMMARY_OFFSET_DAYS': row.manager_monthly_summary_offset_days,
     }
 
 

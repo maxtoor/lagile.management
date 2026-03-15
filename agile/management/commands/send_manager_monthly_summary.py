@@ -1,5 +1,4 @@
-import calendar
-from datetime import date
+from datetime import date, timedelta
 from email.utils import formataddr
 
 from django.core.management.base import BaseCommand
@@ -17,12 +16,12 @@ class _SafeDict(dict):
 
 class Command(BaseCommand):
     help = (
-        'Primo giorno del mese: invia ai referenti un riepilogo con piani in attesa '
-        'e utenti assegnati senza piano del mese corrente, includendo anche approvati e auto-approvazione.'
+        'Invia ai referenti un riepilogo con piani in attesa e utenti assegnati senza piano del mese corrente, '
+        "includendo anche approvati e auto-approvazione, secondo l'offset configurato."
     )
 
     def add_arguments(self, parser):
-        parser.add_argument('--force', action='store_true', help='Esegue anche se oggi non e il primo giorno del mese')
+        parser.add_argument('--force', action='store_true', help='Esegue anche se oggi non coincide con la data configurata')
         parser.add_argument('--dry-run', action='store_true', help='Simula invio senza inviare email reali')
         parser.add_argument('--date', dest='as_of_date', help='Data di riferimento YYYY-MM-DD (default: data server locale)')
 
@@ -46,6 +45,10 @@ class Command(BaseCommand):
         if 0 <= idx < len(month_names):
             return f'{month_names[idx]} {year}'
         return f'{month:02d}/{year}'
+
+    @staticmethod
+    def _scheduled_run_date(*, target_year: int, target_month: int, offset_days: int) -> date:
+        return MonthlyPlan.month_start_date(target_year, target_month) + timedelta(days=offset_days)
 
     @staticmethod
     def _render_from_template(*, key: str, default_subject: str, default_body: str, context: dict) -> tuple[str, str]:
@@ -77,14 +80,25 @@ class Command(BaseCommand):
         force = bool(options.get('force'))
         dry_run = bool(options.get('dry_run'))
 
-        if not force and today.day != 1:
+        offset_days = int(get_runtime_setting('MANAGER_MONTHLY_SUMMARY_OFFSET_DAYS', 0) or 0)
+        target_year = today.year
+        target_month = today.month
+        scheduled_date = self._scheduled_run_date(
+            target_year=target_year,
+            target_month=target_month,
+            offset_days=offset_days,
+        )
+
+        if not force and today != scheduled_date:
             self.stdout.write(
-                self.style.WARNING(f'Oggi {today.isoformat()} non e il primo giorno del mese, nessuna email inviata')
+                self.style.WARNING(
+                    "Oggi "
+                    f"{today.isoformat()} non coincide con la data configurata "
+                    f"({scheduled_date.isoformat()}), nessuna email inviata"
+                )
             )
             return
 
-        target_year = today.year
-        target_month = today.month
         month_label = f'{target_month:02d}/{target_year}'
         month_name_year = self._month_name_year_it(target_year, target_month)
 

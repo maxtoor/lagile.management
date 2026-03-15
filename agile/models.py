@@ -546,6 +546,20 @@ class AppSetting(models.Model):
         blank=True,
         help_text='Se vuoto usa AGILE_EMAIL_FROM_NAME da .env',
     )
+    submission_reminder_offset_days = models.SmallIntegerField(
+        default=-1,
+        help_text=(
+            "Offset in giorni rispetto al primo giorno del mese da pianificare. "
+            "-1 = ultimo giorno del mese precedente, 0 = primo giorno del mese."
+        ),
+    )
+    manager_monthly_summary_offset_days = models.SmallIntegerField(
+        default=0,
+        help_text=(
+            "Offset in giorni rispetto al primo giorno del mese riepilogato. "
+            "0 = primo giorno del mese, 1 = secondo giorno."
+        ),
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
