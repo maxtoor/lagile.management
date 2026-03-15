@@ -549,19 +549,19 @@ class AppSetting(models.Model):
         help_text='Se vuoto usa AGILE_EMAIL_FROM_NAME da .env',
     )
     submission_reminder_offset_days = models.PositiveSmallIntegerField(
-        default=0,
-        verbose_name='Promemoria invio piano: giorni prima della fine mese',
+        default=1,
+        verbose_name='Promemoria utenti: quante volte inviare prima della scadenza',
         help_text=(
-            "Numero di giorni prima della fine del mese corrente da cui iniziare l'invio. "
-            "0 = solo ultimo giorno del mese, 3 = dal terzultimo giorno in poi."
+            "Numero di invii giornalieri possibili prima della scadenza di fine mese. "
+            "1 = solo ultimo giorno del mese, 2 = penultimo e ultimo giorno, 3 = ultimi tre giorni."
         ),
     )
     manager_monthly_summary_offset_days = models.PositiveSmallIntegerField(
         default=1,
-        verbose_name='Riepilogo referenti: fino al giorno del mese',
+        verbose_name='Riepilogo referenti: quante volte inviare dopo la scadenza',
         help_text=(
-            "Ultimo giorno del mese, incluso, entro cui il riepilogo puo essere inviato. "
-            "1 = solo primo giorno del mese, 3 = dal giorno 1 al giorno 3."
+            "Numero di invii giornalieri possibili dopo la scadenza di fine mese. "
+            "1 = solo primo giorno del mese, 2 = primo e secondo giorno, 3 = primi tre giorni."
         ),
     )
     updated_at = models.DateTimeField(auto_now=True)

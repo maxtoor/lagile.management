@@ -125,8 +125,8 @@ python manage.py check_ldap_user_presence --dry-run
 - salta chi ha gia un piano `SUBMITTED` o `APPROVED`
 - evita doppi invii nello stesso giorno usando un audit log tecnico
 - usa la data configurata in `Impostazioni applicazione -> Reminder e sommari`
-  - il valore indica da quanti giorni prima della fine del mese corrente il comando deve iniziare a inviare
-  - default: `0`, quindi invio solo l'ultimo giorno del mese
+  - il valore indica quante volte il promemoria puo essere inviato prima della scadenza di fine mese
+  - default: `1`, quindi invio solo l'ultimo giorno del mese
 
 **Quando fare attenzione**
 
@@ -158,7 +158,7 @@ python manage.py send_submission_reminders --date 2026-03-30 --dry-run
 
 - evita doppi invii nello stesso giorno usando un audit log tecnico
 - usa la data configurata in `Impostazioni applicazione -> Reminder e sommari`
-  - il valore indica fino a quale giorno del mese il comando puo inviare
+  - il valore indica quante volte il riepilogo puo essere inviato dopo la scadenza di fine mese
   - default: `1`, quindi invio solo il primo giorno del mese
 
 **Esempi**

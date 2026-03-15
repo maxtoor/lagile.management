@@ -21,8 +21,8 @@ class _SafeDict(dict):
 class Command(BaseCommand):
     help = (
         "Invia promemoria agli utenti attivi senza auto-approvazione che non hanno ancora "
-        "inviato/approvato il piano del mese successivo, a partire da N giorni prima "
-        "della fine del mese corrente e al massimo una volta al giorno."
+        "inviato/approvato il piano del mese successivo, fino a N invii giornalieri "
+        "negli ultimi giorni del mese corrente."
     )
 
     def add_arguments(self, parser):
@@ -59,11 +59,11 @@ class Command(BaseCommand):
         return today.year, today.month + 1
 
     @staticmethod
-    def _scheduled_run_window(today: date, days_before_month_end: int) -> tuple[date, date]:
+    def _scheduled_run_window(today: date, reminder_count: int) -> tuple[date, date]:
         _, last_day = calendar.monthrange(today.year, today.month)
         end_date = date(today.year, today.month, last_day)
-        safe_days = max(0, int(days_before_month_end))
-        start_date = end_date - timedelta(days=safe_days)
+        safe_count = max(1, int(reminder_count))
+        start_date = end_date - timedelta(days=safe_count - 1)
         return start_date, end_date
 
     @staticmethod
@@ -116,9 +116,9 @@ class Command(BaseCommand):
 
         force = bool(options.get('force'))
         dry_run = bool(options.get('dry_run'))
-        days_before_month_end = int(get_runtime_setting('SUBMISSION_REMINDER_OFFSET_DAYS', 0) or 0)
+        reminder_count = int(get_runtime_setting('SUBMISSION_REMINDER_OFFSET_DAYS', 1) or 1)
         target_year, target_month = self._next_year_month(today)
-        start_date, end_date = self._scheduled_run_window(today, days_before_month_end)
+        start_date, end_date = self._scheduled_run_window(today, reminder_count)
 
         if not force and not (start_date <= today <= end_date):
             self.stdout.write(
