@@ -42,7 +42,6 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 | `LDAP_ATTR_FIRST_NAME` | No | `givenName` | Attributo nome LDAP. |
 | `LDAP_ATTR_LAST_NAME` | No | `sn` | Attributo cognome LDAP. |
 | `LDAP_ATTR_EMAIL` | No | `mail` | Attributo email LDAP. |
-| `LDAP_ATTR_DEPARTMENT` | No | `ou` | Attributo afferenza territoriale/reparto LDAP (import). |
 | `LDAP_IMPORT_FILTER` | No | `(objectClass=person)` | Filtro default comandi `import_ldap_users` e `sync_ldap_users`. |
 
 ## Email/SMTP

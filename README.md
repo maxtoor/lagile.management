@@ -151,7 +151,6 @@ LDAP_BIND_DN=cn=svc_ldap,ou=svc,dc=example,dc=org
 LDAP_BIND_PASSWORD=...
 LDAP_USER_BASE_DN=ou=people,dc=example,dc=org
 LDAP_USER_FILTER=(uid=%(user)s)
-LDAP_ATTR_DEPARTMENT=ou
 LDAP_IMPORT_FILTER=(objectClass=person)
 ```
 
