@@ -46,36 +46,16 @@
           </div>
         </form>
       </section>
-
-      <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
-        <h2 style="margin-top:0">Controllo aggiornamenti</h2>
-        <form method="post" novalidate>
-          {% csrf_token %}
-          <input type="hidden" name="action" value="update_check" />
-          {{ update_check_form.as_p }}
-          <button type="submit" class="default">Verifica stato versione</button>
-        </form>
-      </section>
-
-      <section style="border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
-        <h2 style="margin-top:0">Upgrade applicazione</h2>
-        <p style="margin-top:0;color:#4b5a54">Azioni rapide: mostra i comandi upgrade da eseguire a terminale.</p>
-        <form method="post" novalidate style="display:flex;gap:8px;flex-wrap:wrap">
-          {% csrf_token %}
-          <button type="submit" name="action" value="upgrade_plan_dry">Mostra comando dry-run</button>
-          <button type="submit" name="action" value="upgrade_plan_real" class="default">Mostra comando upgrade reale</button>
-        </form>
-      </section>
-
     </div>
 
     <section style="margin-top:16px;border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
-    <h2 style="margin-top:0">Note operative</h2>
-    <ul>
-      <li>Import release: usa prima <code>Dry run</code>, poi esegui import reale se l'output e corretto.</li>
-      <li>Import release <code>replace</code> sostituisce configurazioni (policy, festivita, template, impostazioni app) ma non cancella utenti.</li>
-    </ul>
-  </section>
+      <h2 style="margin-top:0">Note operative</h2>
+      <ul>
+        <li>Import release: usa prima <code>Dry run</code>, poi esegui import reale se l'output e corretto.</li>
+        <li>Import release <code>replace</code> sostituisce configurazioni (policy, festivita, template, impostazioni app) ma non cancella utenti.</li>
+        <li>Deploy, upgrade applicazione, dipendenze Python e operazioni host restano documentate fuori da questa pagina.</li>
+      </ul>
+    </section>
 
     {% if icb_legacy_enabled %}
     <section style="margin-top:14px;border:1px solid #dce4df;border-radius:10px;padding:0;background:#fff;overflow:hidden">

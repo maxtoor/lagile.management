@@ -364,14 +364,6 @@ class ImportReleaseAdminForm(forms.Form):
     )
 
 
-class UpdateCheckAdminForm(forms.Form):
-    fetch_remote = forms.BooleanField(
-        label='Aggiorna riferimento remoto (git fetch)',
-        required=False,
-        initial=True,
-    )
-
-
 class SyncHolidaysAdminForm(forms.Form):
     year = forms.IntegerField(label='Anno', required=True, initial=date.today().year, min_value=2000, max_value=2100)
     overwrite = forms.BooleanField(
@@ -644,11 +636,10 @@ def import_tools_view(request):
             'admin/agile/import_tools.html',
             {
                 **admin.site.each_context(request),
-                'title': 'Strumenti',
+                'title': 'Import / Export dati',
                 'csv_form': ImportCsvAdminForm(),
                 'release_export_form': ExportReleaseAdminForm(),
                 'release_import_form': ImportReleaseAdminForm(),
-                'update_check_form': UpdateCheckAdminForm(),
                 'icb_legacy_enabled': icb_legacy_enabled,
                 'logs': [],
             },
@@ -659,7 +650,6 @@ def import_tools_view(request):
     csv_form = ImportCsvAdminForm(prefix='csv')
     release_export_form = ExportReleaseAdminForm(prefix='release_export')
     release_import_form = ImportReleaseAdminForm(prefix='release_import')
-    update_check_form = UpdateCheckAdminForm(prefix='update_check')
 
     if request.method == 'POST':
         action = (request.POST.get('action') or '').strip()
@@ -808,54 +798,16 @@ def import_tools_view(request):
                 ) or 'Dati non validi'
                 logs.append(f'Errore validazione import release: {error_text}')
                 messages.error(request, f'Errore import release: {error_text}')
-        elif action == 'update_check':
-            update_check_form = UpdateCheckAdminForm(request.POST, prefix='update_check')
-            if update_check_form.is_valid():
-                fetch_remote = bool(update_check_form.cleaned_data.get('fetch_remote'))
-                lines = _run_update_check(fetch_remote=fetch_remote)
-                logs.append('\n'.join(lines))
-                messages.info(request, 'Controllo aggiornamenti completato')
-            else:
-                error_text = '; '.join(
-                    [f'{field}: {", ".join(errors)}' for field, errors in update_check_form.errors.items()]
-                ) or 'Dati non validi'
-                logs.append(f'Errore controllo aggiornamenti: {error_text}')
-                messages.error(request, f'Errore controllo aggiornamenti: {error_text}')
-        elif action == 'upgrade_plan_dry':
-            logs.append(
-                '\n'.join(
-                    [
-                        'Procedura upgrade (dry-run):',
-                        'cd /app',
-                        'bash scripts/upgrade.sh --dry-run --allow-dirty',
-                    ]
-                )
-            )
-            messages.info(request, 'Comando dry-run upgrade pronto (vedi Output)')
-        elif action == 'upgrade_plan_real':
-            logs.append(
-                '\n'.join(
-                    [
-                        'Procedura upgrade (reale):',
-                        'cd /app',
-                        'bash scripts/upgrade.sh',
-                        '',
-                        'Nota: eseguire da terminale host/progetto con permessi adeguati.',
-                    ]
-                )
-            )
-            messages.info(request, 'Comando upgrade reale pronto (vedi Output)')
 
     return TemplateResponse(
         request,
         'admin/agile/import_tools.html',
         {
             **admin.site.each_context(request),
-            'title': 'Strumenti',
+            'title': 'Import / Export dati',
             'csv_form': csv_form,
             'release_export_form': release_export_form,
             'release_import_form': release_import_form,
-            'update_check_form': update_check_form,
             'logs': logs,
             'preview_blocks': preview_blocks,
             'is_superuser': request.user.is_superuser,
