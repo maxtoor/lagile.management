@@ -17,6 +17,49 @@
   details[open] .icb-collapsible-arrow {
     transform: rotate(90deg);
   }
+  .import-tools-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(35, 49, 43, 0.34);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 1200;
+  }
+  .import-tools-modal {
+    width: min(980px, calc(100vw - 48px));
+    max-height: calc(100vh - 64px);
+    background: #fff;
+    border: 1px solid #dce4df;
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(30, 44, 39, 0.16);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .import-tools-modal-header,
+  .import-tools-modal-footer {
+    padding: 14px 18px;
+    background: #f8fbf9;
+    border-bottom: 1px solid #e3ebe6;
+  }
+  .import-tools-modal-footer {
+    border-top: 1px solid #e3ebe6;
+    border-bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .import-tools-modal-body {
+    padding: 18px;
+    overflow: auto;
+    background: #fff;
+  }
+  .import-tools-modal-close {
+    min-width: 110px;
+  }
 </style>
 <div style="max-width:980px">
   {% if not is_superuser %}
@@ -92,39 +135,66 @@
     {% endif %}
   {% endif %}
 
-  {% if logs %}
-    <section style="margin-top:16px;border:1px solid #dce4df;border-radius:10px;padding:14px;background:#fff">
-      <form method="post" style="margin:0 0 12px 0">
-        {% csrf_token %}
-        <button type="submit" name="action" value="clear_preview">Azzera anteprima</button>
-      </form>
-
-      {% if preview_blocks %}
-        <h2 style="margin-top:0">Anteprima impatti</h2>
-        <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-bottom:12px">
-          {% for block in preview_blocks %}
-            <article style="border:1px solid #e3ebe6;border-radius:8px;padding:10px;background:#f8fbf9">
-              <h3 style="margin:0 0 8px 0;font-size:13px">{{ block.title }}</h3>
-              <table style="width:100%;border-collapse:collapse;font-size:12px">
-                <tbody>
-                  {% for item in block.items %}
-                    <tr>
-                      <td style="padding:4px 0;border-bottom:1px solid #e8efeb">{{ item.label }}</td>
-                      <td style="padding:4px 0;border-bottom:1px solid #e8efeb;text-align:right;font-weight:600;word-break:break-word;white-space:normal">{{ item.value }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </article>
-          {% endfor %}
-        </div>
-      {% endif %}
-
-      <h2 style="margin-top:0">Output</h2>
-      {% for item in logs %}
-        <pre style="white-space:pre-wrap;background:#f7faf8;border:1px solid #e3ebe6;border-radius:8px;padding:10px;margin:0 0 10px 0">{{ item }}</pre>
-      {% endfor %}
-    </section>
-  {% endif %}
 </div>
+
+{% if logs %}
+  <div id="importToolsModalBackdrop" class="import-tools-modal-backdrop">
+    <div class="import-tools-modal" role="dialog" aria-modal="true" aria-labelledby="importToolsModalTitle">
+      <div class="import-tools-modal-header">
+        <h2 id="importToolsModalTitle" style="margin:0">Anteprima e risultati</h2>
+      </div>
+      <div class="import-tools-modal-body">
+        {% if preview_blocks %}
+          <h3 style="margin-top:0">Anteprima impatti</h3>
+          <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-bottom:16px">
+            {% for block in preview_blocks %}
+              <article style="border:1px solid #e3ebe6;border-radius:8px;padding:10px;background:#f8fbf9">
+                <h4 style="margin:0 0 8px 0;font-size:13px">{{ block.title }}</h4>
+                <table style="width:100%;border-collapse:collapse;font-size:12px">
+                  <tbody>
+                    {% for item in block.items %}
+                      <tr>
+                        <td style="padding:4px 0;border-bottom:1px solid #e8efeb">{{ item.label }}</td>
+                        <td style="padding:4px 0;border-bottom:1px solid #e8efeb;text-align:right;font-weight:600;word-break:break-word;white-space:normal">{{ item.value }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </article>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <h3 style="margin-top:0">Output</h3>
+        {% for item in logs %}
+          <pre style="white-space:pre-wrap;background:#f7faf8;border:1px solid #e3ebe6;border-radius:8px;padding:10px;margin:0 0 10px 0">{{ item }}</pre>
+        {% endfor %}
+      </div>
+      <div class="import-tools-modal-footer">
+        <form method="post" style="margin:0">
+          {% csrf_token %}
+          <button type="submit" name="action" value="clear_preview">Azzera anteprima</button>
+        </form>
+        <button type="button" id="importToolsModalCloseBtn" class="import-tools-modal-close">Chiudi</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function() {
+      const backdrop = document.getElementById("importToolsModalBackdrop");
+      const closeBtn = document.getElementById("importToolsModalCloseBtn");
+      if (!backdrop || !closeBtn) return;
+      function closeModal() {
+        backdrop.style.display = "none";
+      }
+      closeBtn.addEventListener("click", closeModal);
+      backdrop.addEventListener("click", (event) => {
+        if (event.target === backdrop) closeModal();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeModal();
+      });
+    })();
+  </script>
+{% endif %}
 {% endblock %}
