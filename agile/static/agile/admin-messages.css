@@ -1,21 +1,72 @@
-.agile-dismissible-message {
+.messagelist.agile-message-stack {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1300;
+  width: min(760px, calc(100vw - 32px));
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.messagelist.agile-message-stack li,
+.messagelist.agile-message-stack .success,
+.messagelist.agile-message-stack .warning,
+.messagelist.agile-message-stack .error,
+.messagelist.agile-message-stack .info,
+.messagelist.agile-message-stack .errornote {
+  pointer-events: auto;
   position: relative;
-  padding-right: 40px !important;
+  margin: 0 !important;
+  padding: 12px 44px 12px 14px !important;
+  border-radius: 12px;
+  border: 1px solid #dce4df !important;
+  background: #fff !important;
+  box-shadow: 0 14px 32px rgba(30, 44, 39, 0.14);
+  color: #2c3a34 !important;
+}
+
+.messagelist.agile-message-stack li.success,
+.messagelist.agile-message-stack .success,
+.messagelist.agile-message-stack .info {
+  background: #f8fbf9 !important;
+  border-color: #dce4df !important;
+}
+
+.messagelist.agile-message-stack li.warning,
+.messagelist.agile-message-stack .warning {
+  background: #fff9ea !important;
+  border-color: #ead9a2 !important;
+}
+
+.messagelist.agile-message-stack li.error,
+.messagelist.agile-message-stack .error,
+.messagelist.agile-message-stack .errornote {
+  background: #fff3f1 !important;
+  border-color: #e7bcb5 !important;
+}
+
+.agile-dismissible-message {
   min-height: 24px;
 }
 
 .agile-message-close {
   position: absolute;
   top: 50%;
-  right: 8px;
+  right: 10px;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.25);
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(44, 58, 52, 0.16);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.9);
   color: #2b3a33;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
@@ -25,5 +76,5 @@
 }
 
 .agile-message-close:hover {
-  background: rgba(255, 255, 255, 0.95);
+  background: #fff;
 }
