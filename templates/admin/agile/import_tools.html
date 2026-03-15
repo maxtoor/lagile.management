@@ -122,11 +122,13 @@
 
           <h3 style="margin:14px 0 8px 0">Note ICB</h3>
           <ul>
-            <li>CSV atteso: <code>email, lastname, name, department</code>.</li>
-            <li>Con modalita <code>last-word</code>, l'afferenza territoriale e l'ultima parola del campo <code>department</code>.</li>
-            <li>Con <code>Importa anche i gruppi</code>, la prima parola di <code>department</code> e usata come nome gruppo (creato se mancante).</li>
+            <li>CSV atteso nel formato legacy ICB, con colonne <code>Email</code>, <code>Cognome</code>, <code>Nome</code>, <code>Gruppo</code>.</li>
+            <li>L'afferenza territoriale viene ricavata automaticamente come ultima parola del campo <code>Gruppo</code>.</li>
+            <li>Il separatore CSV e fisso a <code>,</code> per aderire al formato legacy supportato.</li>
+            <li>Con <code>Importa anche i gruppi</code>, la prima parola di <code>Gruppo</code> viene usata come nome gruppo (creato se mancante).</li>
+            <li>Con <code>Aggiorna anche i referenti dalle righe Default del CSV</code>, i referenti di sede vengono allineati dalle righe legacy dedicate prima dell'eventuale sync LDAP.</li>
             <li>Con <code>Esegui anche sync LDAP inline</code>, a fine import aggiorna anche anagrafica LDAP (nome, cognome, email).</li>
-            <li>Se <code>department</code> contiene <code>Default</code>, la riga viene ignorata.</li>
+            <li>Se <code>Gruppo</code> contiene <code>Default</code>, la riga non viene trattata come utente standard.</li>
             <li>Se l'afferenza territoriale e valida, viene impostata anche <code>Sottoscrizione AILA = Si</code>.</li>
           </ul>
         </div>

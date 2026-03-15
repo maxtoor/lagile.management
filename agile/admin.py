@@ -311,15 +311,6 @@ class SyncLdapAdminForm(forms.Form):
 
 class ImportCsvAdminForm(forms.Form):
     csv_file = forms.FileField(label='File CSV')
-    email_column = forms.CharField(label='Colonna email', required=False, initial='email')
-    lastname_column = forms.CharField(label='Colonna cognome', required=False, initial='lastname')
-    site_column = forms.CharField(label='Colonna afferenza territoriale', required=False, initial='department')
-    site_mode = forms.ChoiceField(
-        label='Modalita afferenza territoriale',
-        choices=(('exact', 'Valore completo'), ('last-word', 'Ultima parola')),
-        required=False,
-        initial='last-word',
-    )
     fallback_lastname = forms.BooleanField(
         label='Fallback su cognome se email non trovata',
         required=False,
@@ -328,14 +319,18 @@ class ImportCsvAdminForm(forms.Form):
     import_groups = forms.BooleanField(
         label='Importa anche i gruppi',
         required=False,
-        initial=False,
+        initial=True,
+    )
+    enrich_managers_from_csv = forms.BooleanField(
+        label='Aggiorna anche i referenti dalle righe Default del CSV',
+        required=False,
+        initial=True,
     )
     with_ldap_sync = forms.BooleanField(
         label='Esegui anche sync LDAP inline (nome, cognome, email)',
         required=False,
         initial=False,
     )
-    delimiter = forms.CharField(label='Separatore', required=False, initial=',', max_length=1)
     dry_run = forms.BooleanField(label='Dry run', required=False, initial=True)
 
 
@@ -680,11 +675,12 @@ def import_tools_view(request):
                             tmp_path = tmp_file.name
 
                         kwargs = {
-                            'email_column': (csv_form.cleaned_data.get('email_column') or 'email').strip(),
-                            'lastname_column': (csv_form.cleaned_data.get('lastname_column') or 'lastname').strip(),
-                            'site_column': (csv_form.cleaned_data.get('site_column') or 'department').strip(),
-                            'site_mode': (csv_form.cleaned_data.get('site_mode') or 'last-word').strip(),
-                            'delimiter': (csv_form.cleaned_data.get('delimiter') or ',').strip()[:1] or ',',
+                            'email_column': 'Email',
+                            'lastname_column': 'Cognome',
+                            'firstname_column': 'Nome',
+                            'site_column': 'Gruppo',
+                            'site_mode': 'last-word',
+                            'delimiter': ',',
                             'dry_run': bool(csv_form.cleaned_data.get('dry_run')),
                         }
                         if action == 'csv_preview':
@@ -693,6 +689,8 @@ def import_tools_view(request):
                             kwargs['fallback_lastname'] = True
                         if csv_form.cleaned_data.get('import_groups'):
                             kwargs['import_groups'] = True
+                        if csv_form.cleaned_data.get('enrich_managers_from_csv'):
+                            kwargs['enrich_managers_from_csv'] = True
                         if csv_form.cleaned_data.get('with_ldap_sync'):
                             kwargs['with_ldap_sync'] = True
                         call_command('update_user_sites_from_csv_icb', tmp_path, stdout=out, stderr=err, **kwargs)
