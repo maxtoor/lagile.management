@@ -2,6 +2,11 @@
 
 {% block content %}
 <style>
+  {% if is_superuser and messages %}
+  .messagelist {
+    display: none;
+  }
+  {% endif %}
   .import-tools-message-stack {
     position: fixed;
     top: 18px;
