@@ -2,61 +2,6 @@
 
 {% block content %}
 <style>
-  {% if is_superuser and messages %}
-  .messagelist {
-    display: none;
-  }
-  {% endif %}
-  .import-tools-message-stack {
-    position: fixed;
-    top: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1300;
-    width: min(760px, calc(100vw - 32px));
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    pointer-events: none;
-  }
-  .import-tools-message {
-    pointer-events: auto;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 14px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid #dce4df;
-    background: #fff;
-    box-shadow: 0 14px 32px rgba(30, 44, 39, 0.14);
-  }
-  .import-tools-message.info,
-  .import-tools-message.success {
-    background: #f8fbf9;
-    border-color: #dce4df;
-  }
-  .import-tools-message.warning {
-    background: #fff9ea;
-    border-color: #ead9a2;
-  }
-  .import-tools-message.error {
-    background: #fff3f1;
-    border-color: #e7bcb5;
-  }
-  .import-tools-message-text {
-    color: #2c3a34;
-    line-height: 1.45;
-  }
-  .import-tools-message-close {
-    flex: 0 0 auto;
-    min-width: 36px;
-    padding: 4px 8px;
-    border-radius: 8px;
-    border: 1px solid #dce4df;
-    background: #fff;
-    cursor: pointer;
-  }
   .icb-collapsible-summary {
     display: flex;
     align-items: center;
@@ -116,16 +61,6 @@
     min-width: 110px;
   }
 </style>
-{% if messages %}
-  <div id="importToolsMessageStack" class="import-tools-message-stack" aria-live="polite">
-    {% for message in messages %}
-      <div class="import-tools-message {{ message.tags|default:'info' }}" data-autoclose="{% if 'error' in message.tags %}0{% else %}1{% endif %}">
-        <div class="import-tools-message-text">{{ message }}</div>
-        <button type="button" class="import-tools-message-close" aria-label="Chiudi messaggio">×</button>
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
 <div style="max-width:980px">
   {% if not is_superuser %}
     <div class="messagelist">
@@ -246,18 +181,6 @@
   </div>
   <script>
     (function() {
-      const messageStack = document.getElementById("importToolsMessageStack");
-      if (messageStack) {
-        messageStack.querySelectorAll(".import-tools-message").forEach((item) => {
-          const closeBtn = item.querySelector(".import-tools-message-close");
-          const closeMessage = () => item.remove();
-          closeBtn?.addEventListener("click", closeMessage);
-          if (item.dataset.autoclose === "1") {
-            window.setTimeout(closeMessage, 5000);
-          }
-        });
-      }
-
       const backdrop = document.getElementById("importToolsModalBackdrop");
       const closeBtn = document.getElementById("importToolsModalCloseBtn");
       if (!backdrop || !closeBtn) return;
