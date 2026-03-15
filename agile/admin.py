@@ -310,24 +310,25 @@ class SyncLdapAdminForm(forms.Form):
 
 
 class ImportCsvAdminForm(forms.Form):
-    csv_file = forms.FileField(label='File CSV')
-    fallback_lastname = forms.BooleanField(
-        label='Fallback su cognome se email non trovata',
-        required=False,
-        initial=True,
-    )
-    import_groups = forms.BooleanField(
-        label='Importa anche i gruppi',
-        required=False,
-        initial=True,
-    )
-    enrich_managers_from_csv = forms.BooleanField(
-        label='Aggiorna anche i referenti dalle righe Default del CSV',
-        required=False,
-        initial=True,
-    )
+    csv_file = forms.FileField(label='Backup CSV ICB')
+    leaves_report_csv = forms.FileField(label='Leaves report CSV legacy')
     with_ldap_sync = forms.BooleanField(
         label='Esegui anche sync LDAP inline (nome, cognome, email)',
+        required=False,
+        initial=False,
+    )
+    overwrite_existing_plans = forms.BooleanField(
+        label='Sovrascrivi eventuali piani gia presenti',
+        required=False,
+        initial=True,
+    )
+    import_notes = forms.BooleanField(
+        label='Importa anche le note attivita dal leaves report',
+        required=False,
+        initial=True,
+    )
+    overwrite_notes = forms.BooleanField(
+        label='Sovrascrivi anche note gia presenti',
         required=False,
         initial=False,
     )
@@ -664,9 +665,11 @@ def import_tools_view(request):
                 csv_form = ImportCsvAdminForm(request.POST, request.FILES, prefix='csv')
                 if csv_form.is_valid():
                     uploaded = csv_form.cleaned_data['csv_file']
+                    uploaded_leaves = csv_form.cleaned_data['leaves_report_csv']
                     out = io.StringIO()
                     err = io.StringIO()
                     tmp_path = None
+                    tmp_leaves_path = None
                     try:
                         suffix = os.path.splitext(uploaded.name or '')[1] or '.csv'
                         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
@@ -674,51 +677,67 @@ def import_tools_view(request):
                                 tmp_file.write(chunk)
                             tmp_path = tmp_file.name
 
+                        leaves_suffix = os.path.splitext(uploaded_leaves.name or '')[1] or '.csv'
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=leaves_suffix) as tmp_file:
+                            for chunk in uploaded_leaves.chunks():
+                                tmp_file.write(chunk)
+                            tmp_leaves_path = tmp_file.name
+
                         kwargs = {
-                            'email_column': 'Email',
-                            'lastname_column': 'Cognome',
-                            'firstname_column': 'Nome',
-                            'site_column': 'Gruppo',
-                            'site_mode': 'last-word',
-                            'delimiter': ',',
                             'dry_run': bool(csv_form.cleaned_data.get('dry_run')),
+                            'with_ldap_sync': bool(csv_form.cleaned_data.get('with_ldap_sync')),
+                            'overwrite_existing_plans': bool(csv_form.cleaned_data.get('overwrite_existing_plans')),
+                            'leaves_report_csv': [tmp_leaves_path],
                         }
                         if action == 'csv_preview':
                             kwargs['dry_run'] = True
-                        if csv_form.cleaned_data.get('fallback_lastname'):
-                            kwargs['fallback_lastname'] = True
-                        if csv_form.cleaned_data.get('import_groups'):
-                            kwargs['import_groups'] = True
-                        if csv_form.cleaned_data.get('enrich_managers_from_csv'):
-                            kwargs['enrich_managers_from_csv'] = True
-                        if csv_form.cleaned_data.get('with_ldap_sync'):
-                            kwargs['with_ldap_sync'] = True
-                        call_command('update_user_sites_from_csv_icb', tmp_path, stdout=out, stderr=err, **kwargs)
+
+                        call_command('import_icb_legacy_bundle', tmp_path, stdout=out, stderr=err, **kwargs)
+
+                        if csv_form.cleaned_data.get('import_notes'):
+                            notes_kwargs = {
+                                'backup_csv_path': tmp_path,
+                                'dry_run': kwargs['dry_run'],
+                            }
+                            if csv_form.cleaned_data.get('overwrite_notes'):
+                                notes_kwargs['overwrite'] = True
+                            call_command(
+                                'import_legacy_icb_notes',
+                                tmp_leaves_path,
+                                stdout=out,
+                                stderr=err,
+                                **notes_kwargs,
+                            )
+
                         output = (out.getvalue() + '\n' + err.getvalue()).strip()
-                        logs.append(output or 'Import CSV completato')
+                        logs.append(output or 'Import bundle ICB completato')
                         if action == 'csv_preview':
-                            preview_blocks = _build_preview_blocks(output, kind='csv')
-                            messages.info(request, 'Anteprima impatti CSV ICB completata (dry-run)')
+                            messages.info(request, 'Anteprima import bundle ICB completata (dry-run)')
                         else:
-                            messages.success(request, 'Import CSV ICB eseguito')
+                            messages.success(request, 'Import bundle ICB eseguito')
                     except Exception as exc:
                         output = (out.getvalue() + '\n' + err.getvalue()).strip()
                         if output:
                             logs.append(output)
                         logs.append(str(exc))
-                        messages.error(request, f'Errore import CSV: {exc}')
+                        messages.error(request, f'Errore import bundle ICB: {exc}')
                     finally:
                         if tmp_path and os.path.exists(tmp_path):
                             try:
                                 os.unlink(tmp_path)
                             except OSError:
                                 pass
+                        if tmp_leaves_path and os.path.exists(tmp_leaves_path):
+                            try:
+                                os.unlink(tmp_leaves_path)
+                            except OSError:
+                                pass
                 else:
                     error_text = '; '.join(
                         [f'{field}: {", ".join(errors)}' for field, errors in csv_form.errors.items()]
                     ) or 'Dati non validi'
-                    logs.append(f'Errore validazione CSV: {error_text}')
-                    messages.error(request, f'Errore import CSV ICB: {error_text}')
+                    logs.append(f'Errore validazione bundle ICB: {error_text}')
+                    messages.error(request, f'Errore import bundle ICB: {error_text}')
         elif action == 'release_export':
             release_export_form = ExportReleaseAdminForm(request.POST, prefix='release_export')
             if release_export_form.is_valid():
