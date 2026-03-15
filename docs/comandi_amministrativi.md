@@ -156,9 +156,10 @@ python manage.py send_submission_reminders --date 2026-03-30 --dry-run
 
 **Cosa fa internamente**
 
-- evita doppi invii per lo stesso `anno/mese` usando un audit log tecnico
+- evita doppi invii nello stesso giorno usando un audit log tecnico
 - usa la data configurata in `Impostazioni applicazione -> Reminder e sommari`
-  - default: `0`, quindi primo giorno del mese riepilogato
+  - il valore indica per quanti giorni, a partire dal primo del mese, il comando puo inviare
+  - default: `0`, quindi invio solo il primo giorno del mese
 
 **Esempi**
 

@@ -17,7 +17,7 @@ class _SafeDict(dict):
 class Command(BaseCommand):
     help = (
         'Invia ai referenti un riepilogo con piani in attesa e utenti assegnati senza piano del mese corrente, '
-        "includendo anche approvati e auto-approvazione, secondo l'offset configurato."
+        "includendo anche approvati e auto-approvazione, dal primo del mese per N giorni e al massimo una volta al giorno."
     )
 
     def add_arguments(self, parser):
@@ -47,8 +47,11 @@ class Command(BaseCommand):
         return f'{month:02d}/{year}'
 
     @staticmethod
-    def _scheduled_run_date(*, target_year: int, target_month: int, offset_days: int) -> date:
-        return MonthlyPlan.month_start_date(target_year, target_month) + timedelta(days=offset_days)
+    def _scheduled_run_window(*, target_year: int, target_month: int, days_from_month_start: int) -> tuple[date, date]:
+        start_date = MonthlyPlan.month_start_date(target_year, target_month)
+        safe_days = max(0, int(days_from_month_start))
+        end_date = start_date + timedelta(days=safe_days)
+        return start_date, end_date
 
     @staticmethod
     def _render_from_template(*, key: str, default_subject: str, default_body: str, context: dict) -> tuple[str, str]:
@@ -80,21 +83,21 @@ class Command(BaseCommand):
         force = bool(options.get('force'))
         dry_run = bool(options.get('dry_run'))
 
-        offset_days = int(get_runtime_setting('MANAGER_MONTHLY_SUMMARY_OFFSET_DAYS', 0) or 0)
+        days_from_month_start = int(get_runtime_setting('MANAGER_MONTHLY_SUMMARY_OFFSET_DAYS', 0) or 0)
         target_year = today.year
         target_month = today.month
-        scheduled_date = self._scheduled_run_date(
+        start_date, end_date = self._scheduled_run_window(
             target_year=target_year,
             target_month=target_month,
-            offset_days=offset_days,
+            days_from_month_start=days_from_month_start,
         )
 
-        if not force and today != scheduled_date:
+        if not force and not (start_date <= today <= end_date):
             self.stdout.write(
                 self.style.WARNING(
                     "Oggi "
-                    f"{today.isoformat()} non coincide con la data configurata "
-                    f"({scheduled_date.isoformat()}), nessuna email inviata"
+                    f"{today.isoformat()} non rientra nella finestra configurata "
+                    f"({start_date.isoformat()} - {end_date.isoformat()}), nessuna email inviata"
                 )
             )
             return
@@ -134,10 +137,11 @@ class Command(BaseCommand):
                 target_id=manager.id,
                 metadata__year=target_year,
                 metadata__month=target_month,
+                metadata__sent_on=today.isoformat(),
             ).exists()
             if already_sent:
                 skipped += 1
-                self.stdout.write(f'Riepilogo gia inviato a {manager_email} per {month_label}, salto')
+                self.stdout.write(f'Riepilogo gia inviato oggi a {manager_email} per {month_label}, salto')
                 continue
 
             managed_ids = [u.id for u in users]
@@ -243,6 +247,7 @@ class Command(BaseCommand):
                         'year': target_year,
                         'month': target_month,
                         'email': manager_email,
+                        'sent_on': today.isoformat(),
                         'pending_count': len(pending),
                         'approved_count': len(approved),
                         'missing_count': len(missing),
