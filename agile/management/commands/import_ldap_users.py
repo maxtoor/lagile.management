@@ -3,7 +3,7 @@ import os
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from agile.models import SITE_CHOICES, User
+from agile.models import User
 
 
 class Command(BaseCommand):
@@ -37,11 +37,6 @@ class Command(BaseCommand):
             return value.decode('utf-8', errors='ignore').strip()
         return str(value).strip()
 
-    @staticmethod
-    def _normalize_site(value: str) -> str:
-        allowed_sites = {choice[0] for choice in SITE_CHOICES}
-        return value if value in allowed_sites else ''
-
     def handle(self, *args, **options):
         try:
             import ldap
@@ -70,9 +65,7 @@ class Command(BaseCommand):
         attr_first_name = os.getenv('LDAP_ATTR_FIRST_NAME', 'givenName')
         attr_last_name = os.getenv('LDAP_ATTR_LAST_NAME', 'sn')
         attr_email = os.getenv('LDAP_ATTR_EMAIL', 'mail')
-        attr_department = os.getenv('LDAP_ATTR_DEPARTMENT', 'ou')
-
-        attrs = [attr_username, attr_first_name, attr_last_name, attr_email, attr_department]
+        attrs = [attr_username, attr_first_name, attr_last_name, attr_email]
 
         conn = ldap.initialize(server_uri)
         conn.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
@@ -96,8 +89,6 @@ class Command(BaseCommand):
         created = 0
         updated = 0
         skipped = 0
-        invalid_site = 0
-
         with transaction.atomic():
             for dn, entry in results:
                 if not dn or not entry:
@@ -111,18 +102,12 @@ class Command(BaseCommand):
                 first_name = self._decode_first(entry.get(attr_first_name))
                 last_name = self._decode_first(entry.get(attr_last_name))
                 email = self._decode_first(entry.get(attr_email))
-                raw_department = self._decode_first(entry.get(attr_department))
-                department = self._normalize_site(raw_department)
-                if raw_department and not department:
-                    invalid_site += 1
-
                 user, was_created = User.objects.get_or_create(
                     username=username,
                     defaults={
                         'first_name': first_name,
                         'last_name': last_name,
                         'email': email,
-                        'department': department,
                         'role': User.Role.EMPLOYEE,
                         'is_active': False,
                     },
@@ -138,12 +123,11 @@ class Command(BaseCommand):
                 user.first_name = first_name
                 user.last_name = last_name
                 user.email = email
-                user.department = department
                 user.is_active = False
                 # Per utenti gestiti via LDAP non manteniamo password locale utilizzabile.
                 user.set_unusable_password()
                 if not dry_run:
-                    user.save(update_fields=['first_name', 'last_name', 'email', 'department', 'is_active', 'password'])
+                    user.save(update_fields=['first_name', 'last_name', 'email', 'is_active', 'password'])
                 updated += 1
 
             if dry_run:
@@ -152,6 +136,6 @@ class Command(BaseCommand):
         suffix = ' (dry-run, nessuna modifica salvata)' if dry_run else ''
         self.stdout.write(
             self.style.SUCCESS(
-                f'Import LDAP completato: creati={created}, aggiornati={updated}, saltati={skipped}, sedi_non_valide={invalid_site}{suffix}'
+                f'Import LDAP completato: creati={created}, aggiornati={updated}, saltati={skipped}{suffix}'
             )
         )

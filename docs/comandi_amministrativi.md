@@ -37,12 +37,14 @@ Se il problema e...
 
 - crea o aggiorna utenti locali con password non utilizzabile
 - imposta `is_active=False` sugli utenti importati
-- valorizza `Afferenza territoriale` solo se il valore LDAP e tra quelli ammessi da `AGILE_SITES`
+- importa solo anagrafica base LDAP (`username`, nome, cognome, email)
 
 **Quando NON usarlo**
 
 - se gli utenti esistono gia e vuoi solo riallineare nome, cognome o email
   - in quel caso usa `sync_ldap_users`
+- se vuoi impostare `Afferenza territoriale`, referente o flag applicativi
+  - questi valori vanno gestiti nell'applicazione, non derivati da LDAP
 
 **Esempi**
 
