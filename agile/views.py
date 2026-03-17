@@ -14,7 +14,7 @@ from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -768,6 +768,8 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         plan = self.get_object()
+        if plan.user_id != self.request.user.id and not self._is_superadmin_user(self.request.user):
+            raise PermissionDenied('Puoi modificare solo i tuoi piani')
         self._assert_programming_enabled(plan_owner_id=plan.user_id)
         original_status = plan.status
         if (
@@ -813,6 +815,9 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
             target_type='MonthlyPlan',
             target_id=updated.id,
         )
+
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed('DELETE', detail='La cancellazione dei piani via API non e consentita')
 
     @action(detail=True, methods=['post'])
     def submit(self, request, pk=None):
