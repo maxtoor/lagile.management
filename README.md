@@ -21,15 +21,36 @@ Backend Django per gestione mensile del calendario di lavoro agile con autentica
 ## Stack
 
 - Python 3.12
-- Django 5 + Django REST Framework
+- Django 4.2 + Django REST Framework
 - PostgreSQL 16
 - LDAP opzionale con `django-auth-ldap`
+
+## Nota sulla branch
+
+Questo `README` descrive la branch `release/ubuntu20-regression`.
+
+Questa branch esiste per mantenere operativa l'applicazione in ambienti vincolati,
+in particolare:
+
+- Ubuntu 20
+- deploy nativo senza Docker
+- host o container LXC dove Docker non puo essere avviato
+
+Questa branch non sostituisce la linea standard del progetto:
+
+- `main` resta la linea normale per il deploy Docker
+- `release/ubuntu20-regression` resta la linea di compatibilita per deploy nativo
+
+Per la guida operativa completa di questa branch:
+
+- [`docs/ubuntu20_lxc_deploy.md`](docs/ubuntu20_lxc_deploy.md)
+- [`docs/ubuntu20_regression_notes.md`](docs/ubuntu20_regression_notes.md)
 
 ## Perché Django
 
 Django offre un livello di sicurezza superiore out-of-the-box, grazie a protezioni integrate contro SQL injection, XSS e CSRF. Questo lo rende particolarmente adatto a un'applicazione gestionale con autenticazione, ruoli, workflow approvativi e interfaccia amministrativa. La precedente versione sviluppata con Node.js era piu flessibile, ma richiedeva maggiore attenzione su configurazioni di sicurezza, dipendenze e codice custom nelle aree piu sensibili.
 
-## Avvio rapido (Docker)
+## Avvio rapido (deploy nativo Ubuntu 20)
 
 1. Crea la directory applicazione, scarica il progetto ed entra nella cartella:
 
@@ -37,19 +58,28 @@ Django offre un livello di sicurezza superiore out-of-the-box, grazie a protezio
 mkdir -p /opt/containers
 git clone https://github.com/maxtoor/lagile.management.git /opt/containers/lagile-management
 cd /opt/containers/lagile-management
+git checkout release/ubuntu20-regression
 ```
 
-2. Copia variabili ambiente:
+2. Prepara ambiente Python locale:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+3. Copia variabili ambiente:
 
 ```bash
 cp .env.example .env
 ```
 
-3. Imposta almeno queste variabili in `.env`:
+4. Imposta almeno queste variabili in `.env`:
 
 ```env
 DJANGO_SECRET_KEY=una-chiave-forte
-DEBUG=1
+DEBUG=0
 ALLOWED_HOSTS=localhost,127.0.0.1
 TIME_ZONE=Europe/Rome
 
@@ -59,71 +89,61 @@ AGILE_DATE_DISPLAY_FORMAT=IT
 POSTGRES_DB=agile_work
 POSTGRES_USER=agile
 POSTGRES_PASSWORD=agile
-POSTGRES_HOST=db
+POSTGRES_HOST=127.0.0.1
 POSTGRES_PORT=5432
 
 LDAP_ENABLED=0
-AGILE_PUBLIC_BASE_URL=http://localhost:8001
+AGILE_PUBLIC_BASE_URL=http://localhost:8000
 ```
 
 Per la configurazione completa delle variabili ambiente:
 - vedi la sezione `Configurazione`
 - oppure il dettaglio completo in [`docs/variabili_env.md`](docs/variabili_env.md)
 
-4. Avvia:
+5. Inizializza l'applicazione:
 
 ```bash
-docker compose up --build
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py check
+python manage.py collectstatic --noinput
 ```
 
-5. App disponibile su:
-- Portale dipendenti: `http://localhost:8001/`
-- API: `http://localhost:8001/api/`
-- Admin: `http://localhost:8001/admin/`
+6. Avvia:
 
-Per installazione automatica e upgrade via script:
+```bash
+python manage.py runserver 0.0.0.0:8000
+```
+
+oppure con Gunicorn:
+
+```bash
+gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+```
+
+7. App disponibile su:
+- Portale dipendenti: `http://localhost:8000/`
+- API: `http://localhost:8000/api/`
+- Admin: `http://localhost:8000/admin/`
+
+Per il deploy completo su Ubuntu 20 / LXC senza Docker:
+- [`docs/ubuntu20_lxc_deploy.md`](docs/ubuntu20_lxc_deploy.md)
+- [`docs/ubuntu20_regression_notes.md`](docs/ubuntu20_regression_notes.md)
+
+## Nota su Docker
+
+In questa branch Docker non e il percorso di deploy di riferimento.
+
+Gli script:
+
 - `scripts/install.sh`
 - `scripts/upgrade.sh`
 
-Esempi rapidi:
+restano orientati alla linea Docker standard del progetto e non rappresentano il
+flusso principale di `release/ubuntu20-regression`.
 
-```bash
-# Installazione automatica
-bash scripts/install.sh --install-dir /opt/containers/lagile-management --branch main --port 8001
-
-# Simulazione installazione
-bash scripts/install.sh --dry-run
-
-# Upgrade
-bash scripts/upgrade.sh
-```
-
-Nota Docker:
-- e presente un servizio `scheduler`; dettagli operativi nella sezione `Automazioni`
-- nella Pagina di Amministrazione e disponibile il link `Monitor log` per visualizzare il tail live e selezionare la sorgente (es. `app` / `scheduler`)
-
-## Avvio locale (senza Docker)
-
-Requisiti minimi:
-- Python 3.12
-- PostgreSQL 16
-
-Nota:
-- il percorso consigliato e l'avvio rapido con Docker
-- l'avvio locale senza Docker e adatto soprattutto a sviluppo o troubleshooting su host gia predisposti
-
-```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-set -a
-source .env
-set +a
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
-```
+Per questa branch il riferimento corretto e il deploy nativo descritto nella
+documentazione Ubuntu 20.
 
 Riferimento rapido configurazione:
 - dettagli di tutte le variabili `.env`: [`docs/variabili_env.md`](docs/variabili_env.md)
