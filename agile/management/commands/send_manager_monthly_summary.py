@@ -48,7 +48,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def _scheduled_run_window(*, target_year: int, target_month: int, reminder_count: int) -> tuple[date, date]:
-        start_date = MonthlyPlan.month_start_date(target_year, target_month)
+        start_date = date(target_year, target_month, 1)
         safe_count = max(1, int(reminder_count))
         end_date = start_date + timedelta(days=safe_count - 1)
         return start_date, end_date
