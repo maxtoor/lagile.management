@@ -1863,6 +1863,7 @@
                 </div>
               </div>
               <div class="fixed-action-submit">
+                <button id="saveDraftBtn" type="button">Salva bozza</button>
                 <button id="submitBtn" class="warn">Richiedi approvazione</button>
                 <button id="requestChangeBtn" class="warn hidden">Richiedi variazione</button>
               </div>
@@ -2318,6 +2319,7 @@
       const TOKEN_KEY = "agile_token";
       const USER_KEY = "agile_user";
       const YM_PREF_PREFIX = "agile_ym_pref_v1";
+      const LOCAL_DRAFT_PREFIX = "agile_local_draft_v2";
       const HELP_GUIDE_PREF_PREFIX = "agile_help_guide_hidden_v1";
       const NO_AILA_WARN_PREF_PREFIX = "agile_no_aila_warn_hidden_v1";
       const LOGIN_WELCOME_PREF_KEY = "agile_login_welcome_hidden_v1";
@@ -2477,6 +2479,7 @@
       const applyBulkRemoteBtn = document.getElementById("applyBulkRemoteBtn");
       const requestChangeBtn = document.getElementById("requestChangeBtn");
       const submitBtn = document.getElementById("submitBtn");
+      const saveDraftBtn = document.getElementById("saveDraftBtn");
       const viewReasonBtn = document.getElementById("viewReasonBtn");
       const restoreApprovedBtn = document.getElementById("restoreApprovedBtn");
       const reasonModal = document.getElementById("reasonModal");
@@ -2515,6 +2518,7 @@
       let popupAutoCloseTimer = null;
       let popupIsNoAilaDismissable = false;
       let weekendHiddenMode = false;
+      let suppressBeforeUnloadWarning = false;
       const WEEKENDS_HIDE_BREAKPOINT = 1085;
       let currentDisplayStatus = "DRAFT";
       let approvedSnapshotMap = {};
@@ -2704,6 +2708,12 @@
         return `${YM_PREF_PREFIX}:${userId}`;
       }
 
+      function localDraftKey(year = Number(yearInput.value), month = Number(selectedMonth)) {
+        const userId = currentUser?.id;
+        if (!userId || !Number.isFinite(year) || !Number.isFinite(month)) return null;
+        return `${LOCAL_DRAFT_PREFIX}:${userId}:${year}:${month}`;
+      }
+
       function helpGuidePrefKey() {
         const userId = currentUser?.id;
         if (!userId) return null;
@@ -2882,17 +2892,100 @@
         return true;
       }
 
-      function persistLocalDraft() {
-        // Bozza locale disabilitata: nessuna persistenza in localStorage.
+      function persistLocalDraft(year = Number(yearInput.value), month = Number(selectedMonth)) {
+        if (APP_PAGE !== "programming") return;
+        const key = localDraftKey(year, month);
+        if (!key) return;
+        if (!hasDraftChanges()) {
+          localStorage.removeItem(key);
+          return;
+        }
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            year,
+            month,
+            savedAt: new Date().toISOString(),
+            planId: currentPlan?.id || null,
+            baselineSignature: baselineDaySignature,
+            days: collectDays(),
+          })
+        );
       }
 
-      function clearLocalDraft() {
-        // Bozza locale disabilitata.
+      function clearLocalDraft(year = Number(yearInput.value), month = Number(selectedMonth)) {
+        const key = localDraftKey(year, month);
+        if (!key) return;
+        localStorage.removeItem(key);
       }
 
-      function restoreLocalDraftIfAny() {
-        // Bozza locale disabilitata.
-        return false;
+      async function restoreLocalDraftIfAny(year, month, { readonly = false } = {}) {
+        if (APP_PAGE !== "programming") return false;
+        const key = localDraftKey(year, month);
+        if (!key) return false;
+        const raw = localStorage.getItem(key);
+        if (!raw) return false;
+
+        let parsed = null;
+        try {
+          parsed = JSON.parse(raw);
+        } catch (_) {
+          localStorage.removeItem(key);
+          return false;
+        }
+
+        const draftYear = Number(parsed?.year);
+        const draftMonth = Number(parsed?.month);
+        if (draftYear !== year || draftMonth !== month || !Array.isArray(parsed?.days)) {
+          localStorage.removeItem(key);
+          return false;
+        }
+
+        const normalizedDraftDays = normalizeDayPayloads(parsed.days);
+        const draftSignature = JSON.stringify(normalizedDraftDays);
+        if (draftSignature === baselineDaySignature) {
+          localStorage.removeItem(key);
+          return false;
+        }
+        if (readonly) {
+          return false;
+        }
+
+        const savedLabel = parsed?.savedAt
+          ? new Date(parsed.savedAt).toLocaleString("it-IT", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "";
+        const result = await askActionDialog({
+          title: "Bozza locale disponibile",
+          message: savedLabel
+            ? `E disponibile una bozza locale salvata il ${savedLabel}. Vuoi riprenderla?`
+            : "E disponibile una bozza locale non salvata sul server. Vuoi riprenderla?",
+          requireReason: false,
+          confirmLabel: "Riprendi bozza",
+          cancelLabel: "Mantieni versione caricata",
+        });
+        if (!result.confirmed) {
+          return false;
+        }
+
+        const nextMap = {};
+        normalizedDraftDays.forEach((item) => {
+          nextMap[item.day] = {
+            work_type: item.work_type === "REMOTE" ? "REMOTE" : "ON_SITE",
+            notes: item.work_type === "REMOTE" ? (item.notes || "") : "",
+          };
+        });
+        clearSelectedDays();
+        renderCalendar(nextMap);
+        refreshPlanningActions();
+        persistLocalDraft(year, month);
+        setFeedback("Bozza locale ripristinata", "ok");
+        return true;
       }
 
       function setFeedback(message, kind = "ok", options = {}) {
@@ -2996,6 +3089,12 @@
           !isNextMonth ||
           !draftChanged;
         submitBtn.classList.toggle("hidden", !programmingEnabled || !isNextMonth);
+
+        if (saveDraftBtn) {
+          const canSaveDraft = programmingEnabled && (isCurrentMonth || isNextMonth);
+          saveDraftBtn.classList.toggle("hidden", !canSaveDraft);
+          saveDraftBtn.disabled = !canSaveDraft || !draftChanged;
+        }
 
         requestChangeBtn.classList.toggle("hidden", !programmingEnabled || !isCurrentMonth);
         requestChangeBtn.disabled =
@@ -3222,13 +3321,26 @@
         mainMenuPanel.classList.add("hidden");
       }
 
-      function navigateFromMenu(target) {
+      async function navigateFromMenu(target) {
         closeMainMenuPanel();
         if (target === "__logout__") {
+          const confirmed = await confirmNavigationWithDraft({
+            title: "Esci dal portale",
+            message: "Le modifiche non salvate saranno conservate come bozza locale su questo browser. Vuoi uscire dal portale?",
+            confirmLabel: "Esci",
+          });
+          if (!confirmed) return;
+          suppressBeforeUnloadWarning = true;
           performLogout();
           return;
         }
         if (target && target !== window.location.pathname) {
+          const confirmed = await confirmNavigationWithDraft({
+            title: "Cambia pagina",
+            confirmLabel: "Cambia pagina",
+          });
+          if (!confirmed) return;
+          suppressBeforeUnloadWarning = true;
           window.location.href = target;
           return;
         }
@@ -3768,7 +3880,7 @@
         renderCalendar(daysMap);
         baselineDaySignature = mapSignatureFromDayValues();
         baselineDayMap = cloneDayValuesMap();
-        restoreLocalDraftIfAny(year, month, { readonly });
+        await restoreLocalDraftIfAny(year, month, { readonly });
         calendarReadonly = readonly;
         bulkSetOnSiteBtn.disabled = readonly;
         bulkSetRemoteBtn.disabled = readonly;
@@ -3791,6 +3903,23 @@
           return;
         }
         await loadMonth();
+      }
+
+      async function confirmNavigationWithDraft(options = {}) {
+        if (APP_PAGE !== "programming" || !token() || !hasDraftChanges()) {
+          return true;
+        }
+        persistLocalDraft();
+        const result = await askActionDialog({
+          title: options.title || "Modifiche non salvate",
+          message:
+            options.message ||
+            "Le modifiche non salvate saranno conservate come bozza locale su questo browser. Vuoi continuare?",
+          requireReason: false,
+          confirmLabel: options.confirmLabel || "Continua",
+          cancelLabel: options.cancelLabel || "Resta qui",
+        });
+        return !!result.confirmed;
       }
 
       function queueUserLabel(user) {
@@ -5023,6 +5152,11 @@
         const nextMonth = Number(item.dataset.value);
         const previousMonth = Number(selectedMonth);
         if (nextMonth === previousMonth) return;
+        const confirmed = await confirmNavigationWithDraft({
+          title: "Cambia mese",
+          confirmLabel: "Cambia mese",
+        });
+        if (!confirmed) return;
         setMonthValue(item.dataset.value);
         try {
           await loadSelectedMonthDirectly();
@@ -5036,6 +5170,14 @@
         const previousYear = Number(yearInput.dataset.prev || currentYearMonth().year);
         const nextYear = Number(yearInput.value);
         if (nextYear === previousYear) return;
+        const confirmed = await confirmNavigationWithDraft({
+          title: "Cambia anno",
+          confirmLabel: "Cambia anno",
+        });
+        if (!confirmed) {
+          yearInput.value = String(previousYear);
+          return;
+        }
         try {
           await loadSelectedMonthDirectly();
         } catch (err) {
@@ -5051,6 +5193,11 @@
       prevMonthBtn.addEventListener("click", async () => {
         const previousYear = Number(yearInput.value);
         const previousMonth = Number(selectedMonth);
+        const confirmed = await confirmNavigationWithDraft({
+          title: "Cambia mese",
+          confirmLabel: "Cambia mese",
+        });
+        if (!confirmed) return;
         shiftMonth(-1);
         try {
           await loadSelectedMonthDirectly();
@@ -5064,6 +5211,11 @@
       nextMonthBtn.addEventListener("click", async () => {
         const previousYear = Number(yearInput.value);
         const previousMonth = Number(selectedMonth);
+        const confirmed = await confirmNavigationWithDraft({
+          title: "Cambia mese",
+          confirmLabel: "Cambia mese",
+        });
+        if (!confirmed) return;
         shiftMonth(1);
         try {
           await loadSelectedMonthDirectly();
@@ -5078,6 +5230,11 @@
         const previousYear = Number(yearInput.value);
         const previousMonth = Number(selectedMonth);
         const currentYm = currentYearMonth();
+        const confirmed = await confirmNavigationWithDraft({
+          title: "Vai al mese corrente",
+          confirmLabel: "Vai al mese corrente",
+        });
+        if (!confirmed) return;
         yearInput.value = String(currentYm.year);
         setMonthValue(currentYm.month);
         try {
@@ -5093,6 +5250,15 @@
         try {
           await submitPlan();
           await loadApproverQueue();
+        } catch (err) {
+          setFeedback(err.message, "error");
+        }
+      });
+
+      saveDraftBtn?.addEventListener("click", async () => {
+        if (saveDraftBtn.disabled) return;
+        try {
+          await saveDraft();
         } catch (err) {
           setFeedback(err.message, "error");
         }
@@ -5765,11 +5931,13 @@
         message = "",
         requireReason = false,
         confirmLabel = "Conferma",
+        cancelLabel = "Annulla",
         reasonPlaceholder = "Inserisci la motivazione",
       } = {}) {
         actionDialogTitle.textContent = title;
         actionDialogMessage.textContent = message;
         actionDialogConfirmBtn.textContent = confirmLabel;
+        actionDialogCancelBtn.textContent = cancelLabel;
         actionDialogReasonWrap.classList.toggle("hidden", !requireReason);
         actionDialogReason.value = "";
         actionDialogReason.placeholder = reasonPlaceholder;
@@ -5870,6 +6038,13 @@
       });
 
       window.addEventListener("scroll", syncFooterHorizontalPosition, { passive: true });
+
+      window.addEventListener("beforeunload", (event) => {
+        if (suppressBeforeUnloadWarning || APP_PAGE !== "programming" || !token() || !hasDraftChanges()) return;
+        persistLocalDraft();
+        event.preventDefault();
+        event.returnValue = "";
+      });
 
       bootstrap();
     </script>
