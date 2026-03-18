@@ -7,7 +7,7 @@ Questa guida descrive esclusivamente l'importazione dei dati storici della versi
 Per il flusso completo servono:
 
 - `ICB_backup.csv`
-  - backup CSV completo usato per utenti, afferenze territoriali, referenti e storico `Programmazione`
+  - backup CSV completo usato per utenti, sedi operative, referenti e storico `Programmazione`
 - `ICB_leaves_report_between_2025_01_01_and_2026_12_31.csv`
   - leaves report legacy usato per stati e note/attivita
 
@@ -17,8 +17,8 @@ Per il flusso completo servono:
 
 Procedura unica per:
 - aggiornare o creare utenti dal backup CSV
-- applicare afferenza territoriale e referente
-- importare anche i gruppi Django a partire dalla colonna `Gruppo`
+- applicare sede operativa e referente
+- importare anche i gruppi utenti dal campo `Gruppo` del CSV
 - importare lo storico `Programmazione` in `MonthlyPlan` e `PlanDay`
 - opzionalmente riallineare nome, cognome ed email da LDAP
 
@@ -105,8 +105,8 @@ Leaves report CSV:
 
 ## Note pratiche
 
-- `ICB_backup.csv` resta la sorgente principale per utenti, afferenze territoriali e storico giorni
-- la colonna `Gruppo` del backup viene usata sia per derivare l'afferenza territoriale sia per assegnare i gruppi Django
+- `ICB_backup.csv` resta la sorgente principale per utenti, sedi operative e storico giorni
+- la colonna `Gruppo` del backup viene usata sia per derivare la sede operativa sia per assegnare i gruppi Django
 - il `Leaves report` completa stati e descrizioni attivita
 - il bundle usa un matching utenti prudente:
   - match email

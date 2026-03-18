@@ -521,7 +521,7 @@ class Command(BaseCommand):
                                                 f'Riga {row_index}: referente "{manager_user.username}" aggiornato ({", ".join(changed_fields)})'
                                             )
                                         )
-                            # Con valore Default: non impostare afferenza territoriale,
+                            # Con valore Default: non impostare sede operativa,
                             # ma creare/aggiornare comunque l'utente locale.
                             user = None
                             if raw_email:

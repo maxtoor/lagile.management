@@ -72,7 +72,7 @@ class LoginSerializer(serializers.Serializer):
             f'Data import: {now_str}\n\n'
             'Pannello amministrativo: {admin_url}\n'
             'Portale applicazione: {portal_url}\n\n'
-            'Completare la configurazione nel pannello amministrativo: Attivo, Afferenza territoriale, Responsabile approvazione, '
+            'Completare la configurazione nel pannello amministrativo: Attivo, Sede operativa, Responsabile approvazione, '
             'Sottoscrizione AILA e altre impostazioni applicative.'
         )
         subject, message = cls._render_system_email(
