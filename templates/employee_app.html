@@ -3102,6 +3102,18 @@
         return mapSignatureFromDayValues() !== baselineDaySignature;
       }
 
+      function hasDifferencesFromDefaultPlan() {
+        const days = Object.keys(dayValues || {});
+        if (!days.length) return false;
+        return days.some((dayIso) => {
+          const current = dayValues[dayIso];
+          if (!current) return false;
+          const currentType = current.work_type === "REMOTE" ? "REMOTE" : "ON_SITE";
+          const currentNotes = currentType === "REMOTE" ? String(current.notes || "").trim() : "";
+          return currentType !== "ON_SITE" || currentNotes !== "";
+        });
+      }
+
       function refreshPlanningActions() {
         const {
           isCurrentMonth,
@@ -3113,6 +3125,8 @@
         } = currentMonthContext;
         const programmingEnabled = hasAilaSubscription();
         const draftChanged = hasDraftChanges();
+        const hasSubmissionReady = hasDifferencesFromDefaultPlan();
+        const hasChangeRequestReady = hasDifferencesFromApproved();
         const editingOverlayActive =
           draftChanged &&
           (currentDisplayStatus === "APPROVED" ||
@@ -3122,7 +3136,7 @@
         submitBtn.disabled =
           !programmingEnabled ||
           !isNextMonth ||
-          !draftChanged;
+          !hasSubmissionReady;
         submitBtn.classList.toggle("hidden", !programmingEnabled || !isNextMonth);
 
         if (saveDraftBtn) {
@@ -3136,7 +3150,7 @@
           !programmingEnabled ||
           !isCurrentMonth ||
           hasPendingChangeRequest ||
-          !draftChanged;
+          !hasChangeRequestReady;
 
         viewReasonBtn.classList.toggle(
           "hidden",
