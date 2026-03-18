@@ -38,7 +38,8 @@ class Command(BaseCommand):
             self.stderr.write(
                 self.style.ERROR(
                     f"La nuova sede '{new_name}' non e presente in AGILE_SITES. "
-                    'Aggiorna prima la configurazione dell\'ambiente.'
+                    'Aggiorna prima la configurazione dell\'ambiente, riavvia l\'applicazione '
+                    'e poi rilancia il comando.'
                 )
             )
             return
@@ -103,6 +104,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.WARNING(
                 'Nota: il comando non modifica AGILE_SITES ne le regole hardcoded degli import CSV. '
-                'Se il rename e definitivo, aggiorna anche la configurazione e i mapping di import.'
+                'Se il rename e definitivo, aggiorna prima la configurazione ambiente, '
+                'riavvia l\'applicazione e riallinea anche i mapping di import.'
             )
         )

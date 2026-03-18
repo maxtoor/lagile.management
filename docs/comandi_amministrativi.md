@@ -245,6 +245,13 @@ python manage.py sync_holidays --year 2026 --overwrite
 - se esiste gia una `DepartmentPolicy` sulla nuova sede, il comando si ferma
 - se esistono festivita con la stessa data gia presenti sulla nuova sede, il comando si ferma
 
+**Ordine operativo consigliato**
+
+1. aggiorna `AGILE_SITES` nell'ambiente (`.env` o configurazione equivalente)
+2. riavvia l'applicazione, cosi il nuovo elenco sedi viene riletto
+3. esegui `rename_operational_site ... --dry-run`
+4. se il riepilogo e corretto, esegui il comando reale
+
 **Cosa NON aggiorna**
 
 - la variabile ambiente `AGILE_SITES`
