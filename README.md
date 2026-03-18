@@ -171,7 +171,7 @@ Alla prima registrazione automatica:
 - la email contiene i link al portale e alla Pagina di Amministrazione
 - il superuser deve completare i campi applicativi necessari, in particolare:
   - `Attivo`
-  - `Afferenza territoriale`
+  - `Sede operativa`
   - `Responsabile approvazione`
   - `Sottoscrizione AILA`
   - eventuali altre impostazioni locali
@@ -263,7 +263,7 @@ Per l'esecuzione manuale dei comandi email, vedi la sezione `Comandi amministrat
 - Prevalenza presenza: se sono presenti giorni `REMOTE`, i giorni `ON_SITE` devono essere strettamente maggiori
 - Sono ammessi solo giorni lavorativi (lun-ven): weekend non consentiti nel piano
 - Le festivita nazionali italiane sono riconosciute automaticamente e non possono essere usate nel piano
-- Le festivita configurate manualmente (globali o per afferenza territoriale) non possono essere usate nel piano
+- Le festivita configurate manualmente (globali o per sede operativa) non possono essere usate nel piano
 - Nel portale i giorni festivi del mese sono esclusi dal calendario compilabile
 - Modifica calendario: mese corrente e mese successivo
 - Mese corrente: solo richiesta variazione con motivazione (non invio in approvazione)
@@ -273,14 +273,14 @@ I vincoli sono validati sia in fase di creazione/modifica del piano, sia al mome
 ### Configurazione utente nel portale
 
 Nella Pagina di Amministrazione, nella scheda `Users`, i campi applicativi principali sono:
-- `Afferenza territoriale` (`department`)
+- `Sede operativa` (`department`)
 - `Ruolo` (`EMPLOYEE`, `ADMIN`, `SUPERADMIN`)
 - `Responsabile approvazione` (`manager`)
 - `Sottoscrizione AILA` (`aila_subscribed`)
 - `Approvazione automatica` (`auto_approve`)
 
 Uso pratico dei campi:
-- `Afferenza territoriale`: sede o unita di riferimento dell'utente nel portale
+- `Sede operativa`: sede o unita di riferimento dell'utente nel portale
 - `Responsabile approvazione`: utente che approva piano e richieste variazione del dipendente
 - `Sottoscrizione AILA=No`: l'utente non puo compilare o inviare piani e richieste variazione
 - `Approvazione automatica=Si`: piano e richieste variazione vengono approvati direttamente, senza passare dalle code

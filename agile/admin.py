@@ -1141,7 +1141,7 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
                     'Data import: {import_timestamp}\n\n'
                     'Pannello amministrativo: {admin_url}\n'
                     'Portale applicazione: {portal_url}\n\n'
-                    'Completare la configurazione nel pannello amministrativo: Attivo, Afferenza territoriale, '
+                    'Completare la configurazione nel pannello amministrativo: Attivo, Sede operativa, '
                     'Responsabile approvazione, Sottoscrizione AILA e altre impostazioni applicative.'
                 ),
             ),

@@ -18,6 +18,8 @@ Se il problema e...
   - guarda `send_submission_reminders`, `send_manager_monthly_summary`
 - `devo gestire le festivita`
   - guarda `sync_holidays`, `prepare_next_year_holidays`
+- `devo rinominare una sede operativa gia usata nei dati`
+  - guarda `rename_operational_site`
 - `devo migrare dati da una vecchia installazione`
   - guarda `export_release_data`, `import_release_data`
 - `devo alleggerire il DB dai log`
@@ -43,7 +45,7 @@ Se il problema e...
 
 - se gli utenti esistono gia e vuoi solo riallineare nome, cognome o email
   - in quel caso usa `sync_ldap_users`
-- se vuoi impostare `Afferenza territoriale`, referente o flag applicativi
+- se vuoi impostare `Sede operativa`, referente o flag applicativi
   - questi valori vanno gestiti nell'applicazione, non derivati da LDAP
 
 **Esempi**
@@ -69,7 +71,7 @@ python manage.py import_ldap_users --base-dn "ou=people,dc=example,dc=org" --fil
 
 **Cosa NON aggiorna**
 
-- `Afferenza territoriale`
+- `Sede operativa`
 - `Responsabile approvazione`
 - `Sottoscrizione AILA`
 - `Ruolo`
@@ -220,6 +222,39 @@ python manage.py purge_audit_logs --days 120 --dry-run
 ```bash
 python manage.py sync_holidays --year 2026
 python manage.py sync_holidays --year 2026 --overwrite
+```
+
+## Sedi operative
+
+### `rename_operational_site`
+
+**Quando si usa**
+
+- vuoi rinominare una sede operativa gia presente nei dati applicativi
+- esempio tipico: `Napoli` -> `Pozzuoli`
+
+**Cosa aggiorna**
+
+- `User.department`
+- `Holiday.department`
+- `DepartmentPolicy.department`
+
+**Controlli di sicurezza**
+
+- la nuova sede deve essere gia presente in `AGILE_SITES`
+- se esiste gia una `DepartmentPolicy` sulla nuova sede, il comando si ferma
+- se esistono festivita con la stessa data gia presenti sulla nuova sede, il comando si ferma
+
+**Cosa NON aggiorna**
+
+- la variabile ambiente `AGILE_SITES`
+- eventuali mapping hardcoded nei comandi di import CSV
+
+**Esempi**
+
+```bash
+python manage.py rename_operational_site Napoli Pozzuoli --dry-run
+python manage.py rename_operational_site Napoli Pozzuoli
 ```
 
 ### `prepare_next_year_holidays`

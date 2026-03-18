@@ -14,7 +14,7 @@ python manage.py import_release_data /percorso/release-export.json --mode merge
 ```
 
 3. dalla versione precedente, accedere come `superuser`, aprire `Setting -> Importa utenti` e scaricare il CSV
-4. usare il CSV scaricato per allineare afferenza territoriale/flag utente su questa versione:
+4. usare il CSV scaricato per allineare sede operativa/flag utente su questa versione:
 
 ```bash
 python manage.py update_user_sites_from_csv /percorso/file.csv --site-column department --site-mode last-word
@@ -26,16 +26,16 @@ In alternativa, i passaggi CSV ICB sono disponibili anche dalla Pagina di Ammini
 
 Nota LDAP attuale:
 - con autenticazione LDAP attiva, un utente non presente in locale viene creato automaticamente al primo login riuscito
-- il superuser riceve una email di onboarding per completare configurazioni applicative (Afferenza territoriale, referente, AILA, ecc.)
+- il superuser riceve una email di onboarding per completare configurazioni applicative (Sede operativa, referente, AILA, ecc.)
 
-## Aggiornamento afferenza territoriale utenti da CSV (match su email)
+## Aggiornamento sede operativa utenti da CSV (match su email)
 
 Procedura consigliata dalla versione precedente:
 - accedere come `superuser`
 - aprire `Setting -> Importa utenti`
 - scaricare il file CSV da utilizzare per l'import
 
-Puoi aggiornare in batch la `Afferenza territoriale` degli utenti locali con:
+Puoi aggiornare in batch la `Sede operativa` degli utenti locali con:
 
 ```bash
 python manage.py update_user_sites_from_csv /percorso/file.csv
@@ -43,7 +43,7 @@ python manage.py update_user_sites_from_csv /percorso/file.csv
 
 Assunzioni default:
 - colonna email: `email`
-- colonna afferenza territoriale: `sede`
+- colonna sede operativa: `sede`
 - delimitatore: `,`
 
 Opzioni utili:
@@ -79,15 +79,15 @@ Note:
 - con `--import-groups`, la prima parola di `department` viene usata come nome gruppo Django:
   - il gruppo viene creato se non esiste
   - l'utente viene associato al gruppo
-- vengono accettate solo afferenze territoriali presenti in `AGILE_SITES`
-- con `--site-mode last-word` l'afferenza territoriale viene estratta come ultima parola del campo sorgente (es. `Ufficio Ricerca Napoli` -> `Napoli`)
+- vengono accettate solo sedi operative presenti in `AGILE_SITES`
+- con `--site-mode last-word` la sede operativa viene estratta come ultima parola del campo sorgente (es. `Ufficio Ricerca Napoli` -> `Napoli`)
 - se il campo sorgente contiene `Default`, la riga viene ignorata
-- quando l'afferenza territoriale viene impostata correttamente, il comando imposta anche `Sottoscrizione AILA` a `Si`
-- quando l'afferenza territoriale viene impostata correttamente, il comando imposta anche `is_active=Si`
-- regole automatiche per referente/auto-approvazione per afferenza territoriale:
+- quando la sede operativa viene impostata correttamente, il comando imposta anche `Sottoscrizione AILA` a `Si`
+- quando la sede operativa viene impostata correttamente, il comando imposta anche `is_active=Si`
+- regole automatiche per referente/auto-approvazione per sede operativa:
   - `Sede A (oscurata)` -> referente assegnato (oscurato), `auto_approve=Si`
   - `Sede B (oscurata)` -> referente assegnato (oscurato), `auto_approve=No`
   - `Sede C (oscurata)` -> referente assegnato (oscurato), `auto_approve=No`
   - `Sede D (oscurata)` -> referente assegnato (oscurato), `auto_approve=No`
 - se un utente viene usato come referente da queste regole e non e gia `ADMIN`/`SUPERADMIN`, viene impostato a ruolo `Responsabile approvazione` (`ADMIN`)
-- il comando stampa un report finale con aggiornati/invariati/non trovati/afferenze territoriali non valide
+- il comando stampa un report finale con aggiornati/invariati/non trovati/sedi operative non valide
