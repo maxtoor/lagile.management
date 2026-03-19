@@ -79,6 +79,9 @@ class CustomUserAdminForm(UserChangeForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if 'department' in self.fields:
+            self.fields['department'].label = 'Sede operativa'
+            self.fields['department'].help_text = "Impostare la sede operativa dell'utente"
         if not self.is_bound and getattr(self.instance, 'pk', None):
             if 'user_approved' in self.fields:
                 current = not bool(getattr(self.instance, 'onboarding_pending', False))
@@ -1023,12 +1026,25 @@ class DepartmentPolicyAdmin(CollapseMediaMixin, admin.ModelAdmin):
     list_display = ('department', 'max_remote_days', 'february_max_remote_days', 'require_on_site_prevalence')
     search_fields = ('department',)
 
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if 'department' in form.base_fields:
+            form.base_fields['department'].label = 'Sede operativa'
+        return form
+
 
 @admin.register(Holiday)
 class HolidayAdmin(CollapseMediaMixin, admin.ModelAdmin):
     list_display = ('day', 'name', 'department')
     list_filter = ('department',)
     search_fields = ('name', 'department')
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if 'department' in form.base_fields:
+            form.base_fields['department'].label = 'Sede operativa'
+            form.base_fields['department'].help_text = 'Vuoto = festivita valida per tutte le sedi operative'
+        return form
 
 
 @admin.register(ChangeRequest)
