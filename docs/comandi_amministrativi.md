@@ -302,7 +302,7 @@ python manage.py prepare_next_year_holidays --force --year 2027
 
 - utenti
 - gruppi
-- policy afferenze territoriali
+- policy sedi operative
 - festivita
 - template email di sistema
 - impostazioni applicazione

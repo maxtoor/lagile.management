@@ -383,7 +383,7 @@ Per trasferire configurazione e anagrafica base tra installazioni (es. bootstrap
 Contenuti esportati:
 - utenti (anagrafica applicativa, ruolo, referente, gruppi, stato AILA/auto-approvazione)
 - gruppi
-- policy afferenze territoriali (`DepartmentPolicy`)
+- policy sedi operative (`DepartmentPolicy`)
 - festivita (`Holiday`)
 - template email di sistema
 - impostazioni applicazione (`AppSetting`)
