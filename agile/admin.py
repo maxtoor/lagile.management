@@ -121,6 +121,15 @@ class CustomUserAdminForm(UserChangeForm):
             cleaned['onboarding_pending'] = not bool(cleaned['user_approved'])
         return cleaned
 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if 'user_approved' in self.cleaned_data:
+            instance.onboarding_pending = not bool(self.cleaned_data['user_approved'])
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
+
 
 @admin.register(User)
 class CustomUserAdmin(CollapseMediaMixin, UserAdmin):
