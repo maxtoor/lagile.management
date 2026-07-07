@@ -7,7 +7,7 @@ Questa guida descrive esclusivamente l'importazione dei dati storici della versi
 Per il flusso completo servono:
 
 - `ICB_backup.csv`
-  - backup CSV completo usato per utenti, afferenze territoriali, referenti e storico `Programmazione`
+  - backup CSV completo usato per utenti, sedi operative, referenti e storico `Programmazione`
 - `ICB_leaves_report_between_2025_01_01_and_2026_12_31.csv`
   - leaves report legacy usato per stati e note/attivita
 
@@ -105,7 +105,7 @@ Leaves report CSV:
 
 ## Note pratiche
 
-- `ICB_backup.csv` resta la sorgente principale per utenti, afferenze territoriali e storico giorni
+- `ICB_backup.csv` resta la sorgente principale per utenti, sedi operative e storico giorni
 - il `Leaves report` completa stati e descrizioni attivita
 - il bundle usa un matching utenti prudente:
   - match email

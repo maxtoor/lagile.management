@@ -11,7 +11,7 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 | `ALLOWED_HOSTS` | Si | `localhost,127.0.0.1` | Hostname/domini ammessi (separati da virgola). |
 | `CSRF_TRUSTED_ORIGINS` | No | vuoto | Origin HTTPS fidati per POST Django, separati da virgola. Necessario per admin dietro dominio HTTPS, es. `https://lagile.na.icb.cnr.it`. |
 | `TIME_ZONE` | No | `Europe/Rome` | Fuso orario applicazione. |
-| `AGILE_SITES` | No | `Sede principale` | Elenco afferenze territoriali ammesse (CSV). Esempio multi-sede: `Napoli,Catania,Sassari,Padova`. |
+| `AGILE_SITES` | No | `Sede principale` | Elenco sedi operative ammesse (CSV). Esempio multi-sede: `Napoli,Catania,Sassari,Padova`. |
 | `AGILE_DATE_DISPLAY_FORMAT` | No | `IT` | Formato data nel portale (`IT` o `ISO`). |
 | `AGILE_LOGIN_LOGO_URL` | No | vuoto | URL assoluto logo schermata login. |
 | `AGILE_FAVICON_URL` | No | vuoto | URL assoluto favicon applicazione. Se vuoto usa la favicon statica di default inclusa nel progetto. |
