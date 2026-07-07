@@ -4128,8 +4128,12 @@
 
       function openPlanDetails(plan, { changeRequest = null } = {}) {
         const days = [...(plan.days || [])].sort((a, b) => a.day.localeCompare(b.day));
+        const holidayDays = new Set(plan.holiday_days || []);
         const remote = days.filter((d) => d.work_type === "REMOTE").length;
-        const onSite = days.filter((d) => d.work_type === "ON_SITE").length;
+        const workingDays = workingDaysOfMonth(Number(plan.year), Number(plan.month))
+          .map((d) => toIsoDate(d))
+          .filter((iso) => !holidayDays.has(iso));
+        const onSite = Math.max(0, workingDays.length - remote);
         const planUserLabel = `${plan.user?.first_name || ""} ${plan.user?.last_name || ""}`.trim() || plan.user?.username || "-";
         const titlePrefix = changeRequest
           ? "Richiesta variazione"
@@ -4187,8 +4191,9 @@
           cell.className = "details-day";
           const d = new Date(year, month - 1, dayNumber);
           const iso = toIsoDate(d);
-          const entry = dayMap[iso];
+          const entry = dayMap[iso] || { day: iso, work_type: "ON_SITE", notes: "" };
           const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+          const isHoliday = holidayDays.has(iso);
 
           const head = document.createElement("div");
           head.className = "details-day-head";
@@ -4198,11 +4203,12 @@
           `;
           cell.appendChild(head);
 
-          if (isWeekend || !entry) {
+          if (isWeekend || isHoliday) {
             cell.classList.add("non-working");
             const status = document.createElement("div");
             status.className = "details-day-status";
-            status.textContent = isWeekend ? "Weekend" : "Non lavorativo";
+            const holidayItem = (plan.holiday_items || []).find((item) => item.day === iso);
+            status.textContent = isHoliday ? (holidayItem?.name || "Festivita") : "Weekend";
             cell.appendChild(status);
             detailsCalendar.appendChild(cell);
             continue;
@@ -4211,6 +4217,7 @@
           cell.classList.add("working");
           cell.classList.add(entry.work_type === "REMOTE" ? "mode-remote" : "mode-onsite");
           cell.dataset.day = iso;
+          detailsDayMap[iso] = entry;
           const modeLabel = document.createElement("div");
           modeLabel.className = "details-day-mode";
           modeLabel.textContent = entry.work_type === "REMOTE" ? "Lavoro agile" : "In sede";
