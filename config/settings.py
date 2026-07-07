@@ -67,6 +67,7 @@ def normalize_log_sources(raw_value: str) -> str:
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-change-me')
 DEBUG = os.getenv('DEBUG', '0') == '1'
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
+CSRF_TRUSTED_ORIGINS = csv_env('CSRF_TRUSTED_ORIGINS', '')
 AGILE_SITES = csv_env('AGILE_SITES', 'Sede principale')
 AGILE_DATE_DISPLAY_FORMAT = os.getenv('AGILE_DATE_DISPLAY_FORMAT', 'IT').upper()
 AGILE_LOGIN_LOGO_URL = os.getenv('AGILE_LOGIN_LOGO_URL', '').strip()

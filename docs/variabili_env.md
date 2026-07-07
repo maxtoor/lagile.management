@@ -9,6 +9,7 @@ Questo documento descrive tutte le variabili ambiente supportate dal progetto.
 | `DJANGO_SECRET_KEY` | Si | `dev-secret-change-me` | Chiave segreta Django. In produzione deve essere robusta e privata. |
 | `DEBUG` | No | `0` | `1` abilita debug Django (solo sviluppo). |
 | `ALLOWED_HOSTS` | Si | `localhost,127.0.0.1` | Hostname/domini ammessi (separati da virgola). |
+| `CSRF_TRUSTED_ORIGINS` | No | vuoto | Origin HTTPS fidati per POST Django, separati da virgola. Necessario per admin dietro dominio HTTPS, es. `https://lagile.na.icb.cnr.it`. |
 | `TIME_ZONE` | No | `Europe/Rome` | Fuso orario applicazione. |
 | `AGILE_SITES` | No | `Sede principale` | Elenco afferenze territoriali ammesse (CSV). Esempio multi-sede: `Napoli,Catania,Sassari,Padova`. |
 | `AGILE_DATE_DISPLAY_FORMAT` | No | `IT` | Formato data nel portale (`IT` o `ISO`). |
