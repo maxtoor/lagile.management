@@ -507,12 +507,30 @@ class AdminOverviewView(APIView):
             )
         )
         visible_users = [user for user in users if bool(getattr(user, 'aila_subscribed', False))]
+        days_in_month = monthrange(year, month)[1]
+        holiday_days_cache: dict[str, set[date]] = {}
+
+        def working_days_count_for_department(department: str) -> int:
+            department_key = department or ''
+            if department_key not in holiday_days_cache:
+                holiday_days_cache[department_key] = MonthlyPlan.holiday_days_for_month(
+                    year=year,
+                    month=month,
+                    department=department_key,
+                )
+            holidays = holiday_days_cache[department_key]
+            return sum(
+                1
+                for day_number in range(1, days_in_month + 1)
+                if (current_day := date(year, month, day_number)).weekday() < 5
+                and current_day not in holidays
+            )
+
         plans = list(
             MonthlyPlan.objects.filter(user__in=users_qs, year=year, month=month)
             .select_related('user')
             .annotate(
                 remote_days_count=Count('days', filter=Q(days__work_type='REMOTE')),
-                on_site_days_count=Count('days', filter=Q(days__work_type='ON_SITE')),
             )
         )
         plans_by_user_id = {plan.user_id: plan for plan in plans}
@@ -548,8 +566,8 @@ class AdminOverviewView(APIView):
                 continue
 
             remote_days = int(getattr(plan, 'remote_days_count', 0) or 0)
-            on_site_days = int(getattr(plan, 'on_site_days_count', 0) or 0)
-            total_days = remote_days + on_site_days
+            total_days = working_days_count_for_department(user.department or '')
+            on_site_days = max(0, total_days - remote_days)
             status_totals[plan.status] = status_totals.get(plan.status, 0) + 1
             rows.append(
                 {

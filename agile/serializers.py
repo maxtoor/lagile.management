@@ -210,6 +210,8 @@ class MonthlyPlanSerializer(serializers.ModelSerializer):
     days = PlanDaySerializer(many=True)
     user = UserSerializer(read_only=True)
     approved_days_snapshot = serializers.JSONField(read_only=True)
+    holiday_days = serializers.SerializerMethodField()
+    holiday_items = serializers.SerializerMethodField()
     has_pending_change_request = serializers.SerializerMethodField()
     has_approved_snapshot = serializers.SerializerMethodField()
     latest_change_request_status = serializers.SerializerMethodField()
@@ -228,6 +230,8 @@ class MonthlyPlanSerializer(serializers.ModelSerializer):
             'approved_at',
             'rejection_reason',
             'approved_days_snapshot',
+            'holiday_days',
+            'holiday_items',
             'has_pending_change_request',
             'has_approved_snapshot',
             'latest_change_request_status',
@@ -237,6 +241,28 @@ class MonthlyPlanSerializer(serializers.ModelSerializer):
             'updated_at',
         )
         read_only_fields = ('status', 'submitted_at', 'approved_by', 'approved_at', 'created_at', 'updated_at')
+
+    def _holiday_labels(self, obj):
+        if not hasattr(obj, '_serializer_holiday_labels'):
+            obj._serializer_holiday_labels = MonthlyPlan.holiday_labels_for_month(
+                year=obj.year,
+                month=obj.month,
+                department=obj.user.department,
+            )
+        return obj._serializer_holiday_labels
+
+    def get_holiday_days(self, obj):
+        return [day.isoformat() for day in sorted(self._holiday_labels(obj).keys())]
+
+    def get_holiday_items(self, obj):
+        labels = self._holiday_labels(obj)
+        return [
+            {
+                'day': day.isoformat(),
+                'name': labels.get(day, 'Festivita'),
+            }
+            for day in sorted(labels.keys())
+        ]
 
     def get_has_pending_change_request(self, obj):
         if hasattr(obj, 'has_pending_change_request_db'):
