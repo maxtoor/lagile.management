@@ -153,6 +153,7 @@ Impostazioni minime consigliate per deploy nativo Ubuntu 20:
 DJANGO_SECRET_KEY=una-chiave-forte
 DEBUG=0
 ALLOWED_HOSTS=localhost,127.0.0.1,timeoff
+CSRF_TRUSTED_ORIGINS=
 TIME_ZONE=Europe/Rome
 
 POSTGRES_DB=agile_work
@@ -166,6 +167,14 @@ AGILE_PUBLIC_BASE_URL=http://timeoff:8000
 AGILE_LOG_FILE=/opt/containers/lagile-management/logs/agile.log
 AGILE_LOG_MONITOR_FILE=/opt/containers/lagile-management/logs/agile.log
 AGILE_LOG_MONITOR_SOURCES=app:/opt/containers/lagile-management/logs/agile.log;scheduler:/opt/containers/lagile-management/logs/scheduler.log
+```
+
+Se l'applicazione e pubblicata dietro un dominio HTTPS, aggiungi anche l'origin completo usato dal browser:
+
+```env
+ALLOWED_HOSTS=localhost,127.0.0.1,timeoff,lagile.na.icb.cnr.it
+CSRF_TRUSTED_ORIGINS=https://lagile.na.icb.cnr.it
+AGILE_PUBLIC_BASE_URL=https://lagile.na.icb.cnr.it
 ```
 
 Se serve SMTP o LDAP, completa il resto delle variabili secondo la tua installazione.
