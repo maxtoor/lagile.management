@@ -788,6 +788,10 @@
         background: #ecfaf2;
       }
 
+      .shared-calendar-cell.mode-remote-pending {
+        background: #fff6dc;
+      }
+
       .shared-calendar-empty-state {
         padding: 18px;
         color: var(--muted);
@@ -840,6 +844,11 @@
       .shared-calendar-legend-swatch.remote {
         background: #ecfaf2;
         border-color: #b8e4cb;
+      }
+
+      .shared-calendar-legend-swatch.remote-pending {
+        background: #fff6dc;
+        border-color: #efd285;
       }
 
       .shared-calendar-legend-swatch.non-working {
@@ -2059,7 +2068,11 @@
               <div class="shared-calendar-legend" aria-label="Legenda calendario condiviso">
                 <span class="shared-calendar-legend-item">
                   <span class="shared-calendar-legend-swatch remote"></span>
-                  <span>Lavoro agile (LA)</span>
+                  <span>LA approvato</span>
+                </span>
+                <span class="shared-calendar-legend-item">
+                  <span class="shared-calendar-legend-swatch remote-pending"></span>
+                  <span>LA in attesa</span>
                 </span>
                 <span class="shared-calendar-legend-item">
                   <span class="shared-calendar-legend-swatch non-working"></span>
@@ -2067,7 +2080,7 @@
                 </span>
                 <span class="shared-calendar-legend-item">
                   <span class="shared-calendar-legend-swatch"></span>
-                  <span>In sede o Nessun piano approvato</span>
+                  <span>In sede o Nessun piano</span>
                 </span>
               </div>
               <div class="shared-calendar-pager">
@@ -4466,8 +4479,10 @@
           const tr = document.createElement("tr");
           const nameCell = document.createElement("td");
           nameCell.className = "shared-calendar-name-cell";
-          if (!row.has_approved_plan) nameCell.classList.add("is-muted");
-          nameCell.innerHTML = `<div><div class="shared-calendar-user-name${row.has_approved_plan ? "" : " is-muted"}">${row.name}</div></div>`;
+          const hasVisiblePlan = Boolean(row.has_visible_plan || row.has_approved_plan);
+          const isSubmittedPlan = row.plan_status === "SUBMITTED";
+          if (!hasVisiblePlan) nameCell.classList.add("is-muted");
+          nameCell.innerHTML = `<div><div class="shared-calendar-user-name${hasVisiblePlan ? "" : " is-muted"}">${row.name}</div></div>`;
           tr.appendChild(nameCell);
           if (tbody.children.length === 0) {
             const leftControlCell = document.createElement("td");
@@ -4479,22 +4494,22 @@
 
           sharedCalendarDays.forEach((day) => {
             const explicitWorkType = row.cells?.[day.date] || "";
-            const workType = row.has_approved_plan && !day.is_weekend && !day.is_holiday
+            const workType = hasVisiblePlan && !day.is_weekend && !day.is_holiday
               ? (explicitWorkType || "ON_SITE")
               : explicitWorkType;
             const td = document.createElement("td");
             td.className = "shared-calendar-cell";
             if (day.is_weekend) td.classList.add("is-weekend");
             if (day.is_holiday) td.classList.add("is-holiday");
-            if (row.has_approved_plan) {
-              if (workType === "REMOTE") td.classList.add("mode-remote");
+            if (hasVisiblePlan) {
+              if (workType === "REMOTE") td.classList.add(isSubmittedPlan ? "mode-remote-pending" : "mode-remote");
               if (workType === "ON_SITE") td.classList.add("mode-onsite");
             }
             const label = workType === "REMOTE" ? "LA" : "";
-            td.title = !row.has_approved_plan
-              ? `${row.name} - nessun piano approvato per ${String(month).padStart(2, "0")}/${year}`
+            td.title = !hasVisiblePlan
+              ? `${row.name} - nessun piano visibile per ${String(month).padStart(2, "0")}/${year}`
               : workType === "REMOTE"
-                ? `${row.name} - lavoro agile ${day.date}`
+                ? `${row.name} - lavoro agile ${isSubmittedPlan ? "in attesa" : "approvato"} ${day.date}`
                 : workType === "ON_SITE"
                   ? `${row.name} - in sede ${day.date}`
                   : (day.holiday_name || "");
