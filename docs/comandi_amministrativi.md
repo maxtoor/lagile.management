@@ -172,6 +172,29 @@ python manage.py send_manager_monthly_summary --force
 python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run
 ```
 
+### `auto_approve_expired_plans`
+
+**Quando si usa**
+
+- come job schedulato dopo la chiusura del mese
+- per applicare il silenzio assenso sui piani rimasti in attesa di approvazione
+
+**Cosa fa**
+
+- cerca i piani `SUBMITTED` dei mesi gia conclusi
+- li imposta ad `APPROVED` senza inviare email
+- valorizza `approved_at`, lascia `approved_by` vuoto e cattura lo snapshot approvato
+- scrive un audit log tecnico `plan_silence_approved`
+- non tocca piani del mese corrente, mesi futuri, bozze, approvati o rifiutati
+
+**Esempi**
+
+```bash
+python manage.py auto_approve_expired_plans --dry-run
+python manage.py auto_approve_expired_plans
+python manage.py auto_approve_expired_plans --date 2026-04-01 --dry-run
+```
+
 ## Audit log
 
 ### `purge_audit_logs`
