@@ -310,6 +310,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # Riepilogo responsabili: controllo ogni ora
 10 * * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py send_manager_monthly_summary >> /opt/containers/lagile-management/logs/scheduler.log 2>&1
 
+# Silenzio assenso piani scaduti: controllo giornaliero
+15 1 * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py auto_approve_expired_plans >> /opt/containers/lagile-management/logs/scheduler.log 2>&1
+
 # Preparazione festivita anno successivo: controllo giornaliero
 20 6 * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py prepare_next_year_holidays >> /opt/containers/lagile-management/logs/scheduler.log 2>&1
 
