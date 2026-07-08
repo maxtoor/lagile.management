@@ -259,6 +259,7 @@ Crea:
 ```cron
 0 * * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py send_submission_reminders >> logs/scheduler.log 2>&1
 5 * * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py send_manager_monthly_summary >> logs/scheduler.log 2>&1
+15 1 * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py auto_approve_expired_plans >> logs/scheduler.log 2>&1
 10 * * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py prepare_next_year_holidays >> logs/scheduler.log 2>&1
 15 * * * * root cd /opt/containers/lagile-management && ./.venv/bin/python manage.py check_ldap_user_presence >> logs/scheduler.log 2>&1
 ```
