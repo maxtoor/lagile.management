@@ -49,7 +49,7 @@ Caratteristiche operative della vista:
 - nessun dettaglio apribile cliccando il nome del collega
 - evidenza principale sulle giornate `LA`
 - weekend e festivita con lo stesso sfondo tenue
-- colleghi senza piano approvato mostrati con nome attenuato
+- colleghi senza piano visibile, cioe senza piano approvato o in attesa, mostrati con nome attenuato
 
 La vista e stata verificata anche nel contesto reale Ubuntu 20 come estensione compatibile della shell transitoria.
 

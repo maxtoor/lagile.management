@@ -370,8 +370,9 @@ class AdminSharedCalendarView(APIView):
             ).select_related('manager').prefetch_related('groups')
         )
 
+        visible_plan_statuses = {MonthlyPlan.Status.APPROVED, MonthlyPlan.Status.SUBMITTED}
         plans = list(
-            MonthlyPlan.objects.filter(user__in=users_qs, year=year, month=month, status='APPROVED')
+            MonthlyPlan.objects.filter(user__in=users_qs, year=year, month=month, status__in=visible_plan_statuses)
             .select_related('user')
             .prefetch_related('days')
         )
@@ -406,12 +407,18 @@ class AdminSharedCalendarView(APIView):
             plan = plans_by_user_id.get(user.id)
             day_cells = {}
             if plan:
-                for item in (plan.approved_days_snapshot or []):
-                    day_raw = item.get('day')
-                    work_type = item.get('work_type')
-                    if not day_raw or work_type not in {'ON_SITE', 'REMOTE'}:
-                        continue
-                    day_cells[str(day_raw)] = work_type
+                if plan.status == MonthlyPlan.Status.APPROVED:
+                    for item in (plan.approved_days_snapshot or []):
+                        day_raw = item.get('day')
+                        work_type = item.get('work_type')
+                        if not day_raw or work_type not in {'ON_SITE', 'REMOTE'}:
+                            continue
+                        day_cells[str(day_raw)] = work_type
+                else:
+                    for item in plan.days.all():
+                        if item.work_type not in {'ON_SITE', 'REMOTE'}:
+                            continue
+                        day_cells[item.day.isoformat()] = item.work_type
             rows.append(
                 {
                     'user_id': user.id,
@@ -420,7 +427,9 @@ class AdminSharedCalendarView(APIView):
                     'department': user.department or '',
                     'groups': sorted(group.name for group in user.groups.all()),
                     'manager_name': '',
-                    'has_approved_plan': bool(plan),
+                    'has_approved_plan': bool(plan and plan.status == MonthlyPlan.Status.APPROVED),
+                    'has_visible_plan': bool(plan),
+                    'plan_status': plan.status if plan else '',
                     'cells': day_cells,
                 }
             )
