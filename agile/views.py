@@ -949,6 +949,39 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
             AuditLog.track(actor=request.user, action='plan_submitted', target_type='MonthlyPlan', target_id=plan.id)
         return Response(self.get_serializer(plan).data)
 
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        plan = self.get_object()
+        if plan.user_id != request.user.id:
+            return Response({'detail': 'Puoi ritirare solo i tuoi piani'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            self._assert_programming_enabled(plan_owner_id=plan.user_id)
+        except ValidationError as exc:
+            return Response({'detail': exc.detail}, status=status.HTTP_400_BAD_REQUEST)
+        if (plan.year, plan.month) != self._next_year_month():
+            return Response(
+                {'detail': 'Il ritiro e consentito solo per il mese successivo'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if plan.status != MonthlyPlan.Status.SUBMITTED:
+            return Response(
+                {'detail': 'Puoi ritirare solo un piano inviato e non ancora approvato'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        plan.status = MonthlyPlan.Status.DRAFT
+        plan.submitted_at = None
+        plan.rejection_reason = ''
+        plan.save(update_fields=['status', 'submitted_at', 'rejection_reason', 'updated_at'])
+        AuditLog.track(
+            actor=request.user,
+            action='plan_withdrawn',
+            target_type='MonthlyPlan',
+            target_id=plan.id,
+            metadata={'year': plan.year, 'month': plan.month},
+        )
+        return Response(self.get_serializer(plan).data)
+
     @action(detail=True, methods=['post'], permission_classes=[IsAdminOrSuperAdmin])
     def review(self, request, pk=None):
         plan = self.get_object()
