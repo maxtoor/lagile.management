@@ -3142,7 +3142,9 @@
         const programmingEnabled = hasAilaSubscription();
         const draftChanged = hasDraftChanges();
         const hasSubmissionReady = hasDifferencesFromDefaultPlan();
-        const hasChangeRequestReady = hasDifferencesFromApproved();
+        const hasChangeRequestReady =
+          hasDifferencesFromApproved() ||
+          Boolean(currentPlan && !hasApprovedSnapshot && draftChanged);
         const editingOverlayActive =
           draftChanged &&
           (currentDisplayStatus === "APPROVED" ||
@@ -3535,7 +3537,7 @@
       }
 
       function isPendingRequestState() {
-        return currentDisplayStatus === "PENDING";
+        return Boolean(currentMonthContext.hasPendingChangeRequest);
       }
 
       function dayModalMode() {
