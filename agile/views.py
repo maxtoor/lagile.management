@@ -321,6 +321,51 @@ class MonthHolidaysView(APIView):
         )
 
 
+class ImpersonationStartView(APIView):
+    def post(self, request):
+        if not request.user.is_superuser:
+            return Response({'detail': 'Solo i superuser possono impersonare un utente'}, status=status.HTTP_403_FORBIDDEN)
+
+        target_id = request.data.get('user_id')
+        target = User.objects.filter(id=target_id, is_active=True).first()
+        if not target:
+            return Response({'detail': 'Utente non trovato'}, status=status.HTTP_404_NOT_FOUND)
+        if target.is_superuser:
+            return Response({'detail': 'Non e consentito impersonare un altro superuser'}, status=status.HTTP_400_BAD_REQUEST)
+        if target.id == request.user.id:
+            return Response({'detail': 'Non puoi impersonare te stesso'}, status=status.HTTP_400_BAD_REQUEST)
+
+        token, _ = Token.objects.get_or_create(user=target)
+        AuditLog.track(
+            actor=request.user,
+            action='impersonation_started',
+            target_type='User',
+            target_id=target.id,
+            metadata={'target_username': target.username},
+        )
+        return Response({'token': token.key, 'user': UserSerializer(target).data})
+
+
+class ImpersonationStopView(APIView):
+    def post(self, request):
+        original_token = (request.data.get('original_token') or '').strip()
+        if not original_token:
+            return Response({'detail': 'Token originale mancante'}, status=status.HTTP_400_BAD_REQUEST)
+
+        token = Token.objects.select_related('user').filter(key=original_token).first()
+        if not token or not token.user.is_active or not token.user.is_superuser:
+            return Response({'detail': 'Token originale non valido'}, status=status.HTTP_403_FORBIDDEN)
+
+        AuditLog.track(
+            actor=token.user,
+            action='impersonation_stopped',
+            target_type='User',
+            target_id=request.user.id,
+            metadata={'target_username': request.user.username},
+        )
+        return Response({'token': token.key, 'user': UserSerializer(token.user).data})
+
+
 class AdminSharedCalendarView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -513,6 +558,7 @@ class AdminOverviewView(APIView):
                 'department',
                 'aila_subscribed',
                 'auto_approve',
+                'is_superuser',
             )
         )
         visible_users = [user for user in users if bool(getattr(user, 'aila_subscribed', False))]
@@ -564,6 +610,7 @@ class AdminOverviewView(APIView):
                         'department': user.department or '',
                         'aila_subscribed': bool(getattr(user, 'aila_subscribed', False)),
                         'auto_approve': bool(getattr(user, 'auto_approve', False)),
+                        'is_superuser': bool(getattr(user, 'is_superuser', False)),
                         'plan_id': None,
                         'status': 'MISSING',
                         'remote_days': 0,
@@ -587,6 +634,7 @@ class AdminOverviewView(APIView):
                     'department': user.department or '',
                     'aila_subscribed': bool(getattr(user, 'aila_subscribed', False)),
                     'auto_approve': bool(getattr(user, 'auto_approve', False)),
+                    'is_superuser': bool(getattr(user, 'is_superuser', False)),
                     'plan_id': plan.id,
                     'status': plan.status,
                     'remote_days': remote_days,
