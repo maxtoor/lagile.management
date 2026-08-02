@@ -1067,21 +1067,39 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
         serializer = ChangeRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if plan.change_requests.filter(status=ChangeRequest.Status.PENDING).exists():
-            return Response({'detail': 'Esiste gia una richiesta variazione in attesa'}, status=status.HTTP_400_BAD_REQUEST)
+        pending_change_request = plan.change_requests.filter(status=ChangeRequest.Status.PENDING).order_by('-created_at').first()
 
         now = timezone.now()
         with transaction.atomic():
             if request.user.auto_approve:
-                change_request = ChangeRequest.objects.create(
-                    plan=plan,
-                    user=request.user,
-                    reason=serializer.validated_data['reason'],
-                    status=ChangeRequest.Status.APPROVED,
-                    response_reason='Approvazione automatica',
-                    processed_by=request.user,
-                    processed_at=now,
-                )
+                if pending_change_request:
+                    pending_change_request.user = request.user
+                    pending_change_request.reason = serializer.validated_data['reason']
+                    pending_change_request.status = ChangeRequest.Status.APPROVED
+                    pending_change_request.response_reason = 'Approvazione automatica'
+                    pending_change_request.processed_by = request.user
+                    pending_change_request.processed_at = now
+                    pending_change_request.save(
+                        update_fields=[
+                            'user',
+                            'reason',
+                            'status',
+                            'response_reason',
+                            'processed_by',
+                            'processed_at',
+                        ]
+                    )
+                    change_request = pending_change_request
+                else:
+                    change_request = ChangeRequest.objects.create(
+                        plan=plan,
+                        user=request.user,
+                        reason=serializer.validated_data['reason'],
+                        status=ChangeRequest.Status.APPROVED,
+                        response_reason='Approvazione automatica',
+                        processed_by=request.user,
+                        processed_at=now,
+                    )
                 plan.status = MonthlyPlan.Status.APPROVED
                 plan.approved_by = request.user
                 plan.approved_at = now
@@ -1100,14 +1118,24 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_201_CREATED,
                 )
 
-            change_request = ChangeRequest.objects.create(
-                plan=plan,
-                user=request.user,
-                reason=serializer.validated_data['reason'],
-            )
+            if pending_change_request:
+                pending_change_request.reason = serializer.validated_data['reason']
+                pending_change_request.user = request.user
+                pending_change_request.save(update_fields=['reason', 'user'])
+                change_request = pending_change_request
+                action = 'plan_change_request_updated'
+                response_detail = 'Richiesta variazione aggiornata'
+            else:
+                change_request = ChangeRequest.objects.create(
+                    plan=plan,
+                    user=request.user,
+                    reason=serializer.validated_data['reason'],
+                )
+                action = 'plan_change_requested'
+                response_detail = 'Richiesta variazione inviata'
             AuditLog.track(
                 actor=request.user,
-                action='plan_change_requested',
+                action=action,
                 target_type='ChangeRequest',
                 target_id=change_request.id,
                 metadata={'plan_id': plan.id},
@@ -1133,7 +1161,7 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
                         'error': str(exc),
                     },
                 )
-        return Response({'detail': 'Richiesta variazione inviata', 'auto_approved': False}, status=status.HTTP_201_CREATED)
+        return Response({'detail': response_detail, 'auto_approved': False}, status=status.HTTP_201_CREATED)
 
 
 class ChangeRequestViewSet(viewsets.ReadOnlyModelViewSet):

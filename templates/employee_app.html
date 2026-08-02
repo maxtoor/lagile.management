@@ -3148,8 +3148,8 @@
             : "Richiedi approvazione";
         }
         if (requestChangeBtn) {
-          requestChangeBtn.textContent = currentDisplayStatus === "PENDING"
-            ? "In attesa approvazione"
+          requestChangeBtn.textContent = currentMonthContext.hasPendingChangeRequest
+            ? "Aggiorna variazione"
             : "Richiedi variazione";
         }
       }
@@ -3239,7 +3239,6 @@
         requestChangeBtn.disabled =
           !programmingEnabled ||
           !isCurrentMonth ||
-          hasPendingChangeRequest ||
           !hasChangeRequestReady;
 
         viewReasonBtn.classList.toggle(
@@ -3611,12 +3610,8 @@
         return days.some((dayIso) => dayDiffersFromApproved(dayIso));
       }
 
-      function isPendingRequestState() {
-        return Boolean(currentMonthContext.hasPendingChangeRequest);
-      }
-
       function dayModalMode() {
-        return (calendarReadonly || isPendingRequestState()) ? "view" : "edit";
+        return calendarReadonly ? "view" : "edit";
       }
 
       function renderCalendar(daysMap = {}) {
@@ -4009,12 +4004,11 @@
 
         const editableMonth = isCurrentMonth || isNextMonth;
         const readonlyByMonth = !editableMonth;
-        const readonlyByPendingChangeRequest = isCurrentMonth && hasPendingChangeRequest;
         const readonlyByAilaSubscription = !hasAilaSubscription();
         if (readonlyByAilaSubscription) {
           setStatus("NO_AILA");
         }
-        const readonly = readonlyByMonth || readonlyByPendingChangeRequest || readonlyByAilaSubscription;
+        const readonly = readonlyByMonth || readonlyByAilaSubscription;
         if (readonly) {
           clearSelectedDays();
         }
