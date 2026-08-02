@@ -6,6 +6,8 @@ from .views import (
     AdminSharedCalendarView,
     AdminUserAutoApproveView,
     ChangeRequestViewSet,
+    ImpersonationStartView,
+    ImpersonationStopView,
     LoginView,
     MeView,
     MonthHolidaysView,
@@ -20,6 +22,8 @@ router.register(r'change-requests', ChangeRequestViewSet, basename='change-reque
 urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/me/', MeView.as_view(), name='me'),
+    path('auth/impersonate/', ImpersonationStartView.as_view(), name='impersonate-start'),
+    path('auth/impersonate/stop/', ImpersonationStopView.as_view(), name='impersonate-stop'),
     path('auth/server-date/', ServerDateView.as_view(), name='server-date'),
     path('admin/overview/', AdminOverviewView.as_view(), name='admin-overview'),
     path('admin/shared-calendar/', AdminSharedCalendarView.as_view(), name='admin-shared-calendar'),

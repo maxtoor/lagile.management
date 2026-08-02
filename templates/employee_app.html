@@ -97,6 +97,32 @@
         box-shadow: 0 12px 34px rgba(61, 81, 109, 0.08);
       }
 
+      .impersonation-banner {
+        position: fixed;
+        top: calc(var(--top-strip-height) + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 120;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        border: 1px solid #efd285;
+        border-radius: 999px;
+        background: #fff6dc;
+        color: #74520d;
+        box-shadow: 0 10px 28px rgba(110, 86, 30, 0.16);
+        font-size: 0.88rem;
+        font-weight: 700;
+      }
+
+      .impersonation-banner button {
+        padding: 6px 10px;
+        border-color: #d5ad48;
+        background: #ffffff;
+        color: #74520d;
+      }
+
       .grid {
         display: grid;
         grid-template-columns: 1fr;
@@ -1754,6 +1780,10 @@
         </div>
       </div>
     </div>
+    <div id="impersonationBanner" class="impersonation-banner hidden">
+      <span id="impersonationBannerText"></span>
+      <button id="stopImpersonationBtn" type="button">Torna superuser</button>
+    </div>
     <div class="wrap">
       <section id="userProfileCard" class="card user-profile fixed-top hidden">
         <div class="user-profile-grid">
@@ -2334,6 +2364,8 @@
       const API_BASE = "/api";
       const TOKEN_KEY = "agile_token";
       const USER_KEY = "agile_user";
+      const IMPERSONATION_TOKEN_KEY = "agile_impersonation_original_token";
+      const IMPERSONATION_USER_KEY = "agile_impersonation_original_user";
       const YM_PREF_PREFIX = "agile_ym_pref_v1";
       const LOCAL_DRAFT_PREFIX = "agile_local_draft_v2";
       const HELP_GUIDE_PREF_PREFIX = "agile_help_guide_hidden_v1";
@@ -2374,6 +2406,9 @@
       const softwareInfoLink = document.getElementById("softwareInfoLink");
       const softwareInfoModal = document.getElementById("softwareInfoModal");
       const closeSoftwareInfoBtn = document.getElementById("closeSoftwareInfoBtn");
+      const impersonationBanner = document.getElementById("impersonationBanner");
+      const impersonationBannerText = document.getElementById("impersonationBannerText");
+      const stopImpersonationBtn = document.getElementById("stopImpersonationBtn");
       const pageFooter = document.querySelector(".page-footer");
       const mainMenu = document.getElementById("mainMenu");
       const mainMenuToggle = document.getElementById("mainMenuToggle");
@@ -2709,6 +2744,43 @@
 
       function token() {
         return localStorage.getItem(TOKEN_KEY);
+      }
+
+      function originalImpersonationToken() {
+        return localStorage.getItem(IMPERSONATION_TOKEN_KEY);
+      }
+
+      function isImpersonating() {
+        return Boolean(originalImpersonationToken());
+      }
+
+      function clearImpersonationState() {
+        localStorage.removeItem(IMPERSONATION_TOKEN_KEY);
+        localStorage.removeItem(IMPERSONATION_USER_KEY);
+        updateImpersonationBanner();
+      }
+
+      function updateImpersonationBanner() {
+        if (!impersonationBanner || !impersonationBannerText) return;
+        const originalUserRaw = localStorage.getItem(IMPERSONATION_USER_KEY);
+        let originalUser = null;
+        try {
+          originalUser = originalUserRaw ? JSON.parse(originalUserRaw) : null;
+        } catch (_) {
+          originalUser = null;
+        }
+        const active = isImpersonating() && currentUser;
+        impersonationBanner.classList.toggle("hidden", !active);
+        if (active) {
+          const targetLabel = userFullName(currentUser);
+          const superLabel = originalUser ? userFullName(originalUser) : "superuser";
+          impersonationBannerText.textContent = `Accesso come ${targetLabel} (superuser: ${superLabel})`;
+        }
+      }
+
+      function userFullName(user) {
+        const fullName = `${(user?.first_name || "").trim()} ${(user?.last_name || "").trim()}`.trim();
+        return fullName || user?.username || "-";
       }
 
       function purgeLegacyLocalDrafts() {
@@ -3281,6 +3353,7 @@
           if (profileFirstNameInput) profileFirstNameInput.value = "";
           if (profileLastNameInput) profileLastNameInput.value = "";
           if (profileEmailInput) profileEmailInput.value = "";
+          updateImpersonationBanner();
           return;
         }
         const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "-";
@@ -3301,6 +3374,7 @@
         const showStickyProfile = APP_PAGE === "programming";
         document.body.classList.toggle("has-fixed-profile", showStickyProfile);
         userProfileCard.classList.toggle("hidden", !showStickyProfile);
+        updateImpersonationBanner();
       }
 
       function applyMainPageMode() {
@@ -3383,6 +3457,7 @@
         stopApproverAutoRefresh();
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
+        clearImpersonationState();
         currentDisplayStatus = "EDITING";
         updateSendButtonsLabel();
         renderUserProfile(null);
@@ -3955,8 +4030,58 @@
       }
 
       function queueUserLabel(user) {
-        const fullName = `${(user?.first_name || "").trim()} ${(user?.last_name || "").trim()}`.trim();
-        return fullName || user?.username || "-";
+        return userFullName(user);
+      }
+
+      async function startUserImpersonation(userId, userLabel) {
+        if (!currentUser?.is_superuser || isImpersonating()) return;
+        const result = await askActionDialog({
+          title: "Accesso come utente",
+          message: `Vuoi accedere temporaneamente come ${userLabel}? Le azioni saranno tracciate negli audit log.`,
+          confirmLabel: "Accedi come utente",
+        });
+        if (!result.confirmed) return;
+
+        const originalToken = token();
+        const originalUser = currentUser;
+        const payload = await api("/auth/impersonate/", {
+          method: "POST",
+          body: JSON.stringify({ user_id: userId }),
+        });
+        if (!payload?.token || !payload?.user) {
+          throw new Error("Risposta impersonificazione non valida");
+        }
+        localStorage.setItem(IMPERSONATION_TOKEN_KEY, originalToken || "");
+        localStorage.setItem(IMPERSONATION_USER_KEY, JSON.stringify(originalUser));
+        localStorage.setItem(TOKEN_KEY, payload.token);
+        localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
+        window.location.href = "/";
+      }
+
+      async function stopUserImpersonation() {
+        const originalToken = originalImpersonationToken();
+        if (!originalToken) {
+          clearImpersonationState();
+          window.location.href = "/";
+          return;
+        }
+        try {
+          const payload = await api("/auth/impersonate/stop/", {
+            method: "POST",
+            body: JSON.stringify({ original_token: originalToken }),
+          });
+          localStorage.setItem(TOKEN_KEY, payload.token || originalToken);
+          if (payload.user) {
+            localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
+          } else {
+            localStorage.removeItem(USER_KEY);
+          }
+        } catch (err) {
+          localStorage.setItem(TOKEN_KEY, originalToken);
+          localStorage.removeItem(USER_KEY);
+        }
+        clearImpersonationState();
+        window.location.href = "/admin/overview/";
       }
 
       function renderApproverQueue(plans) {
@@ -4639,6 +4764,9 @@
           const detailAction = row.plan_id
             ? `<button class="btn-small btn-detail" data-overview-plan-id="${row.plan_id}">Dettaglio</button>`
             : "";
+          const impersonateAction = currentUser?.is_superuser && !isImpersonating() && !row.is_superuser && row.user_id !== currentUser.id
+            ? `<button class="btn-small ghost" data-overview-impersonate-user-id="${row.user_id}">Accedi come</button>`
+            : "";
           const autoEnabled = Boolean(row.auto_approve);
           const autoCell = `
             <label style="display:inline-flex;align-items:center;justify-content:center;width:100%">
@@ -4650,7 +4778,8 @@
               />
             </label>
           `;
-          const actionsCell = detailAction ? `<div class="review-actions">${detailAction}</div>` : "-";
+          const actionButtons = [detailAction, impersonateAction].filter(Boolean).join("");
+          const actionsCell = actionButtons ? `<div class="review-actions">${actionButtons}</div>` : "-";
           tr.innerHTML = `
             <td>${userLabel}</td>
             <td>${row.department || "-"}</td>
@@ -5075,6 +5204,7 @@
             if (err.status === 401 || err.status === 403) {
               localStorage.removeItem(TOKEN_KEY);
               localStorage.removeItem(USER_KEY);
+              clearImpersonationState();
             }
             loginOverlay.classList.remove("hidden");
             defocusLoginUsername();
@@ -5112,6 +5242,7 @@
               password: document.getElementById("password").value,
             }),
           });
+          clearImpersonationState();
           localStorage.setItem(TOKEN_KEY, data.token);
           localStorage.setItem(USER_KEY, JSON.stringify(data.user));
           purgeLegacyLocalDrafts();
@@ -5614,6 +5745,20 @@
       });
 
       overviewBody?.addEventListener("click", async (event) => {
+        const impersonateButton = event.target.closest("button[data-overview-impersonate-user-id]");
+        if (impersonateButton) {
+          const userId = impersonateButton.dataset.overviewImpersonateUserId;
+          if (!userId) return;
+          const userRow = overviewRows.find((row) => String(row.user_id) === String(userId));
+          const userLabel = userRow ? queueUserLabel(userRow) : "utente";
+          try {
+            await startUserImpersonation(userId, userLabel);
+          } catch (err) {
+            setFeedback(err.message, "error");
+          }
+          return;
+        }
+
         const autoCheckbox = event.target.closest("input[data-overview-auto-checkbox]");
         if (autoCheckbox) {
           const userId = autoCheckbox.dataset.overviewAutoCheckbox;
@@ -5670,6 +5815,14 @@
           openPlanDetails(selectedPlan);
         } catch (err) {
           setReviewFeedback(err.message, "error");
+        }
+      });
+
+      stopImpersonationBtn?.addEventListener("click", async () => {
+        try {
+          await stopUserImpersonation();
+        } catch (err) {
+          setFeedback(err.message, "error");
         }
       });
 
