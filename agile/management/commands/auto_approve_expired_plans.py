@@ -1,3 +1,4 @@
+from calendar import monthrange
 from datetime import date
 
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -5,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from agile.models import AuditLog, MonthlyPlan
+from agile.models import AuditLog, MonthlyPlan, PlanDay
 
 
 class Command(BaseCommand):
@@ -41,6 +42,57 @@ class Command(BaseCommand):
     def _plan_month_start(plan: MonthlyPlan) -> date:
         return date(plan.year, plan.month, 1)
 
+    @staticmethod
+    def _completed_working_day_payloads(plan: MonthlyPlan):
+        holidays = MonthlyPlan.holiday_days_for_month(
+            year=plan.year,
+            month=plan.month,
+            department=plan.user.department,
+        )
+        existing_by_day = {
+            item.day: {
+                'day': item.day,
+                'work_type': item.work_type,
+                'notes': item.notes or '',
+            }
+            for item in plan.days.all()
+        }
+
+        payloads = []
+        for day_number in range(1, monthrange(plan.year, plan.month)[1] + 1):
+            day_value = date(plan.year, plan.month, day_number)
+            if day_value.weekday() >= 5 or day_value in holidays:
+                continue
+            payloads.append(
+                existing_by_day.get(
+                    day_value,
+                    {
+                        'day': day_value,
+                        'work_type': PlanDay.WorkType.ON_SITE,
+                        'notes': '',
+                    },
+                )
+            )
+        return payloads
+
+    @staticmethod
+    def _materialize_missing_on_site_days(plan: MonthlyPlan, day_payloads) -> None:
+        existing_days = {item.day for item in plan.days.all()}
+        missing_days = [
+            PlanDay(
+                plan=plan,
+                day=payload['day'],
+                work_type=PlanDay.WorkType.ON_SITE,
+                notes='',
+            )
+            for payload in day_payloads
+            if payload['day'] not in existing_days and payload['work_type'] == PlanDay.WorkType.ON_SITE
+        ]
+        if missing_days:
+            PlanDay.objects.bulk_create(missing_days)
+            if hasattr(plan, '_prefetched_objects_cache'):
+                plan._prefetched_objects_cache.pop('days', None)
+
     def handle(self, *args, **options):
         raw_date = (options.get('as_of_date') or '').strip()
         dry_run = bool(options.get('dry_run'))
@@ -71,14 +123,22 @@ class Command(BaseCommand):
                 continue
 
             plan_label = f'{plan.user.username} {plan.month:02d}/{plan.year}'
-            if dry_run:
-                approved += 1
-                self.stdout.write(f'[DRY-RUN] Approvazione per silenzio assenso: {plan_label}')
-                continue
 
             try:
+                day_payloads = self._completed_working_day_payloads(plan)
+                MonthlyPlan.validate_day_payloads(
+                    year=plan.year,
+                    month=plan.month,
+                    department=plan.user.department,
+                    day_payloads=day_payloads,
+                )
+                if dry_run:
+                    approved += 1
+                    self.stdout.write(f'[DRY-RUN] Approvazione per silenzio assenso: {plan_label}')
+                    continue
+
                 with transaction.atomic():
-                    plan.validate_existing_days()
+                    self._materialize_missing_on_site_days(plan, day_payloads)
                     now = timezone.now()
                     plan.status = MonthlyPlan.Status.APPROVED
                     plan.approved_by = None

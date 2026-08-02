@@ -182,6 +182,7 @@ python manage.py send_manager_monthly_summary --date 2026-04-01 --dry-run
 **Cosa fa**
 
 - cerca i piani `SUBMITTED` dei mesi gia conclusi
+- considera automaticamente `In sede` i giorni lavorativi mancanti dal piano, utile soprattutto per piani importati o parziali
 - li imposta ad `APPROVED` senza inviare email
 - valorizza `approved_at`, lascia `approved_by` vuoto e cattura lo snapshot approvato
 - scrive un audit log tecnico `plan_silence_approved`
