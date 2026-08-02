@@ -1903,6 +1903,7 @@
               </div>
               <div class="fixed-action-submit">
                 <button id="saveDraftBtn" type="button">Salva bozza</button>
+                <button id="withdrawPlanBtn" type="button" class="hidden">Ritira e modifica</button>
                 <button id="submitBtn" class="warn">Richiedi approvazione</button>
                 <button id="requestChangeBtn" class="warn hidden">Richiedi variazione</button>
               </div>
@@ -2531,6 +2532,7 @@
       const requestChangeBtn = document.getElementById("requestChangeBtn");
       const submitBtn = document.getElementById("submitBtn");
       const saveDraftBtn = document.getElementById("saveDraftBtn");
+      const withdrawPlanBtn = document.getElementById("withdrawPlanBtn");
       const viewReasonBtn = document.getElementById("viewReasonBtn");
       const restoreApprovedBtn = document.getElementById("restoreApprovedBtn");
       const reasonModal = document.getElementById("reasonModal");
@@ -3188,14 +3190,25 @@
             currentDisplayStatus === "PENDING" ||
             currentDisplayStatus === "REJECTED");
 
+        const canWithdrawPlan =
+          programmingEnabled &&
+          isNextMonth &&
+          currentPlan &&
+          currentPlan.status === "SUBMITTED";
+
         submitBtn.disabled =
           !programmingEnabled ||
           !isNextMonth ||
           !hasSubmissionReady;
         submitBtn.classList.toggle("hidden", !programmingEnabled || !isNextMonth);
 
+        if (withdrawPlanBtn) {
+          withdrawPlanBtn.classList.toggle("hidden", !canWithdrawPlan);
+          withdrawPlanBtn.disabled = !canWithdrawPlan;
+        }
+
         if (saveDraftBtn) {
-          const canSaveDraft = programmingEnabled && (isCurrentMonth || isNextMonth);
+          const canSaveDraft = programmingEnabled && (isCurrentMonth || isNextMonth) && !canWithdrawPlan;
           saveDraftBtn.classList.toggle("hidden", !canSaveDraft);
           saveDraftBtn.disabled = !canSaveDraft || !draftChanged;
         }
@@ -3969,11 +3982,15 @@
 
         const editableMonth = isCurrentMonth || isNextMonth;
         const readonlyByMonth = !editableMonth;
+        const readonlyBySubmittedNextMonth =
+          isNextMonth &&
+          currentPlan &&
+          currentPlan.status === "SUBMITTED";
         const readonlyByAilaSubscription = !hasAilaSubscription();
         if (readonlyByAilaSubscription) {
           setStatus("NO_AILA");
         }
-        const readonly = readonlyByMonth || readonlyByAilaSubscription;
+        const readonly = readonlyByMonth || readonlyBySubmittedNextMonth || readonlyByAilaSubscription;
         if (readonly) {
           clearSelectedDays();
         }
@@ -5050,6 +5067,26 @@
         await loadMonth();
       }
 
+      async function withdrawPlan() {
+        if (!currentPlan?.id) return;
+        const result = await askActionDialog({
+          title: "Ritira piano",
+          message: "Vuoi ritirare il piano inviato? Tornera in bozza e potrai modificarlo prima di inviarlo di nuovo.",
+          requireReason: false,
+          confirmLabel: "Ritira e modifica",
+        });
+        if (!result.confirmed) return;
+        currentPlan = await api(`/plans/${currentPlan.id}/withdraw/`, {
+          method: "POST",
+          body: "{}",
+        });
+        setStatus(currentPlan.status);
+        currentMonthContext.hasPendingChangeRequest = !!currentPlan.has_pending_change_request;
+        refreshPlanningActions();
+        setFeedback("Piano ritirato: ora puoi modificarlo", "ok");
+        await loadMonth();
+      }
+
       function askSubmitConfirmation() {
         return new Promise((resolve) => {
           resolveSubmitConfirm = resolve;
@@ -5425,6 +5462,15 @@
         if (saveDraftBtn.disabled) return;
         try {
           await saveDraft();
+        } catch (err) {
+          setFeedback(err.message, "error");
+        }
+      });
+
+      withdrawPlanBtn?.addEventListener("click", async () => {
+        if (withdrawPlanBtn.disabled) return;
+        try {
+          await withdrawPlan();
         } catch (err) {
           setFeedback(err.message, "error");
         }
