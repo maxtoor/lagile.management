@@ -118,13 +118,15 @@ python manage.py check_ldap_user_presence --dry-run
 
 **Quando si usa**
 
-- per ricordare agli utenti di inviare in approvazione il piano del mese successivo
+- per ricordare agli utenti di inviare o salvare il piano del mese successivo
+- per utenti in approvazione fiduciaria il testo invita a salvare il piano, che verra approvato automaticamente
 - come job schedulato o come invio manuale controllato
 
 **Cosa fa**
 
 - scorre gli utenti eleggibili
 - salta chi ha gia un piano `SUBMITTED` o `APPROVED`
+- include anche gli utenti in approvazione fiduciaria, per evitare che dimentichino di salvare il piano
 - evita doppi invii nello stesso giorno usando un audit log tecnico
 - usa la data configurata in `Impostazioni applicazione -> Reminder e sommari`
   - il valore indica quante volte il promemoria puo essere inviato prima della scadenza di fine mese

@@ -17,7 +17,7 @@ class _SafeDict(dict):
 
 class Command(BaseCommand):
     help = (
-        "Invia promemoria agli utenti attivi senza auto-approvazione che non hanno ancora "
+        "Invia promemoria agli utenti attivi che non hanno ancora "
         "inviato/approvato il piano del mese successivo, fino a N invii giornalieri "
         "negli ultimi giorni del mese corrente."
     )
@@ -132,7 +132,6 @@ class Command(BaseCommand):
 
         eligible_users = User.objects.filter(
             is_active=True,
-            auto_approve=False,
             aila_subscribed=True,
         ).exclude(email__isnull=True).exclude(email__exact='')
 
@@ -168,15 +167,24 @@ class Command(BaseCommand):
                 continue
 
             full_name = f'{(user.first_name or "").strip()} {(user.last_name or "").strip()}'.strip() or user.username
+            fiduciary_approval = bool(user.auto_approve)
+            action_label = 'salvare' if fiduciary_approval else 'inviare in approvazione'
+            completion_label = 'il salvataggio' if fiduciary_approval else "l'invio"
+            fiduciary_line = (
+                'Il piano sara registrato automaticamente con approvazione fiduciaria.\n'
+                if fiduciary_approval
+                else ''
+            )
             default_subject = f'Promemoria invio piano lavoro agile - {month_name_year}'
             links = build_email_link_context()
             portal_line = f"Link portale: {links['portal_url']}\n\n" if links['portal_url'] else ''
             default_body = (
                 'Gentile {full_name},\n\n'
-                'ti ricordiamo di inviare in approvazione il piano di lavoro agile per {month_name_year}.\n'
-                'Stato attuale: {plan_status_label}.\n\n'
+                'ti ricordiamo di {submission_action_label} il piano di lavoro agile per {month_name_year}.\n'
+                'Stato attuale: {plan_status_label}.\n'
+                '{fiduciary_approval_line}\n'
                 '{portal_line}'
-                'Puoi accedere al portale per completare l\'invio.'
+                'Puoi accedere al portale per completare {submission_completion_label}.'
             )
             subject, body = self._render_from_template(
                 key=SystemEmailTemplate.Key.REMINDER_PENDING_SUBMISSION,
@@ -191,6 +199,10 @@ class Command(BaseCommand):
                     'month_name_year': month_name_year,
                     'plan_status': status or 'ASSENTE',
                     'plan_status_label': status or 'ASSENTE',
+                    'is_fiduciary_approval': fiduciary_approval,
+                    'submission_action_label': action_label,
+                    'submission_completion_label': completion_label,
+                    'fiduciary_approval_line': fiduciary_line,
                     'portal_line': portal_line,
                     **links,
                 },
