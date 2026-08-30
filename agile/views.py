@@ -836,6 +836,31 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
         self._assert_programming_enabled()
         self._assert_employee_can_edit(year=serializer.validated_data['year'], month=serializer.validated_data['month'])
         plan = serializer.save(user=self.request.user)
+        if self.request.user.auto_approve:
+            now = timezone.now()
+            plan.status = MonthlyPlan.Status.APPROVED
+            plan.submitted_at = now
+            plan.approved_by = self.request.user
+            plan.approved_at = now
+            plan.rejection_reason = ''
+            plan.save(
+                update_fields=[
+                    'status',
+                    'submitted_at',
+                    'approved_by',
+                    'approved_at',
+                    'rejection_reason',
+                    'updated_at',
+                ]
+            )
+            plan.capture_approved_snapshot()
+            AuditLog.track(
+                actor=self.request.user,
+                action='plan_fiduciary_saved',
+                target_type='MonthlyPlan',
+                target_id=plan.id,
+                metadata={'year': plan.year, 'month': plan.month},
+            )
         AuditLog.track(
             actor=self.request.user,
             action='plan_created',
@@ -859,6 +884,32 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
         current_year, current_month = self._current_year_month()
         is_current_month = (plan.year, plan.month) == (current_year, current_month)
         updated = serializer.save()
+        if plan.user_id == self.request.user.id and self.request.user.auto_approve:
+            now = timezone.now()
+            updated.status = MonthlyPlan.Status.APPROVED
+            updated.submitted_at = updated.submitted_at or now
+            updated.approved_by = self.request.user
+            updated.approved_at = now
+            updated.rejection_reason = ''
+            updated.save(
+                update_fields=[
+                    'status',
+                    'submitted_at',
+                    'approved_by',
+                    'approved_at',
+                    'rejection_reason',
+                    'updated_at',
+                ]
+            )
+            updated.capture_approved_snapshot()
+            AuditLog.track(
+                actor=self.request.user,
+                action='plan_fiduciary_saved',
+                target_type='MonthlyPlan',
+                target_id=updated.id,
+                metadata={'year': updated.year, 'month': updated.month},
+            )
+            return
         # Mese successivo: dopo una modifica, un piano gia inviato/approvato torna in bozza per nuova approvazione.
         if (
             not is_current_month

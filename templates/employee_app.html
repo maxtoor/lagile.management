@@ -3144,15 +3144,19 @@
       }
 
       function updateSendButtonsLabel() {
+        const fiduciaryApproval = Boolean(currentUser?.auto_approve);
+        if (saveDraftBtn) {
+          saveDraftBtn.textContent = fiduciaryApproval ? "Salva piano" : "Salva bozza";
+        }
         if (submitBtn) {
           submitBtn.textContent = currentDisplayStatus === "PENDING"
             ? "In attesa approvazione"
             : "Richiedi approvazione";
         }
         if (requestChangeBtn) {
-          requestChangeBtn.textContent = currentMonthContext.hasPendingChangeRequest
-            ? "Aggiorna variazione"
-            : "Richiedi variazione";
+          requestChangeBtn.textContent = fiduciaryApproval
+            ? "Conferma variazione"
+            : (currentMonthContext.hasPendingChangeRequest ? "Aggiorna variazione" : "Richiedi variazione");
         }
       }
 
@@ -3232,10 +3236,11 @@
           currentPlan.status === "SUBMITTED";
 
         submitBtn.disabled =
+          Boolean(currentUser?.auto_approve) ||
           !programmingEnabled ||
           !isNextMonth ||
           !hasSubmissionReady;
-        submitBtn.classList.toggle("hidden", !programmingEnabled || !isNextMonth);
+        submitBtn.classList.toggle("hidden", Boolean(currentUser?.auto_approve) || !programmingEnabled || !isNextMonth);
 
         if (withdrawPlanBtn) {
           withdrawPlanBtn.classList.toggle("hidden", !canWithdrawPlan);
@@ -5069,7 +5074,7 @@
         baselineDayMap = cloneDayValuesMap();
         clearLocalDraft(payload.year, payload.month);
         if (!silent) {
-          setFeedback("Bozza salvata", "ok");
+          setFeedback(currentUser?.auto_approve ? "Piano salvato" : "Bozza salvata", "ok");
         }
         if (reloadAfterSave) {
           await loadMonth();
