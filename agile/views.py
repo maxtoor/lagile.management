@@ -1223,21 +1223,25 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
                         processed_by=request.user,
                         processed_at=now,
                     )
-                plan.status = MonthlyPlan.Status.APPROVED
-                plan.approved_by = request.user
-                plan.approved_at = now
-                plan.rejection_reason = ''
-                plan.save(update_fields=['status', 'approved_by', 'approved_at', 'rejection_reason', 'updated_at'])
-                plan.capture_approved_snapshot()
+                self._apply_fiduciary_approval_if_needed(plan, action='plan_fiduciary_change_saved')
                 AuditLog.track(
                     actor=request.user,
                     action='plan_change_auto_approved',
                     target_type='ChangeRequest',
                     target_id=change_request.id,
-                    metadata={'plan_id': plan.id},
+                    metadata={'plan_id': plan.id, 'plan_status': plan.status},
+                )
+                detail = (
+                    'Piano riportato in modifica: nessuna giornata di lavoro agile indicata'
+                    if plan.status == MonthlyPlan.Status.DRAFT
+                    else 'Richiesta variazione approvata automaticamente'
                 )
                 return Response(
-                    {'detail': 'Richiesta variazione approvata automaticamente', 'auto_approved': True},
+                    {
+                        'detail': detail,
+                        'auto_approved': True,
+                        'plan': self.get_serializer(plan).data,
+                    },
                     status=status.HTTP_201_CREATED,
                 )
 
