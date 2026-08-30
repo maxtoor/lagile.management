@@ -5181,8 +5181,14 @@
           body: JSON.stringify({ reason }),
         });
         const autoApproved = Boolean(response?.auto_approved);
-        setStatus(autoApproved ? "APPROVED" : "PENDING");
-        currentMonthContext.hasPendingChangeRequest = !autoApproved;
+        if (response?.plan) {
+          currentPlan = response.plan;
+        }
+        setStatus(response?.plan?.status || (autoApproved ? "APPROVED" : "PENDING"));
+        currentMonthContext.hasPendingChangeRequest = response?.plan
+          ? !!response.plan.has_pending_change_request
+          : !autoApproved;
+        currentMonthContext.hasApprovedSnapshot = !!(response?.plan && response.plan.has_approved_snapshot);
         refreshPlanningActions();
         clearLocalDraft();
         closeChangeRequestModal();
