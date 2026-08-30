@@ -6,6 +6,7 @@ from typing import Optional
 
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from agile.models import AuditLog, MonthlyPlan, SystemEmailTemplate, User
@@ -148,11 +149,18 @@ class Command(BaseCommand):
                 continue
 
             managed_ids = [u.id for u in users]
-            plans = MonthlyPlan.objects.filter(user_id__in=managed_ids, year=target_year, month=target_month).select_related('user')
-            plan_by_user = {p.user_id: p for p in plans}
+            plans = list(
+                MonthlyPlan.objects.filter(user_id__in=managed_ids, year=target_year, month=target_month)
+                .select_related('user')
+                .annotate(
+                    remote_days_count=Count('days', filter=Q(days__work_type='REMOTE')),
+                )
+            )
+            visible_plans = [p for p in plans if int(getattr(p, 'remote_days_count', 0) or 0) > 0]
+            plan_by_user = {p.user_id: p for p in visible_plans}
 
-            pending = [p for p in plans if p.status == MonthlyPlan.Status.SUBMITTED]
-            approved = [p for p in plans if p.status == MonthlyPlan.Status.APPROVED]
+            pending = [p for p in visible_plans if p.status == MonthlyPlan.Status.SUBMITTED]
+            approved = [p for p in visible_plans if p.status == MonthlyPlan.Status.APPROVED]
             missing = [u for u in users if u.id not in plan_by_user]
             auto_approve_users = [u for u in users if bool(u.auto_approve)]
 

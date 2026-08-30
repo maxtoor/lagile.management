@@ -127,6 +127,7 @@ python manage.py check_ldap_user_presence --dry-run
 - scorre gli utenti eleggibili
 - salta chi ha gia un piano `SUBMITTED` o `APPROVED`
 - include anche gli utenti in approvazione fiduciaria, per evitare che dimentichino di salvare il piano
+- considera non compilato un piano senza giornate di lavoro agile
 - evita doppi invii nello stesso giorno usando un audit log tecnico
 - usa la data configurata in `Impostazioni applicazione -> Reminder e sommari`
   - il valore indica quante volte il promemoria puo essere inviato prima della scadenza di fine mese
@@ -157,6 +158,7 @@ python manage.py send_submission_reminders --date 2026-03-30 --dry-run
 - piani approvati
 - utenti senza piano
 - utenti in auto-approvazione
+- i piani senza giornate di lavoro agile vengono considerati come non compilati
 
 **Cosa fa internamente**
 
