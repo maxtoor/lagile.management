@@ -1171,10 +1171,11 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
                 'Promemoria invio piano lavoro agile - {month_name_year}',
                 (
                     'Gentile {full_name},\n\n'
-                    'ti ricordiamo di inviare in approvazione il piano di lavoro agile per {month_name_year}.\n'
-                    'Stato attuale: {plan_status_label}.\n\n'
+                    'ti ricordiamo di {submission_action_label} il piano di lavoro agile per {month_name_year}.\n'
+                    'Stato attuale: {plan_status_label}.\n'
+                    '{fiduciary_approval_line}\n'
                     '{portal_line}'
-                    "Puoi accedere al portale per completare l'invio."
+                    'Puoi accedere al portale per completare {submission_completion_label}.'
                 ),
             ),
             SystemEmailTemplate.Key.MANAGER_MONTHLY_SUMMARY: (
@@ -1255,6 +1256,9 @@ class SystemEmailTemplateAdmin(CollapseMediaMixin, admin.ModelAdmin):
             "<code>{{manager_name}}</code>, <code>{{employee_name}}</code>, "
             "<code>{{pending_count}}</code>, <code>{{missing_count}}</code>, "
             "<code>{{pending_lines}}</code>, <code>{{missing_lines}}</code>"
+            "<br><strong>Promemoria:</strong> "
+            "<code>{{is_fiduciary_approval}}</code>, <code>{{submission_action_label}}</code>, "
+            "<code>{{submission_completion_label}}</code>, <code>{{fiduciary_approval_line}}</code>"
             "<br><strong>Link:</strong> "
             "<code>{{public_base_url}}</code>, <code>{{portal_url}}</code>, <code>{{admin_url}}</code>"
             "</div>"
