@@ -5074,7 +5074,14 @@
         baselineDayMap = cloneDayValuesMap();
         clearLocalDraft(payload.year, payload.month);
         if (!silent) {
-          setFeedback(currentUser?.auto_approve ? "Piano salvato" : "Bozza salvata", "ok");
+          const feedbackMessage = currentUser?.auto_approve
+            ? (
+                currentPlan.status === "APPROVED"
+                  ? "Piano salvato con approvazione fiduciaria"
+                  : "Piano salvato senza giornate di lavoro agile: risulta non compilato"
+              )
+            : "Bozza salvata";
+          setFeedback(feedbackMessage, "ok");
         }
         if (reloadAfterSave) {
           await loadMonth();

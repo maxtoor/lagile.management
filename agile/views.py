@@ -422,9 +422,16 @@ class AdminSharedCalendarView(APIView):
         plans = list(
             MonthlyPlan.objects.filter(user__in=users_qs, year=year, month=month, status__in=visible_plan_statuses)
             .select_related('user')
+            .annotate(
+                remote_days_count=Count('days', filter=Q(days__work_type='REMOTE')),
+            )
             .prefetch_related('days')
         )
-        plans_by_user_id = {plan.user_id: plan for plan in plans}
+        plans_by_user_id = {
+            plan.user_id: plan
+            for plan in plans
+            if int(getattr(plan, 'remote_days_count', 0) or 0) > 0
+        }
 
         global_holiday_labels = MonthlyPlan.italian_national_holidays_for_month(year=year, month=month)
         for holiday_day, holiday_name in Holiday.objects.filter(
@@ -622,6 +629,26 @@ class AdminOverviewView(APIView):
                 continue
 
             remote_days = int(getattr(plan, 'remote_days_count', 0) or 0)
+            if remote_days <= 0:
+                rows.append(
+                    {
+                        'user_id': user.id,
+                        'username': user.username,
+                        'first_name': user.first_name or '',
+                        'last_name': user.last_name or '',
+                        'department': user.department or '',
+                        'aila_subscribed': bool(getattr(user, 'aila_subscribed', False)),
+                        'auto_approve': bool(getattr(user, 'auto_approve', False)),
+                        'is_superuser': bool(getattr(user, 'is_superuser', False)),
+                        'plan_id': None,
+                        'status': 'MISSING',
+                        'remote_days': 0,
+                        'on_site_days': 0,
+                        'total_days': 0,
+                    }
+                )
+                status_totals['MISSING'] += 1
+                continue
             total_days = working_days_count_for_department(user.department or '')
             on_site_days = max(0, total_days - remote_days)
             status_totals[plan.status] = status_totals.get(plan.status, 0) + 1
@@ -770,6 +797,66 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
     def _as_bool_query_param(value) -> bool:
         return str(value or '').strip().lower() in {'1', 'true', 'yes', 'si', 'on'}
 
+    @staticmethod
+    def _has_remote_days(plan: MonthlyPlan) -> bool:
+        return plan.days.filter(work_type='REMOTE').exists()
+
+    def _apply_fiduciary_approval_if_needed(self, plan: MonthlyPlan, *, action: str) -> bool:
+        if not (plan.user_id == self.request.user.id and self.request.user.auto_approve):
+            return False
+        if not self._has_remote_days(plan):
+            plan.status = MonthlyPlan.Status.DRAFT
+            plan.submitted_at = None
+            plan.approved_by = None
+            plan.approved_at = None
+            plan.rejection_reason = ''
+            plan.approved_days_snapshot = []
+            plan.save(
+                update_fields=[
+                    'status',
+                    'submitted_at',
+                    'approved_by',
+                    'approved_at',
+                    'rejection_reason',
+                    'approved_days_snapshot',
+                    'updated_at',
+                ]
+            )
+            AuditLog.track(
+                actor=self.request.user,
+                action='plan_fiduciary_saved_without_remote',
+                target_type='MonthlyPlan',
+                target_id=plan.id,
+                metadata={'year': plan.year, 'month': plan.month},
+            )
+            return True
+
+        now = timezone.now()
+        plan.status = MonthlyPlan.Status.APPROVED
+        plan.submitted_at = plan.submitted_at or now
+        plan.approved_by = self.request.user
+        plan.approved_at = now
+        plan.rejection_reason = ''
+        plan.save(
+            update_fields=[
+                'status',
+                'submitted_at',
+                'approved_by',
+                'approved_at',
+                'rejection_reason',
+                'updated_at',
+            ]
+        )
+        plan.capture_approved_snapshot()
+        AuditLog.track(
+            actor=self.request.user,
+            action=action,
+            target_type='MonthlyPlan',
+            target_id=plan.id,
+            metadata={'year': plan.year, 'month': plan.month},
+        )
+        return True
+
     def _assert_programming_enabled(self, *, plan_owner_id: int | None = None) -> None:
         if plan_owner_id is not None and plan_owner_id != self.request.user.id:
             return
@@ -836,31 +923,7 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
         self._assert_programming_enabled()
         self._assert_employee_can_edit(year=serializer.validated_data['year'], month=serializer.validated_data['month'])
         plan = serializer.save(user=self.request.user)
-        if self.request.user.auto_approve:
-            now = timezone.now()
-            plan.status = MonthlyPlan.Status.APPROVED
-            plan.submitted_at = now
-            plan.approved_by = self.request.user
-            plan.approved_at = now
-            plan.rejection_reason = ''
-            plan.save(
-                update_fields=[
-                    'status',
-                    'submitted_at',
-                    'approved_by',
-                    'approved_at',
-                    'rejection_reason',
-                    'updated_at',
-                ]
-            )
-            plan.capture_approved_snapshot()
-            AuditLog.track(
-                actor=self.request.user,
-                action='plan_fiduciary_saved',
-                target_type='MonthlyPlan',
-                target_id=plan.id,
-                metadata={'year': plan.year, 'month': plan.month},
-            )
+        self._apply_fiduciary_approval_if_needed(plan, action='plan_fiduciary_saved')
         AuditLog.track(
             actor=self.request.user,
             action='plan_created',
@@ -884,31 +947,7 @@ class MonthlyPlanViewSet(viewsets.ModelViewSet):
         current_year, current_month = self._current_year_month()
         is_current_month = (plan.year, plan.month) == (current_year, current_month)
         updated = serializer.save()
-        if plan.user_id == self.request.user.id and self.request.user.auto_approve:
-            now = timezone.now()
-            updated.status = MonthlyPlan.Status.APPROVED
-            updated.submitted_at = updated.submitted_at or now
-            updated.approved_by = self.request.user
-            updated.approved_at = now
-            updated.rejection_reason = ''
-            updated.save(
-                update_fields=[
-                    'status',
-                    'submitted_at',
-                    'approved_by',
-                    'approved_at',
-                    'rejection_reason',
-                    'updated_at',
-                ]
-            )
-            updated.capture_approved_snapshot()
-            AuditLog.track(
-                actor=self.request.user,
-                action='plan_fiduciary_saved',
-                target_type='MonthlyPlan',
-                target_id=updated.id,
-                metadata={'year': updated.year, 'month': updated.month},
-            )
+        if self._apply_fiduciary_approval_if_needed(updated, action='plan_fiduciary_saved'):
             return
         # Mese successivo: dopo una modifica, un piano gia inviato/approvato torna in bozza per nuova approvazione.
         if (
